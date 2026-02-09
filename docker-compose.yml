@@ -1,0 +1,36 @@
+# Matches homelab-services structure (env_file, port from env, healthcheck, logging, security):
+# env_file .env, port from env, healthcheck, logging, security_opt, stop_grace_period.
+# Deploy from app repo: make deploy. On homelab: clone into homelab-services/dane-priznanie/,
+#   cp .env.example .env, then cd dane-priznanie && docker-compose up -d --build
+version: "3.8"
+
+services:
+  dane-priznanie:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dane-priznanie:latest
+    container_name: dane-priznanie
+    env_file:
+      - .env
+    ports:
+      - "${SERVICE_PORT:-3015}:3015"
+    environment:
+      NODE_ENV: production
+      PORT: 3015
+      TZ: "${TZ:-Europe/Bratislava}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3015/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 10s

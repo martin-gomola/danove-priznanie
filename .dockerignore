@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build
+.next
+out
+build
+
+# Git
+.git
+.gitignore
+
+# IDE / misc
+.cursor
+.vscode
+.idea
+*.log
+.DS_Store
+*.pem
+
+# Env (use build args or compose env instead)
+.env*
+!.env.example
+
+# Test / coverage
+coverage
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Docs / plans (optional to exclude)
+# .cursor
+# *.md
+# !README.md

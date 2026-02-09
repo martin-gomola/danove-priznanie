@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #111827;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+/* Number input - hide arrows */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Date input styling */
+input[type="date"] {
+  color-scheme: light;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+  accent-color: #10b981;
+}
+
+/* Tabular nums for financial data */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Focus visible */
+*:focus-visible {
+  outline: 1px solid rgba(0, 0, 0, 0.15);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

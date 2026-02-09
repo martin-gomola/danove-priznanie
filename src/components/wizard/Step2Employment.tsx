@@ -1,0 +1,114 @@
+'use client';
+
+import React from 'react';
+import { EmploymentIncome } from '@/types/TaxForm';
+import { FormField, Input, SectionCard, InfoBox, SourceNote } from '@/components/ui/FormField';
+
+interface Props {
+  data: EmploymentIncome;
+  onChange: (updates: Partial<EmploymentIncome>) => void;
+  calculatedR38: string;
+}
+
+export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          V. ODDIEL
+        </h2>
+        <p className="text-sm text-gray-500">
+          Výpočet základu dane z príjmov zo závislej činnosti (§5)
+        </p>
+        <SourceNote
+          text="Zákon č. 595/2003 Z.z. §5 -- Príjmy zo závislej činnosti"
+          href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-5"
+        />
+      </div>
+
+      <InfoBox>
+        <strong>Kde najdete tieto udaje?</strong>
+        <br />
+        Tieto 4 hodnoty najdete na &quot;Potvrdenie o zdanitelnych prijmoch&quot;
+        (rocne zuctovanie) od zamestnavatela. Kazda hodnota je jasne oznacena
+        na formulari.
+      </InfoBox>
+
+      <SectionCard title="Udaje z rocneho zuctovania" subtitle="Zadajte 4 hodnoty z potvrdenia od zamestnavatela">
+        <div className="space-y-5">
+          <FormField
+            label="r. 36 -- Uhrn prijmov"
+            hint="Celkovy hrubý prijem zo zamestnania (brutto)"
+            required
+          >
+            <Input
+              type="number"
+              step="0.01"
+              value={data.r36}
+              onChange={(e) => onChange({ r36: e.target.value })}
+              placeholder="0.00"
+              suffix="EUR"
+            />
+          </FormField>
+
+          <FormField
+            label="r. 37 -- Uhrn povinneho poistneho"
+            hint="Socialne a zdravotne poistenie zaplatene zamestnancom"
+            required
+          >
+            <Input
+              type="number"
+              step="0.01"
+              value={data.r37}
+              onChange={(e) => onChange({ r37: e.target.value })}
+              placeholder="0.00"
+              suffix="EUR"
+            />
+          </FormField>
+
+          {/* Auto-calculated r38 */}
+          <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs text-gray-500">r. 38 -- Zaklad dane (automaticky)</span>
+                <p className="text-xs text-gray-400 mt-0.5">r36 - r37</p>
+              </div>
+              <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                {calculatedR38 ? `${parseFloat(calculatedR38).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '-- EUR'}
+              </span>
+            </div>
+          </div>
+
+          <FormField
+            label="r. 131 -- Uhrn preddavkov na dan"
+            hint="Preddavky na dan uz zaplatene zamestnavatelom"
+            required
+          >
+            <Input
+              type="number"
+              step="0.01"
+              value={data.r131}
+              onChange={(e) => onChange({ r131: e.target.value })}
+              placeholder="0.00"
+              suffix="EUR"
+            />
+          </FormField>
+
+          <FormField
+            label="r. 36a -- Prijmy z dohod"
+            hint="Volitelne -- len ak ste mali prijmy z dohod o pracach vykonanych mimo pracovneho pomeru"
+          >
+            <Input
+              type="number"
+              step="0.01"
+              value={data.r36a}
+              onChange={(e) => onChange({ r36a: e.target.value })}
+              placeholder="0.00"
+              suffix="EUR"
+            />
+          </FormField>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
