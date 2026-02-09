@@ -72,6 +72,11 @@ export function convertToJson(
     if (form.employment.r36a) {
       t.r36a = decStr(form.employment.r36a);
     }
+
+    // Príloha č.4: socZdravPoistenie - pr8 must equal r.37
+    if (form.employment.r37) {
+      t.socZdravPoistenie.pr8 = decStr(form.employment.r37);
+    }
   }
 
   // ════════════════════════════════════════════════════════
