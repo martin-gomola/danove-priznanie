@@ -293,9 +293,9 @@ export function convertToJson(
   t.datumVyhlasenia = todayStr;
 
   // Refund request (XIV. oddiel)
+  t.danovyPreplatokBonus.datum = todayStr;
   if (calc.isRefund) {
     t.danovyPreplatokBonus.vratitDanPreplatok = '1';
-    t.danovyPreplatokBonus.datum = todayStr;
   }
 
   return output;
