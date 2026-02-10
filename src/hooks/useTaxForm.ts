@@ -6,6 +6,18 @@ import { parseDpfoXmlToFormData } from '@/lib/utils/parseDpfoXml';
 import { useToast } from '@/components/ui/Toast';
 
 const STORAGE_KEY = 'dane-priznanie-2025';
+const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
+
+/** Get or create a per-browser session token (random UUID stored in localStorage). */
+function getSessionToken(): string {
+  if (typeof window === 'undefined') return '';
+  let token = localStorage.getItem(SESSION_TOKEN_KEY);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
+  }
+  return token;
+}
 
 /**
  * Custom hook for managing the tax form state with localStorage persistence.
@@ -14,6 +26,7 @@ export function useTaxForm() {
   const toast = useToast();
   const [form, setForm] = useState<TaxFormData>(DEFAULT_TAX_FORM);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [sessionToken, setSessionToken] = useState('');
 
   // Load from localStorage on mount - deep-merge each section so newly added
   // fields (e.g. czkRate) get their defaults even when saved data is older.
@@ -38,18 +51,30 @@ export function useTaxForm() {
     } catch (e) {
       console.warn('Failed to load saved form data:', e);
     }
+    setSessionToken(getSessionToken());
     setIsLoaded(true);
   }, []);
 
-  // Poll for pending form updates from external tools (MCP / Cursor skill / Claude Code).
-  // GET /api/form returns { data: null } when idle, or { data: {...} } with a queued update.
+  // Sync session token across tabs (e.g. when changed on /developer page)
   useEffect(() => {
-    if (!isLoaded) return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SESSION_TOKEN_KEY && e.newValue) {
+        setSessionToken(e.newValue);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  // Poll for pending form updates from external tools (MCP / Cursor skill / Claude Code).
+  // GET /api/form?session=<token> returns { data: null } when idle, or { data: {...} } with a queued update.
+  useEffect(() => {
+    if (!isLoaded || !sessionToken) return;
     const POLL_INTERVAL = 3_000;
 
     const poll = async () => {
       try {
-        const res = await fetch('/api/form');
+        const res = await fetch(`/api/form?session=${encodeURIComponent(sessionToken)}`);
         if (!res.ok) return;
         const { data } = await res.json();
         if (!data || typeof data !== 'object') return;
@@ -75,7 +100,7 @@ export function useTaxForm() {
 
     const id = setInterval(poll, POLL_INTERVAL);
     return () => clearInterval(id);
-  }, [isLoaded, toast]);
+  }, [isLoaded, sessionToken, toast]);
 
   // Save to localStorage whenever form changes
   useEffect(() => {
@@ -211,6 +236,7 @@ export function useTaxForm() {
   return {
     form,
     isLoaded,
+    sessionToken,
     updateForm,
     updatePersonalInfo,
     updateEmployment,

@@ -1,11 +1,52 @@
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: 'API & AI integrácia - Daňové priznanie',
-  robots: { index: false, follow: false },
-};
+import { useEffect, useState } from 'react';
+
+const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
+
+function getSessionToken(): string {
+  let token = localStorage.getItem(SESSION_TOKEN_KEY);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
+  }
+  return token;
+}
 
 export default function DeveloperPage() {
+  const [token, setToken] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [baseUrl, setBaseUrl] = useState('http://localhost:3015');
+
+  useEffect(() => {
+    setToken(getSessionToken());
+    setBaseUrl(window.location.origin);
+  }, []);
+
+  const copyToken = () => {
+    navigator.clipboard.writeText(token);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const saveToken = () => {
+    const trimmed = token.trim();
+    if (!trimmed) return;
+    localStorage.setItem(SESSION_TOKEN_KEY, trimmed);
+    setToken(trimmed);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const regenerateToken = () => {
+    const newToken = crypto.randomUUID();
+    localStorage.setItem(SESSION_TOKEN_KEY, newToken);
+    setToken(newToken);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <div className="max-w-3xl mx-auto px-6 py-12 space-y-10">
@@ -22,23 +63,65 @@ export default function DeveloperPage() {
           </p>
         </div>
 
+        {/* Session token */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-medium">Váš API token</h2>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
+            <p className="text-sm text-gray-600">
+              Tento token sa používa pri volaniach API aj pri pollingu formulára.
+              Môžete ho skopírovať, vložiť vlastný, alebo vygenerovať nový.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Vložte alebo vygenerujte token..."
+                className="flex-1 px-3 py-2 bg-gray-900 text-emerald-400 rounded-lg text-sm font-mono placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                spellCheck={false}
+              />
+              <button
+                onClick={saveToken}
+                disabled={!token.trim()}
+                className="px-3 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shrink-0"
+              >
+                {saved ? '✓ Uložené' : 'Uložiť'}
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={copyToken}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                {copied ? '✓ Skopírované' : 'Kopírovať'}
+              </button>
+              <button
+                onClick={regenerateToken}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                Vygenerovať nový
+              </button>
+            </div>
+            <p className="text-xs text-gray-400">
+              Token je uložený v localStorage. Po uložení sa formulár automaticky prepne na polling s týmto tokenom.
+            </p>
+          </div>
+        </section>
+
         {/* How it works */}
         <section className="space-y-3">
           <h2 className="text-lg font-medium">Ako to funguje</h2>
           <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3 text-sm text-gray-600">
             <p>
-              Aplikácia beží na <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">localhost</code> a poskytuje
-              jednoduché REST API, cez ktoré môžu externé AI nástroje odoslať dáta priamo do formulára.
+              Aplikácia poskytuje jednoduché REST API, cez ktoré môžu externé AI nástroje odoslať dáta priamo do formulára.
+              Každý prehliadač má vlastný session token — dáta sú izolované.
             </p>
             <ol className="list-decimal list-inside space-y-1.5 text-gray-600">
               <li>AI agent prečíta váš PDF/obrázok (napr. Potvrdenie o zdaniteľných príjmoch)</li>
               <li>Extrahuje hodnoty pomocou vstavanej schopnosti čítať dokumenty</li>
-              <li>Odošle ich cez <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">POST /api/form</code></li>
+              <li>Odošle ich cez <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">POST /api/form</code> s vaším tokenom</li>
               <li>Aplikácia automaticky prevezme dáta do formulára (polling každé 3s)</li>
             </ol>
-            <p className="text-xs text-gray-400">
-              Žiadny cloud, všetko beží lokálne. POST je chránený tokenom (FORM_API_TOKEN v .env).
-            </p>
           </div>
         </section>
 
@@ -59,9 +142,9 @@ export default function DeveloperPage() {
                 Odošle čiastočné dáta formulára. Aplikácia ich automaticky zlúči do aktuálneho stavu.
               </p>
               <div className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto">
-                <pre>{`curl -X POST http://localhost:3015/api/form \\
+                <pre>{`curl -X POST ${baseUrl}/api/form \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer \$FORM_API_TOKEN" \\
+  -H "Authorization: Bearer ${token || '<your-token>'}" \\
   -d '{
     "employment": {
       "enabled": true,
@@ -83,10 +166,10 @@ export default function DeveloperPage() {
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-mono font-medium rounded">
                   GET
                 </span>
-                <code className="text-sm font-mono">/api/form</code>
+                <code className="text-sm font-mono">/api/form?session=<span className="text-blue-400">&lt;token&gt;</span></code>
               </div>
               <p className="text-sm text-gray-600">
-                Interný endpoint - klient polluje každé 3s. Vráti čakajúce dáta a vymaže ich (jednorazové čítanie).
+                Klient polluje každé 3s s session tokenom. Vráti čakajúce dáta a vymaže ich (jednorazové čítanie).
               </p>
             </div>
           </div>
@@ -173,13 +256,13 @@ export default function DeveloperPage() {
             </p>
             <div className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto">
               <pre>{`# Agent reads the PDF, extracts values, then:
-curl -X POST http://localhost:3015/api/form \\
+curl -X POST ${baseUrl}/api/form \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer \$FORM_API_TOKEN" \\
+  -H "Authorization: Bearer ${token || '<your-token>'}" \\
   -d '{"employment":{"enabled":true,"r36":"32400.00","r37":"4341.60","r131":"3648.00"}}'`}</pre>
             </div>
             <p className="text-xs text-gray-400">
-              Token z .env. Na localhoste bez tokenu funguje bez autentifikácie.
+              Použite token zobrazený vyššie. Každý prehliadač má vlastný token — dáta sú izolované medzi používateľmi.
             </p>
           </div>
         </section>

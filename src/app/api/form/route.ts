@@ -1,70 +1,101 @@
 import { NextRequest } from 'next/server';
 
 /**
- * Simple in-memory bridge for external tools (MCP, Cursor skills, Claude Code)
+ * Per-session bridge for external tools (MCP, Cursor skills, Claude Code)
  * to push form data into the running app.
  *
- * POST /api/form - queue a partial form update (requires Bearer token)
- * GET  /api/form - poll & consume the pending update (browser-side, no auth)
+ * POST /api/form - queue a partial form update (requires Bearer <session-token>)
+ * GET  /api/form?session=<token> - poll & consume the pending update for this session
  *
- * Security: POST requires Authorization: Bearer <FORM_API_TOKEN>.
- * When FORM_API_TOKEN is not set, POST is rejected (401).
- * GET is unauthenticated because the browser polls it - data only exists
- * after an authenticated POST, so the risk surface is minimal.
+ * Security:
+ * - Each browser session generates a random UUID token (stored in localStorage).
+ * - POST requires Authorization: Bearer <session-token>.
+ * - GET requires ?session=<token> query param to scope data retrieval.
+ * - Tokens are random UUIDs (128-bit entropy) – practically unguessable.
+ * - Pending data expires after 60 seconds and sessions are cleaned up automatically.
  *
- * Single-user tool - one pending update at a time, in-memory only.
+ * Multi-user safe: each session token has its own isolated pending update.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let pendingUpdate: Record<string, any> | null = null;
-let pendingAt: number | null = null;
+interface PendingEntry {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: Record<string, any>;
+  createdAt: number;
+}
+
+/** Pending updates per session token */
+const pendingUpdates = new Map<string, PendingEntry>();
 
 /** Pending updates expire after 60 seconds */
 const EXPIRY_MS = 60_000;
 
-/** Max payload size (100 KB) - reject oversized bodies to prevent memory abuse */
+/** Max concurrent sessions (prevent memory exhaustion) */
+const MAX_SESSIONS = 500;
+
+/** Max payload size (100 KB) */
 const MAX_PAYLOAD_BYTES = 100_000;
 
-/** Keys that could trigger prototype pollution when spread into objects */
+/** Keys that could trigger prototype pollution */
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-/** Known top-level form sections - reject anything else */
+/** Known top-level form sections */
 const ALLOWED_SECTIONS = new Set([
   'personalInfo', 'employment', 'dividends', 'mutualFunds',
   'mortgage', 'spouse', 'childBonus', 'twoPercent',
 ]);
 
+/** Clean up expired entries from the map */
+function cleanExpired() {
+  const now = Date.now();
+  for (const [token, entry] of pendingUpdates) {
+    if (now - entry.createdAt > EXPIRY_MS) {
+      pendingUpdates.delete(token);
+    }
+  }
+}
+
+/** Minimum token length to reject accidentally weak tokens */
+const MIN_TOKEN_LENGTH = 8;
+
 /**
- * Verify the Bearer token from the Authorization header.
- * Rejects all requests when FORM_API_TOKEN is not configured.
+ * Extract the Bearer token from the Authorization header.
+ * Must be at least MIN_TOKEN_LENGTH characters to prevent weak tokens.
  */
-function verifyToken(req: NextRequest): boolean {
-  const expected = process.env.FORM_API_TOKEN;
-  if (!expected) return false; // no token configured = reject all
+function extractToken(req: NextRequest): string | null {
   const auth = req.headers.get('authorization') ?? '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  return token === expected;
+  if (!auth.startsWith('Bearer ')) return null;
+  const token = auth.slice(7).trim();
+  return token.length >= MIN_TOKEN_LENGTH ? token : null;
 }
 
 /**
  * Recursively strip dangerous keys (__proto__, constructor, prototype)
- * from an object tree to prevent prototype pollution attacks.
+ * from an object tree — including objects nested inside arrays —
+ * to prevent prototype pollution attacks.
  */
-function sanitize(obj: unknown): Record<string, unknown> | null {
-  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+function sanitizeValue(val: unknown): unknown {
+  if (val === null || val === undefined || typeof val !== 'object') return val;
+  if (Array.isArray(val)) return val.map(sanitizeValue);
   const clean: Record<string, unknown> = {};
-  for (const [key, val] of Object.entries(obj)) {
+  for (const [key, v] of Object.entries(val)) {
     if (DANGEROUS_KEYS.has(key)) continue;
-    clean[key] = val && typeof val === 'object' && !Array.isArray(val)
-      ? sanitize(val) ?? val
-      : val;
+    clean[key] = sanitizeValue(v);
   }
   return clean;
 }
 
+function sanitize(obj: unknown): Record<string, unknown> | null {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null;
+  return sanitizeValue(obj) as Record<string, unknown>;
+}
+
 export async function POST(req: NextRequest) {
-  if (!verifyToken(req)) {
-    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  const token = extractToken(req);
+  if (!token) {
+    return Response.json(
+      { error: 'Missing Authorization: Bearer <session-token>' },
+      { status: 401 },
+    );
   }
 
   try {
@@ -98,25 +129,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    pendingUpdate = filtered;
-    pendingAt = Date.now();
+    // Clean expired entries and enforce max sessions
+    cleanExpired();
+    if (pendingUpdates.size >= MAX_SESSIONS && !pendingUpdates.has(token)) {
+      return Response.json(
+        { error: 'Too many active sessions. Try again later.' },
+        { status: 503 },
+      );
+    }
+
+    pendingUpdates.set(token, { data: filtered, createdAt: Date.now() });
     return Response.json({ ok: true, message: 'Form update queued - the app will pick it up shortly.' });
   } catch {
     return Response.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 }
 
-export async function GET() {
-  // Expire stale updates
-  if (pendingUpdate && pendingAt && Date.now() - pendingAt > EXPIRY_MS) {
-    pendingUpdate = null;
-    pendingAt = null;
+export async function GET(req: NextRequest) {
+  const session = req.nextUrl.searchParams.get('session');
+  if (!session || session.length < MIN_TOKEN_LENGTH) {
+    return Response.json({ data: null });
   }
 
-  const data = pendingUpdate;
-  // Clear after reading (consume once)
-  pendingUpdate = null;
-  pendingAt = null;
+  // Clean expired entries
+  cleanExpired();
 
-  return Response.json({ data });
+  const entry = pendingUpdates.get(session);
+  // Clear after reading (consume once)
+  pendingUpdates.delete(session);
+
+  return Response.json({ data: entry?.data ?? null });
 }
