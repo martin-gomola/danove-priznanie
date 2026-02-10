@@ -373,7 +373,7 @@ export function Step7Review({ form, calc, onDownloadXml }: Props) {
           </p>
         </div>
         <p className="text-center text-xs text-gray-400">
-          XML nahrajete a DPFO podáte cez{' '}
+          XML nahrate a DPFO podáte cez{' '}
           <a
             href="https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb"
             target="_blank"
