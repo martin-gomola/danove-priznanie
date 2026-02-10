@@ -37,7 +37,7 @@ export default function DeveloperPage() {
               <li>Aplikácia automaticky prevezme dáta do formulára (polling každé 3s)</li>
             </ol>
             <p className="text-xs text-gray-400">
-              Žiadny cloud, všetko beží lokálne. Na produkčnom serveri je POST chránený tokenom (FORM_API_TOKEN v .env).
+              Žiadny cloud, všetko beží lokálne. POST je chránený tokenom (FORM_API_TOKEN v .env).
             </p>
           </div>
         </section>
