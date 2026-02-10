@@ -10,7 +10,11 @@ import {
   FileUp,
   Terminal,
   Github,
+  Info,
+  X,
 } from 'lucide-react';
+
+const NOTICE_DISMISSED_KEY = 'dane-priznanie-notice-dismissed';
 
 interface WizardLayoutProps {
   currentStep: number;
@@ -40,6 +44,16 @@ export function WizardLayout({
   children,
 }: WizardLayoutProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [noticeDismissed, setNoticeDismissed] = React.useState(true); // default hidden to avoid flash
+
+  React.useEffect(() => {
+    setNoticeDismissed(localStorage.getItem(NOTICE_DISMISSED_KEY) === '1');
+  }, []);
+
+  const dismissNotice = () => {
+    setNoticeDismissed(true);
+    localStorage.setItem(NOTICE_DISMISSED_KEY, '1');
+  };
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -55,6 +69,32 @@ export function WizardLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+      {/* Info notice */}
+      {!noticeDismissed && (
+        <div className="shrink-0 bg-slate-800 text-slate-200 text-xs relative z-50">
+          <div className="max-w-4xl mx-auto px-6 py-2.5 flex items-start gap-3">
+            <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-0.5">
+              <p className="font-medium text-slate-100">
+              LocalStorage only architecture
+              </p>
+              <p className="text-slate-400 leading-relaxed">
+                Aplikácia pokrýva priznanie pre <span className="text-slate-300">zamestnanca s príjmom z dividend a podielových fondov</span>.
+                Dáta sú uložené v localStorage vášho prehliadača, nič sa neposiela na server.
+                Exportujte XML pravidelne, dáta sa stratia pri vymazaní cache.
+              </p>
+            </div>
+            <button
+              onClick={dismissNotice}
+              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors shrink-0 mt-0.5"
+              aria-label="Zavrieť"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="shrink-0 border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-4">
