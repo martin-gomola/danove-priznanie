@@ -5,7 +5,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
-  RotateCcw,
+  Trash2,
   FileDown,
   FileUp,
   Terminal,
@@ -162,7 +162,7 @@ export function WizardLayout({
                 className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 transition-colors"
                 title="Vymazať všetky dáta"
               >
-                <RotateCcw className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" />
               </button>
               <input
                 ref={fileInputRef}

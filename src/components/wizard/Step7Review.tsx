@@ -1,14 +1,94 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
 import { SectionCard, InfoBox } from '@/components/ui/FormField';
-import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+
+interface ValidationWarning {
+  step: number;
+  section: string;
+  field: string;
+}
+
+function validateForm(form: TaxFormData): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+
+  // Personal info (step 0) - always required
+  if (!form.personalInfo.dic) warnings.push({ step: 0, section: 'Osobné údaje', field: 'DIČ' });
+  if (!form.personalInfo.meno) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Meno' });
+  if (!form.personalInfo.priezvisko) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Priezvisko' });
+  if (!form.personalInfo.ulica) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Ulica' });
+  if (!form.personalInfo.cislo) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Číslo' });
+  if (!form.personalInfo.psc) warnings.push({ step: 0, section: 'Osobné údaje', field: 'PSČ' });
+  if (!form.personalInfo.obec) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Obec' });
+
+  // Employment (step 3) - if enabled
+  if (form.employment.enabled) {
+    if (!form.employment.r36) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Úhrn príjmov (r.01)' });
+    if (!form.employment.r37) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Povinné poistné (r.02)' });
+    if (!form.employment.r131) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Preddavky na daň (r.04)' });
+  }
+
+  // Child bonus (step 1) - if enabled
+  if (form.childBonus.enabled) {
+    const hasChild = form.childBonus.children.some(
+      (c) => c.priezviskoMeno && c.rodneCislo
+    );
+    if (!hasChild) warnings.push({ step: 1, section: 'Deti', field: 'Aspoň 1 dieťa (meno + rodné číslo)' });
+  }
+
+  // Mortgage (step 2) - if enabled
+  if (form.mortgage.enabled) {
+    if (!form.mortgage.zaplateneUroky) warnings.push({ step: 2, section: 'Hypoteka', field: 'Zaplatené úroky' });
+    if (!form.mortgage.pocetMesiacov) warnings.push({ step: 2, section: 'Hypoteka', field: 'Počet mesiacov' });
+    if (!form.mortgage.datumZacatiaUroceniaUveru) warnings.push({ step: 2, section: 'Hypoteka', field: 'Dátum začiatia úročenia' });
+    if (!form.mortgage.datumUzavretiaZmluvy) warnings.push({ step: 2, section: 'Hypoteka', field: 'Dátum uzavretia zmluvy' });
+  }
+
+  // Dividends (step 5) - if enabled
+  if (form.dividends.enabled) {
+    const hasEntry = form.dividends.entries.some(
+      (e) => e.country && (parseFloat(e.amountUsd) > 0 || parseFloat(e.amountEur) > 0)
+    );
+    if (!hasEntry) warnings.push({ step: 5, section: 'Dividendy', field: 'Aspoň 1 dividendový príjem' });
+  }
+
+  // Mutual funds (step 4) - if enabled
+  if (form.mutualFunds.enabled) {
+    const hasEntry = form.mutualFunds.entries.some(
+      (e) => parseFloat(e.saleAmount) > 0
+    );
+    if (!hasEntry) warnings.push({ step: 4, section: 'Fondy', field: 'Aspoň 1 predaj (príjem)' });
+  }
+
+  // 2% allocation (step 6) - if enabled
+  if (form.twoPercent.enabled) {
+    if (!form.twoPercent.ico) warnings.push({ step: 6, section: '2% dane', field: 'IČO organizácie' });
+  }
+
+  // Parent allocation (step 6) - if choice != none
+  if (form.parentAllocation.choice !== 'none') {
+    const p1 = form.parentAllocation.parent1;
+    if (!p1.priezvisko || !p1.meno || !p1.rodneCislo) {
+      warnings.push({ step: 6, section: '2% rodičom', field: 'Rodič 1 (meno, priezvisko, rodné číslo)' });
+    }
+    if (form.parentAllocation.choice === 'both') {
+      const p2 = form.parentAllocation.parent2;
+      if (!p2.priezvisko || !p2.meno || !p2.rodneCislo) {
+        warnings.push({ step: 6, section: '2% rodičom', field: 'Rodič 2 (meno, priezvisko, rodné číslo)' });
+      }
+    }
+  }
+
+  return warnings;
+}
 
 interface Props {
   form: TaxFormData;
   calc: TaxCalculationResult;
   onDownloadXml: () => void;
+  onGoToStep: (step: number) => void;
 }
 
 function Row({
@@ -55,8 +135,9 @@ function Divider() {
   return <div className="border-t border-gray-200 my-1" />;
 }
 
-export function Step7Review({ form, calc, onDownloadXml }: Props) {
+export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
+  const warnings = useMemo(() => validateForm(form), [form]);
   const documents: { label: string; needed: boolean }[] = [
     {
       label: 'Potvrdenie o zdaniteľných príjmoch (od zamestnávateľa)',
@@ -96,6 +177,36 @@ export function Step7Review({ form, calc, onDownloadXml }: Props) {
           Kontrola výpočtu dane a export XML
         </p>
       </div>
+
+      {/* Validation warnings */}
+      {warnings.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <h3 className="text-sm font-semibold text-amber-800">
+              Chýbajúce povinné údaje ({warnings.length})
+            </h3>
+          </div>
+          <ul className="space-y-1.5">
+            {warnings.map((w, i) => (
+              <li key={i} className="flex items-center justify-between text-xs">
+                <span className="text-amber-800">
+                  <span className="font-medium">{w.section}</span>
+                  <span className="text-amber-600 mx-1.5">›</span>
+                  {w.field}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onGoToStep(w.step)}
+                  className="text-amber-700 hover:text-amber-900 underline decoration-amber-300 hover:decoration-amber-500 transition-colors ml-3 flex-shrink-0"
+                >
+                  Opraviť
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Final result card */}
       <div
@@ -346,11 +457,19 @@ export function Step7Review({ form, calc, onDownloadXml }: Props) {
 
       {/* Export + Validation */}
       <div className="flex flex-col gap-3">
+        {warnings.length > 0 && (
+          <p className="text-xs text-amber-600 text-center">
+            <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" />
+            XML bude obsahovať neúplné údaje. Doplňte chýbajúce polia vyššie.
+          </p>
+        )}
         <button
           onClick={onDownloadXml}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl
-            bg-gray-900 border border-gray-900 text-white font-medium
-            hover:bg-gray-800 hover:border-gray-800 transition-all duration-200"
+          className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all duration-200 ${
+            warnings.length > 0
+              ? 'bg-gray-400 border border-gray-400 text-white hover:bg-gray-500 hover:border-gray-500'
+              : 'bg-gray-900 border border-gray-900 text-white hover:bg-gray-800 hover:border-gray-800'
+          }`}
         >
           <Download className="w-5 h-5" />
           Stiahnuť XML súbor

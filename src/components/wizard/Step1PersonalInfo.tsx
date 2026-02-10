@@ -3,15 +3,15 @@
 import React, { useRef, useCallback } from 'react';
 import { PersonalInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard } from '@/components/ui/FormField';
-import { parsePersonalInfoFromDpfoXml } from '@/lib/utils/parseDpfoXml';
 import { Upload } from 'lucide-react';
 
 interface Props {
   data: PersonalInfo;
   onChange: (updates: Partial<PersonalInfo>) => void;
+  onImport: (file: File) => void;
 }
 
-export function Step1PersonalInfo({ data, onChange }: Props) {
+export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportXml = useCallback(() => {
@@ -22,20 +22,10 @@ export function Step1PersonalInfo({ data, onChange }: Props) {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        const xml = reader.result as string;
-        const personal = parsePersonalInfoFromDpfoXml(xml);
-        if (personal) {
-          onChange(personal);
-        } else {
-          alert('Súbor nebol platné DPFO XML alebo neobsahuje hlavičku s DIC.');
-        }
-      };
-      reader.readAsText(file, 'UTF-8');
+      onImport(file);
       e.target.value = '';
     },
-    [onChange]
+    [onImport]
   );
 
   return (

@@ -84,6 +84,7 @@ export default function Home() {
           <Step1PersonalInfo
             data={form.personalInfo}
             onChange={updatePersonalInfo}
+            onImport={importXml}
           />
         );
       case 1:
@@ -144,6 +145,7 @@ export default function Home() {
             form={form}
             calc={calc}
             onDownloadXml={handleDownloadXml}
+            onGoToStep={setStep}
           />
         );
       default:
