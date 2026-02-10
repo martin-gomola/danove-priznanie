@@ -21,6 +21,7 @@ import {
   type ParentTaxAllocation,
   type DividendEntry,
   type ChildEntry,
+  type StockSales,
 } from '@/types/TaxForm';
 import { findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { ECB_RATE_2025, ECB_CZK_RATE_2025, TAX_YEAR } from '@/lib/tax/constants';
@@ -133,6 +134,30 @@ function parseMutualFunds(telo: Record<string, unknown>): MutualFundSales {
     enabled: true,
     entries: [
       { id: 'imported-1', fundName: '', saleAmount: s1, purchaseAmount: s2 },
+    ],
+  };
+}
+
+/** Parse stock sales (§8, tabulka3.t3r1 or r69/r70) from telo. */
+function parseStockSales(telo: Record<string, unknown>): StockSales {
+  const tabulka3 = getChild(telo, 'tabulka3');
+  const t3r1 = isObj(tabulka3) ? getChild(tabulka3, 't3r1') : undefined;
+  let s1 = '';
+  let s2 = '';
+  if (isObj(t3r1)) {
+    s1 = extractText(t3r1.s1);
+    s2 = extractText(t3r1.s2);
+  }
+  if (!s1 && !s2) {
+    s1 = extractText(getChild(telo, 'r69'));
+    s2 = extractText(getChild(telo, 'r70'));
+  }
+  if (!s1 && !s2) return DEFAULT_TAX_FORM.stockSales;
+
+  return {
+    enabled: true,
+    entries: [
+      { id: 'imported-stock-1', ticker: '', saleAmount: s1, purchaseAmount: s2 },
     ],
   };
 }
@@ -359,6 +384,7 @@ export function parseDpfoXmlToFormData(xmlString: string): TaxFormData {
       employment: parseEmployment(telo),
       mortgage: parseMortgage(telo),
       mutualFunds: parseMutualFunds(telo),
+      stockSales: parseStockSales(telo),
       dividends: parseDividends(telo),
       spouse: parseSpouse(telo),
       childBonus: parseChildBonus(telo),

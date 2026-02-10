@@ -176,16 +176,16 @@ export function WizardLayout({
         </div>
       </header>
 
-      {/* Step indicator - no scrollbar; wraps on narrow screens */}
+      {/* Step indicator - single row; wider container so all steps fit */}
       <div className="shrink-0 border-b border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-6 py-3">
-          <div className="flex flex-wrap items-center justify-center gap-1.5">
+        <div className="max-w-6xl mx-auto px-0 py-2">
+          <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto scrollbar-hide">
             {stepLabels.map((label, i) => (
               <button
                 key={i}
                 onClick={() => onGoToStep(i)}
                 className={`
-                  flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium
+                  flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium
                   whitespace-nowrap transition-all duration-200 shrink-0
                   ${
                     i === currentStep
@@ -198,7 +198,7 @@ export function WizardLayout({
               >
                 <span
                   className={`
-                    flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold shrink-0
+                    flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold shrink-0
                     ${
                       i === currentStep
                         ? 'bg-white/20 text-white'

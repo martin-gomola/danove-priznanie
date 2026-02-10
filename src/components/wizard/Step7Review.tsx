@@ -62,6 +62,14 @@ function validateForm(form: TaxFormData): ValidationWarning[] {
     if (!hasEntry) warnings.push({ step: 4, section: 'Fondy', field: 'Aspoň 1 predaj (príjem)' });
   }
 
+  // Stock sales (step 4) - if enabled
+  if (form.stockSales.enabled) {
+    const hasEntry = form.stockSales.entries.some(
+      (e) => parseFloat(e.saleAmount) > 0 || parseFloat(e.purchaseAmount) > 0
+    );
+    if (!hasEntry) warnings.push({ step: 4, section: 'Akcie (§8)', field: 'Aspoň 1 obchod (kúpna/predajná cena)' });
+  }
+
   // 2% allocation (step 6) - if enabled
   if (form.twoPercent.enabled) {
     if (!form.twoPercent.ico) warnings.push({ step: 6, section: '2% dane', field: 'IČO organizácie' });
@@ -150,6 +158,10 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
     {
       label: 'Doklady k príjmom a výdavkom z podielových fondov (§7)',
       needed: form.mutualFunds.enabled,
+    },
+    {
+      label: 'Doklady k predaju akcií (§8)',
+      needed: form.stockSales.enabled,
     },
     {
       label: 'Potvrdenie o zaplatených úrokoch (od banky)',
@@ -264,6 +276,22 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
         </SectionCard>
       )}
 
+      {/* Stock Sales Section (§8) */}
+      {form.stockSales.enabled && (
+        <SectionCard title="Oddiel VIII: Ostatné príjmy (§8) – predaj akcií">
+          <div className="space-y-0.5">
+            <Row row="r.69" label="Úhrn príjmov z tabuľky 3" value={calc.r69} />
+            <Row row="r.70" label="Úhrn výdavkov z tabuľky 3" value={calc.r70} />
+            <Row row="r.71" label="Osobitný základ dane z §8" value={calc.r71} highlight="amber" />
+          </div>
+          <div className="mt-3">
+            <InfoBox variant="info">
+              Príjem z predaja akcií (držaných menej ako 1 rok) sa započítava do <strong>r.80</strong> a zdaňuje sa <strong>progresívnou sadzbou 19&nbsp;/&nbsp;25&nbsp;%</strong> spolu so mzdou. Základ dane (r.71) je znížený o <strong>oslobodenie do 500&nbsp;EUR</strong> (raz za priznanie).
+            </InfoBox>
+          </div>
+        </SectionCard>
+      )}
+
       {/* Dividends Section */}
       {form.dividends.enabled && (
         <SectionCard title="Príloha č.2 -- Podiely na zisku (§51e)">
@@ -309,7 +337,11 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           <Row row="r.78" label="ZD z §5 po znížení o NCZD" value={calc.r78} />
 
           {/* Tax base */}
-          <Row row="r.80" label="ZD podľa §4 ods.1 písm.a" value={calc.r80} />
+          <Row
+            row="r.80"
+            label={`ZD podľa §4 ods.1 písm.a${form.stockSales.enabled ? ' (r.78 + r.71)' : ''}`}
+            value={calc.r80}
+          />
           <Divider />
 
           {/* Taxes */}
@@ -327,7 +359,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           <Divider />
           <Row row="r.116" label="Daň celkovo" value={calc.r116} highlight="amber" />
           <InfoBox variant="info">
-            r.116 = r.90 (daň zo zamestnania){form.mutualFunds.enabled ? ' + r.115 (daň z fondov)' : ''}{form.dividends.enabled ? ' + príl.2 r.28 (daň z dividend)' : ''}
+            r.116 = r.90 (daň zo zamestnania a §8){form.mutualFunds.enabled ? ' + r.115 (daň z fondov)' : ''}{form.dividends.enabled ? ' + príl.2 r.28 (daň z dividend)' : ''}
           </InfoBox>
 
           {/* Bonuses */}

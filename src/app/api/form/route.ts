@@ -40,7 +40,7 @@ const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /** Known top-level form sections */
 const ALLOWED_SECTIONS = new Set([
-  'personalInfo', 'employment', 'dividends', 'mutualFunds',
+  'personalInfo', 'employment', 'dividends', 'mutualFunds', 'stockSales',
   'mortgage', 'spouse', 'childBonus', 'twoPercent', 'parentAllocation',
 ]);
 

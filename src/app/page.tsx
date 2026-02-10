@@ -20,7 +20,7 @@ const STEP_LABELS = [
   'Deti',
   'Hypoteka',
   'Zamestnanie',
-  'Fondy',
+  'Fondy a akcie',
   'Dividendy',
   '2% dane',
   'Súhrn',
@@ -34,6 +34,7 @@ export default function Home() {
     updateEmployment,
     updateDividends,
     updateMutualFunds,
+    updateStockSales,
     updateMortgage,
     updateSpouse,
     updateChildBonus,
@@ -119,6 +120,8 @@ export default function Home() {
           <Step4MutualFunds
             data={form.mutualFunds}
             onChange={updateMutualFunds}
+            stockData={form.stockSales}
+            onStockChange={updateStockSales}
           />
         );
       case 5:

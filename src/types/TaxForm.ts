@@ -66,6 +66,19 @@ export interface MutualFundSales {
   entries: MutualFundEntry[];
 }
 
+// ── Stock Sales (§8 ods.1 písm.e, Tabulka 3 – held under 1 year) ─────
+export interface StockEntry {
+  id: string;
+  ticker: string;
+  purchaseAmount: string; // EUR
+  saleAmount: string; // EUR
+}
+
+export interface StockSales {
+  enabled: boolean;
+  entries: StockEntry[];
+}
+
 // ── Mortgage Interest (Oddiel IV, §33a) ──────────────────────────────
 export interface MortgageInterest {
   enabled: boolean;
@@ -136,6 +149,7 @@ export interface TaxFormData {
   dividends: ForeignDividends;
   // Step 4
   mutualFunds: MutualFundSales;
+  stockSales: StockSales;
   // Step 5
   mortgage: MortgageInterest;
   // Step 6 - Oddiel III: spouse (§11 ods.3) + child bonus (§33)
@@ -165,6 +179,11 @@ export interface TaxCalculationResult {
   r67: string; // úhrn výdavkov z tabuľky 2 (= totalFundExpense)
   r68: string; // osobitný základ dane z §7 = max(r66 - r67, 0)
 
+  // ── Oddiel VIII: Other income (§8, Tabulka 3 – stocks held under 1 year)
+  r69: string; // úhrn príjmov z tabuľky 3
+  r70: string; // úhrn výdavkov z tabuľky 3
+  r71: string; // osobitný základ dane z §8 = max(r69 - r70, 0)
+
   // ── Príloha č.2: Dividends ─────────────────────────────
   totalDividendsEur: string;
   totalWithheldTaxEur: string; // daň zaplatená v zahraničí
@@ -191,7 +210,7 @@ export interface TaxCalculationResult {
   r78: string; // ZD z §5 po znížení = max(r38 - r77, 0)
 
   // Tax base totals
-  r80: string; // ZD podľa §4 ods.1 písm.a = r78 (no §6.3,4 / §8)
+  r80: string; // ZD podľa §4 ods.1 písm.a = r78 + r71 (employment + §8)
 
   // Tax from §4 ods.1 písm.a (employment + §6.3,4 + §8)
   r81: string; // Daň z r.80 (progressive 19%/25%)
@@ -274,6 +293,11 @@ export const DEFAULT_MUTUAL_FUNDS: MutualFundSales = {
   entries: [],
 };
 
+export const DEFAULT_STOCK_SALES: StockSales = {
+  enabled: false,
+  entries: [],
+};
+
 export const DEFAULT_MORTGAGE: MortgageInterest = {
   enabled: false,
   zaplateneUroky: '',
@@ -333,6 +357,7 @@ export const DEFAULT_TAX_FORM: TaxFormData = {
   employment: DEFAULT_EMPLOYMENT,
   dividends: DEFAULT_DIVIDENDS,
   mutualFunds: DEFAULT_MUTUAL_FUNDS,
+  stockSales: DEFAULT_STOCK_SALES,
   mortgage: DEFAULT_MORTGAGE,
   spouse: DEFAULT_SPOUSE,
   childBonus: DEFAULT_CHILD_BONUS,

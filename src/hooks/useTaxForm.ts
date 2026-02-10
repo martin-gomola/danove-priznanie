@@ -42,6 +42,7 @@ export function useTaxForm() {
           employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
           dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
           mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
+          stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
           mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
           spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
           childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
@@ -87,6 +88,7 @@ export function useTaxForm() {
           if (data.employment) next.employment = { ...prev.employment, ...data.employment };
           if (data.dividends) next.dividends = { ...prev.dividends, ...data.dividends };
           if (data.mutualFunds) next.mutualFunds = { ...prev.mutualFunds, ...data.mutualFunds };
+          if (data.stockSales) next.stockSales = { ...prev.stockSales, ...data.stockSales };
           if (data.mortgage) next.mortgage = { ...prev.mortgage, ...data.mortgage };
           if (data.spouse) next.spouse = { ...prev.spouse, ...data.spouse };
           if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
@@ -157,6 +159,16 @@ export function useTaxForm() {
       setForm((prev) => ({
         ...prev,
         mutualFunds: { ...prev.mutualFunds, ...updates },
+      }));
+    },
+    []
+  );
+
+  const updateStockSales = useCallback(
+    (updates: Partial<TaxFormData['stockSales']>) => {
+      setForm((prev) => ({
+        ...prev,
+        stockSales: { ...prev.stockSales, ...updates },
       }));
     },
     []
@@ -233,6 +245,7 @@ export function useTaxForm() {
             ...DEFAULT_TAX_FORM,
             ...parsed,
             dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
+            stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
           });
           toast.success('XML importované');
         } catch (err) {
@@ -254,6 +267,7 @@ export function useTaxForm() {
     updateEmployment,
     updateDividends,
     updateMutualFunds,
+    updateStockSales,
     updateMortgage,
     updateSpouse,
     updateChildBonus,

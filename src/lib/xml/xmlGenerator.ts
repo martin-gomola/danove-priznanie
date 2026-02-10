@@ -149,6 +149,17 @@ export function convertToJson(
   }
 
   // ════════════════════════════════════════════════════════
+  // Oddiel VIII: Other income - Stock sales (§8 ods.1 písm.e), Tabulka 3
+  // ════════════════════════════════════════════════════════
+  if (form.stockSales.enabled && form.stockSales.entries.length > 0) {
+    t.tabulka3.t3r1.s1 = decStr(calc.r69);
+    t.tabulka3.t3r1.s2 = decStr(calc.r70);
+    t.r69 = decStr(calc.r69);
+    t.r70 = decStr(calc.r70);
+    t.r71 = decStr(calc.r71);
+  }
+
+  // ════════════════════════════════════════════════════════
   // Oddiel IX: Tax calculation
   // ════════════════════════════════════════════════════════
 

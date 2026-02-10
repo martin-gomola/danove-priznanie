@@ -68,6 +68,11 @@ export const MIN_ALLOCATION = 3; // minimum allocation amount EUR
 export const PARENT_ALLOCATION_RATE = 0.02;
 export const MIN_PARENT_ALLOCATION = 3; // minimum per parent EUR
 
+// ── §8 Short-term stock sales (held under 1 year) ────────────────────
+// Base reduction per tax return (§9 ods.1 písm.i applied to §8 príjmy)
+// Source: akcie.sk, zákon 595/2003 Z.z.
+export const STOCK_SHORT_TERM_EXEMPTION = 500; // EUR
+
 // ── ECB Annual Average Exchange Rate USD/EUR 2025 ────────────────────
 // Official 2025 annual average rate published by ECB
 // Source: https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A

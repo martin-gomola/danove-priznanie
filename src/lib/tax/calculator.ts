@@ -31,6 +31,7 @@ import {
   MIN_ALLOCATION,
   PARENT_ALLOCATION_RATE,
   MIN_PARENT_ALLOCATION,
+  STOCK_SHORT_TERM_EXEMPTION,
 } from './constants';
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
 
@@ -202,6 +203,12 @@ interface MutualFundsSectionResult {
   r68: Decimal;
 }
 
+interface StockSalesSectionResult {
+  r69: Decimal;
+  r70: Decimal;
+  r71: Decimal;
+}
+
 interface DividendsSectionResult {
   totalDividendsEur: Decimal;
   totalWithheldTaxEur: Decimal;
@@ -277,6 +284,22 @@ function mutualFundsSection(form: TaxFormData): MutualFundsSectionResult {
   return { totalFundIncome, totalFundExpense, r66, r67, r68 };
 }
 
+/** Oddiel VIII: Stock sales (§8 ods.1 písm.e), Tabulka 3 – held under 1 year.
+ * Tax base r71 is reduced by STOCK_SHORT_TERM_EXEMPTION (500 EUR) once per return. */
+function stockSalesSection(form: TaxFormData): StockSalesSectionResult {
+  let r69 = new Decimal(0);
+  let r70 = new Decimal(0);
+  if (form.stockSales.enabled) {
+    for (const entry of form.stockSales.entries) {
+      r69 = r69.plus(d(entry.saleAmount));
+      r70 = r70.plus(d(entry.purchaseAmount));
+    }
+  }
+  const grossBase = Decimal.max(r69.minus(r70), new Decimal(0));
+  const r71 = Decimal.max(grossBase.minus(STOCK_SHORT_TERM_EXEMPTION), new Decimal(0));
+  return { r69, r70, r71 };
+}
+
 /** Príloha č.2: Foreign dividends (§51e) with foreign tax credit. */
 function dividendsSection(form: TaxFormData): DividendsSectionResult {
   let totalDividendsEur = new Decimal(0);
@@ -317,11 +340,12 @@ function dividendsSection(form: TaxFormData): DividendsSectionResult {
   };
 }
 
-/** Oddiel IX: NCZD reduction, tax base §4, tax from §7, grand total (r.72–r.116). */
+/** Oddiel IX: NCZD reduction, tax base §4 (r78 + r71), tax from §7, grand total (r.72–r.116). */
 function taxCalculationSection(
   form: TaxFormData,
   r38: Decimal,
   r68: Decimal,
+  r71: Decimal,
   pril2_pr28: Decimal
 ): TaxCalculationSectionResult {
   const r72 = r38;
@@ -336,7 +360,7 @@ function taxCalculationSection(
   }
   const r77 = Decimal.min(r73.plus(r74), r72);
   const r78 = Decimal.max(r38.minus(r77), new Decimal(0));
-  const r80 = r78;
+  const r80 = r78.plus(r71);
   const r81 = calculateProgressiveTax(r80);
   const r90 = r81;
   const r106 = r68.mul(CAPITAL_TAX_RATE);
@@ -393,6 +417,7 @@ function parentAllocationSection(form: TaxFormData, r124: Decimal): Decimal {
 function buildResult(
   emp: EmploymentSectionResult,
   mf: MutualFundsSectionResult,
+  stocks: StockSalesSectionResult,
   div: DividendsSectionResult,
   tax: TaxCalculationSectionResult,
   bon: BonusesSectionResult,
@@ -407,6 +432,9 @@ function buildResult(
     r66: fmt(mf.r66),
     r67: fmt(mf.r67),
     r68: fmt(mf.r68),
+    r69: fmt(stocks.r69),
+    r70: fmt(stocks.r70),
+    r71: fmt(stocks.r71),
     totalDividendsEur: fmt(div.totalDividendsEur),
     totalWithheldTaxEur: fmt(div.totalWithheldTaxEur),
     pril2_pr1: fmt(div.pril2_pr1),
@@ -463,11 +491,12 @@ function buildResult(
 export function calculateTax(form: TaxFormData): TaxCalculationResult {
   const emp = employmentSection(form);
   const mf = mutualFundsSection(form);
+  const stocks = stockSalesSection(form);
   const div = dividendsSection(form);
-  const tax = taxCalculationSection(form, emp.r38, mf.r68, div.pril2_pr28);
+  const tax = taxCalculationSection(form, emp.r38, mf.r68, stocks.r71, div.pril2_pr28);
   const bon = bonusesSection(form, tax.r116, emp.r38);
   const fin = finalSection(bon.r118, bon.r123, bon.r127, emp.r131);
   const r152 = allocationSection(form, bon.r124);
   const parentAllocPerParent = parentAllocationSection(form, bon.r124);
-  return buildResult(emp, mf, div, tax, bon, fin, r152, parentAllocPerParent);
+  return buildResult(emp, mf, stocks, div, tax, bon, fin, r152, parentAllocPerParent);
 }

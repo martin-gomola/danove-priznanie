@@ -52,6 +52,15 @@ input[type="checkbox"] {
   accent-color: #10b981;
 }
 
+/* Hide scrollbar but keep scroll (e.g. step nav) */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Tabular nums for financial data */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
