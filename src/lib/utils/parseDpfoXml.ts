@@ -18,6 +18,7 @@ import {
   ChildBonus,
   DEFAULT_TAX_FORM,
   type TwoPercentAllocation,
+  type ParentTaxAllocation,
   type DividendEntry,
   type ChildEntry,
 } from '@/types/TaxForm';
@@ -264,6 +265,40 @@ function parseTwoPercent(telo: Record<string, unknown>): TwoPercentAllocation {
   };
 }
 
+/** Extract parent allocation (§50aa) from telo.r153. */
+function parseParentAllocation(telo: Record<string, unknown>): ParentTaxAllocation {
+  const r153 = getChild(telo, 'r153');
+  if (!isObj(r153)) return DEFAULT_TAX_FORM.parentAllocation;
+
+  const neuplatnujem = extractText(r153.neuplatnujemPar50aa);
+  if (neuplatnujem === '1') return DEFAULT_TAX_FORM.parentAllocation;
+
+  const rodicA = getChild(r153, 'rodicA');
+  const rodicB = getChild(r153, 'rodicB');
+
+  const p1 = isObj(rodicA) ? {
+    meno: extractText(rodicA.meno),
+    priezvisko: extractText(rodicA.priezvisko),
+    rodneCislo: extractText(rodicA.rodneCislo),
+  } : { meno: '', priezvisko: '', rodneCislo: '' };
+
+  const p2 = isObj(rodicB) ? {
+    meno: extractText(rodicB.meno),
+    priezvisko: extractText(rodicB.priezvisko),
+    rodneCislo: extractText(rodicB.rodneCislo),
+  } : { meno: '', priezvisko: '', rodneCislo: '' };
+
+  const hasP1 = Boolean(p1.meno || p1.priezvisko || p1.rodneCislo);
+  const hasP2 = Boolean(p2.meno || p2.priezvisko || p2.rodneCislo);
+
+  return {
+    choice: hasP1 && hasP2 ? 'both' : hasP1 ? 'one' : 'none',
+    parent1: p1,
+    parent2: p2,
+    osvojeny: extractText(r153.bolZverenyDoStarostlivosti) === '1',
+  };
+}
+
 // ── Public API ───────────────────────────────────────────────────────
 
 /**
@@ -311,7 +346,11 @@ export function parseDpfoXmlToFormData(xmlString: string): TaxFormData {
     if (!isObj(telo)) return base;
 
     if (isPreviousYear) {
-      return { ...base, twoPercent: parseTwoPercent(telo) };
+      return {
+        ...base,
+        twoPercent: parseTwoPercent(telo),
+        parentAllocation: parseParentAllocation(telo),
+      };
     }
 
     // Current year: import all sections
@@ -324,6 +363,7 @@ export function parseDpfoXmlToFormData(xmlString: string): TaxFormData {
       spouse: parseSpouse(telo),
       childBonus: parseChildBonus(telo),
       twoPercent: parseTwoPercent(telo),
+      parentAllocation: parseParentAllocation(telo),
     };
   } catch {
     return base;

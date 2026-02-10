@@ -41,7 +41,7 @@ const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 /** Known top-level form sections */
 const ALLOWED_SECTIONS = new Set([
   'personalInfo', 'employment', 'dividends', 'mutualFunds',
-  'mortgage', 'spouse', 'childBonus', 'twoPercent',
+  'mortgage', 'spouse', 'childBonus', 'twoPercent', 'parentAllocation',
 ]);
 
 /** Clean up expired entries from the map */
@@ -70,7 +70,7 @@ function extractToken(req: NextRequest): string | null {
 
 /**
  * Recursively strip dangerous keys (__proto__, constructor, prototype)
- * from an object tree — including objects nested inside arrays —
+ * from an object tree - including objects nested inside arrays -
  * to prevent prototype pollution attacks.
  */
 function sanitizeValue(val: unknown): unknown {

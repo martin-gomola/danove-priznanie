@@ -78,6 +78,10 @@ export function Step7Review({ form, calc, onDownloadXml }: Props) {
       label: 'Potvrdenie o dobrovoľníckej činnosti (pre 3%)',
       needed: form.twoPercent.enabled && form.twoPercent.splnam3per,
     },
+    {
+      label: 'Kópia rozhodnutia o zverení do starostlivosti (§50aa)',
+      needed: form.parentAllocation.choice !== 'none' && form.parentAllocation.osvojeny,
+    },
   ];
 
   const neededDocs = documents.filter((d) => d.needed);
@@ -265,6 +269,39 @@ export function Step7Review({ form, calc, onDownloadXml }: Props) {
               value={calc.r152}
               highlight="green"
             />
+          </div>
+        </SectionCard>
+      )}
+
+      {/* 2% Parents Allocation */}
+      {form.parentAllocation.choice !== 'none' && (
+        <SectionCard title="Oddiel XII -- Podiel zaplatenej dane rodičom (§50aa)">
+          <div className="space-y-0.5">
+            <Row
+              label={`Rodič 1: ${[form.parentAllocation.parent1.priezvisko, form.parentAllocation.parent1.meno].filter(Boolean).join(' ') || '-'}`}
+              value={form.parentAllocation.parent1.rodneCislo}
+              numeric={false}
+            />
+            <Row
+              label="Suma (2% z r.124)"
+              value={calc.parentAllocPerParent}
+              highlight="green"
+            />
+            {form.parentAllocation.choice === 'both' && (
+              <>
+                <Divider />
+                <Row
+                  label={`Rodič 2: ${[form.parentAllocation.parent2.priezvisko, form.parentAllocation.parent2.meno].filter(Boolean).join(' ') || '-'}`}
+                  value={form.parentAllocation.parent2.rodneCislo}
+                  numeric={false}
+                />
+                <Row
+                  label="Suma (2% z r.124)"
+                  value={calc.parentAllocPerParent}
+                  highlight="green"
+                />
+              </>
+            )}
           </div>
         </SectionCard>
       )}

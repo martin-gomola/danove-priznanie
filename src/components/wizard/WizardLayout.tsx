@@ -9,7 +9,7 @@ import {
   FileDown,
   FileUp,
   Terminal,
-  Github,
+  GithubIcon,
   Info,
   X,
 } from 'lucide-react';
@@ -271,7 +271,7 @@ export function WizardLayout({
               className="text-gray-300 hover:text-gray-500 transition-colors"
               title="GitHub"
             >
-              <Github className="w-3.5 h-3.5" />
+              <GithubIcon className="w-3.5 h-3.5" />
             </a>
           </div>
         </div>

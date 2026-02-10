@@ -48,7 +48,7 @@ The app polls every 3s and auto-merges the data (toast notification on success).
 ## Security
 
 - **Per-session token**: Each browser generates a unique session token (UUID). The token is shown on the `/developer` page. API rejects POST without a valid Bearer token (min 8 characters).
-- **Data isolation**: Each session token has its own isolated pending update — users cannot see each other's data.
+- **Data isolation**: Each session token has its own isolated pending update - users cannot see each other's data.
 - **No .env token**: The old `FORM_API_TOKEN` env var is no longer used. Always ask the user for their session token.
 - **Localhost recommended**: This sends sensitive tax data. Use on localhost only. For remote servers, confirm URL with the user first.
 

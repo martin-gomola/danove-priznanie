@@ -38,6 +38,7 @@ export default function Home() {
     updateSpouse,
     updateChildBonus,
     updateTwoPercent,
+    updateParentAllocation,
     setStep,
     resetForm,
     importXml,
@@ -132,6 +133,9 @@ export default function Home() {
             data={form.twoPercent}
             onChange={updateTwoPercent}
             calculatedAmount={calc.r152}
+            parentData={form.parentAllocation}
+            onParentChange={updateParentAllocation}
+            calculatedPerParent={calc.parentAllocPerParent}
           />
         );
       case 7:

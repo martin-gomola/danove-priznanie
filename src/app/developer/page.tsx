@@ -114,7 +114,7 @@ export default function DeveloperPage() {
           <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3 text-sm text-gray-600">
             <p>
               Aplikácia poskytuje jednoduché REST API, cez ktoré môžu externé AI nástroje odoslať dáta priamo do formulára.
-              Každý prehliadač má vlastný session token — dáta sú izolované.
+              Každý prehliadač má vlastný session token - dáta sú izolované.
             </p>
             <ol className="list-decimal list-inside space-y-1.5 text-gray-600">
               <li>AI agent prečíta váš PDF/obrázok (napr. Potvrdenie o zdaniteľných príjmoch)</li>
@@ -189,6 +189,7 @@ export default function DeveloperPage() {
                 ['spouse', 'NCZD na manžela/ku'],
                 ['childBonus', 'Daňový bonus na deti'],
                 ['twoPercent', '2%/3% poukázanie dane'],
+                ['parentAllocation', '2% dane rodičom (§50aa)'],
               ].map(([key, desc]) => (
                 <div key={key} className="flex items-start gap-2">
                   <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono text-gray-700 shrink-0 mt-0.5">
@@ -262,7 +263,7 @@ curl -X POST ${baseUrl}/api/form \\
   -d '{"employment":{"enabled":true,"r36":"32400.00","r37":"4341.60","r131":"3648.00"}}'`}</pre>
             </div>
             <p className="text-xs text-gray-400">
-              Použite token zobrazený vyššie. Každý prehliadač má vlastný token — dáta sú izolované medzi používateľmi.
+              Použite token zobrazený vyššie. Každý prehliadač má vlastný token - dáta sú izolované medzi používateľmi.
             </p>
           </div>
         </section>

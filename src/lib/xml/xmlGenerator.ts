@@ -224,6 +224,26 @@ export function convertToJson(
   }
 
   // ════════════════════════════════════════════════════════
+  // Oddiel XII: 2% allocation to parents (§50aa)
+  // ════════════════════════════════════════════════════════
+  if (form.parentAllocation.choice !== 'none') {
+    t.r153.neuplatnujemPar50aa = '0';
+    t.r153.rodicA = {
+      rodneCislo: form.parentAllocation.parent1.rodneCislo,
+      priezvisko: form.parentAllocation.parent1.priezvisko,
+      meno: form.parentAllocation.parent1.meno,
+    };
+    if (form.parentAllocation.choice === 'both') {
+      t.r153.rodicB = {
+        rodneCislo: form.parentAllocation.parent2.rodneCislo,
+        priezvisko: form.parentAllocation.parent2.priezvisko,
+        meno: form.parentAllocation.parent2.meno,
+      };
+    }
+    t.r153.bolZverenyDoStarostlivosti = boolStr(form.parentAllocation.osvojeny);
+  }
+
+  // ════════════════════════════════════════════════════════
   // Príloha č.2: Foreign dividends (§51e)
   // ════════════════════════════════════════════════════════
   if (form.dividends.enabled && form.dividends.entries.length > 0) {

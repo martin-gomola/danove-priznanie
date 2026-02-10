@@ -46,6 +46,7 @@ export function useTaxForm() {
           spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
           childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
           twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
+          parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
         });
       }
     } catch (e) {
@@ -90,6 +91,7 @@ export function useTaxForm() {
           if (data.spouse) next.spouse = { ...prev.spouse, ...data.spouse };
           if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
           if (data.twoPercent) next.twoPercent = { ...prev.twoPercent, ...data.twoPercent };
+          if (data.parentAllocation) next.parentAllocation = { ...prev.parentAllocation, ...data.parentAllocation };
           return next;
         });
         toast.success('Údaje boli doplnené z externého nástroja');
@@ -200,6 +202,16 @@ export function useTaxForm() {
     []
   );
 
+  const updateParentAllocation = useCallback(
+    (updates: Partial<TaxFormData['parentAllocation']>) => {
+      setForm((prev) => ({
+        ...prev,
+        parentAllocation: { ...prev.parentAllocation, ...updates },
+      }));
+    },
+    []
+  );
+
   const setStep = useCallback((step: number) => {
     setForm((prev) => ({ ...prev, currentStep: step }));
   }, []);
@@ -246,6 +258,7 @@ export function useTaxForm() {
     updateSpouse,
     updateChildBonus,
     updateTwoPercent,
+    updateParentAllocation,
     setStep,
     resetForm,
     importXml,

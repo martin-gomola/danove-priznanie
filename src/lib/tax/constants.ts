@@ -63,6 +63,11 @@ export const TWO_PERCENT_RATE = 0.02;
 export const THREE_PERCENT_RATE = 0.03; // if volunteered 40+ hours
 export const MIN_ALLOCATION = 3; // minimum allocation amount EUR
 
+// ── 2% tax allocation to parents (§50aa) ────────────────────────────
+// 2% of paid tax per parent (same rate as §50 NGO allocation)
+export const PARENT_ALLOCATION_RATE = 0.02;
+export const MIN_PARENT_ALLOCATION = 3; // minimum per parent EUR
+
 // ── ECB Annual Average Exchange Rate USD/EUR 2025 ────────────────────
 // Official 2025 annual average rate published by ECB
 // Source: https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A

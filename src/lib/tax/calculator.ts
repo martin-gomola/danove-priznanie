@@ -29,6 +29,8 @@ import {
   TWO_PERCENT_RATE,
   THREE_PERCENT_RATE,
   MIN_ALLOCATION,
+  PARENT_ALLOCATION_RATE,
+  MIN_PARENT_ALLOCATION,
 } from './constants';
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
 
@@ -380,6 +382,13 @@ function allocationSection(form: TaxFormData, r124: Decimal): Decimal {
   return allocation.gte(MIN_ALLOCATION) ? allocation : new Decimal(0);
 }
 
+/** Oddiel XII: 2% allocation to parents (§50aa). Returns per-parent amount. */
+function parentAllocationSection(form: TaxFormData, r124: Decimal): Decimal {
+  if (form.parentAllocation.choice === 'none') return new Decimal(0);
+  const allocation = r124.mul(PARENT_ALLOCATION_RATE);
+  return allocation.gte(MIN_PARENT_ALLOCATION) ? allocation : new Decimal(0);
+}
+
 /** Build the public TaxCalculationResult from section results. */
 function buildResult(
   emp: EmploymentSectionResult,
@@ -388,7 +397,8 @@ function buildResult(
   tax: TaxCalculationSectionResult,
   bon: BonusesSectionResult,
   fin: FinalSectionResult,
-  r152: Decimal
+  r152: Decimal,
+  parentAllocPerParent: Decimal
 ): TaxCalculationResult {
   return {
     r38: fmt(emp.r38),
@@ -436,6 +446,7 @@ function buildResult(
     r135: fmt(fin.r135),
     r136: fmt(fin.r136),
     r152: fmt(r152),
+    parentAllocPerParent: fmt(parentAllocPerParent),
     finalTaxToPay: fmt(fin.r135),
     finalTaxRefund: fmt(fin.r136),
     isRefund: fin.finalResult.lt(0),
@@ -457,5 +468,6 @@ export function calculateTax(form: TaxFormData): TaxCalculationResult {
   const bon = bonusesSection(form, tax.r116, emp.r38);
   const fin = finalSection(bon.r118, bon.r123, bon.r127, emp.r131);
   const r152 = allocationSection(form, bon.r124);
-  return buildResult(emp, mf, div, tax, bon, fin, r152);
+  const parentAllocPerParent = parentAllocationSection(form, bon.r124);
+  return buildResult(emp, mf, div, tax, bon, fin, r152, parentAllocPerParent);
 }

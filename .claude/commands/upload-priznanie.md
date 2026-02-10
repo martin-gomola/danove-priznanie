@@ -29,6 +29,6 @@ All values: EUR strings, 2 decimal places (e.g. "32400.00").
 
 ## Notes
 
-- **Token**: Each user has a unique per-session token (UUID). Do NOT read from `.env` — ask the user or have them copy it from `/developer`.
+- **Token**: Each user has a unique per-session token (UUID). Do NOT read from `.env` - ask the user or have them copy it from `/developer`.
 - **Base URL**: Default is `http://localhost:3015`. For remote servers, confirm the URL with the user first.
-- Sensitive tax data — prefer localhost.
+- Sensitive tax data - prefer localhost.

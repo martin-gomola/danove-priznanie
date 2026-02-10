@@ -110,6 +110,22 @@ export interface TwoPercentAllocation {
   suhlasSoZaslanim: boolean; // consent to share data with org
 }
 
+// ── 2% Tax Allocation to Parents (Oddiel XII, §50aa) ─────────────────
+export type ParentAllocationChoice = 'both' | 'one' | 'none';
+
+export interface ParentInfo {
+  meno: string;
+  priezvisko: string;
+  rodneCislo: string;
+}
+
+export interface ParentTaxAllocation {
+  choice: ParentAllocationChoice;
+  parent1: ParentInfo;
+  parent2: ParentInfo;
+  osvojeny: boolean; // bol/a som zverený/á do starostlivosti
+}
+
 // ── Complete Tax Form ────────────────────────────────────────────────
 export interface TaxFormData {
   // Step 1
@@ -127,6 +143,8 @@ export interface TaxFormData {
   childBonus: ChildBonus;
   // Step 7
   twoPercent: TwoPercentAllocation;
+  // Step 8 (before review)
+  parentAllocation: ParentTaxAllocation;
   // Meta
   currentStep: number;
   lastSaved: string; // ISO date string
@@ -208,8 +226,11 @@ export interface TaxCalculationResult {
   r135: string; // daň na úhradu (tax to pay)
   r136: string; // daňový preplatok (tax refund)
 
-  // 2% allocation
+  // 2% allocation (§50)
   r152: string; // 2% or 3% of r124
+
+  // 2% allocation to parents (§50aa)
+  parentAllocPerParent: string; // 2% of r124 per parent (min 3 EUR or 0)
 
   // Summary helpers
   finalTaxToPay: string;
@@ -294,6 +315,19 @@ export const DEFAULT_TWO_PERCENT: TwoPercentAllocation = {
   suhlasSoZaslanim: false,
 };
 
+export const DEFAULT_PARENT_INFO: ParentInfo = {
+  meno: '',
+  priezvisko: '',
+  rodneCislo: '',
+};
+
+export const DEFAULT_PARENT_ALLOCATION: ParentTaxAllocation = {
+  choice: 'none',
+  parent1: { ...DEFAULT_PARENT_INFO },
+  parent2: { ...DEFAULT_PARENT_INFO },
+  osvojeny: false,
+};
+
 export const DEFAULT_TAX_FORM: TaxFormData = {
   personalInfo: DEFAULT_PERSONAL_INFO,
   employment: DEFAULT_EMPLOYMENT,
@@ -303,6 +337,7 @@ export const DEFAULT_TAX_FORM: TaxFormData = {
   spouse: DEFAULT_SPOUSE,
   childBonus: DEFAULT_CHILD_BONUS,
   twoPercent: DEFAULT_TWO_PERCENT,
+  parentAllocation: DEFAULT_PARENT_ALLOCATION,
   currentStep: 0,
   lastSaved: '',
 };
