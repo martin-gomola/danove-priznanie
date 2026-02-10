@@ -4,11 +4,15 @@ import { NextRequest } from 'next/server';
  * Simple in-memory bridge for external tools (MCP, Cursor skills, Claude Code)
  * to push form data into the running app.
  *
- * POST /api/form - queue a partial form update
- * GET  /api/form - poll & consume the pending update (client-side hook)
+ * POST /api/form - queue a partial form update (requires Bearer token)
+ * GET  /api/form - poll & consume the pending update (browser-side, no auth)
+ *
+ * Security: POST requires Authorization: Bearer <FORM_API_TOKEN>.
+ * When FORM_API_TOKEN is not set, POST is rejected (401).
+ * GET is unauthenticated because the browser polls it - data only exists
+ * after an authenticated POST, so the risk surface is minimal.
  *
  * Single-user tool - one pending update at a time, in-memory only.
- * Intended for trusted local tools on localhost / homelab LAN.
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,6 +35,18 @@ const ALLOWED_SECTIONS = new Set([
 ]);
 
 /**
+ * Verify the Bearer token from the Authorization header.
+ * Rejects all requests when FORM_API_TOKEN is not configured.
+ */
+function verifyToken(req: NextRequest): boolean {
+  const expected = process.env.FORM_API_TOKEN;
+  if (!expected) return false; // no token configured = reject all
+  const auth = req.headers.get('authorization') ?? '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  return token === expected;
+}
+
+/**
  * Recursively strip dangerous keys (__proto__, constructor, prototype)
  * from an object tree to prevent prototype pollution attacks.
  */
@@ -47,6 +63,10 @@ function sanitize(obj: unknown): Record<string, unknown> | null {
 }
 
 export async function POST(req: NextRequest) {
+  if (!verifyToken(req)) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     // Check content length before parsing
     const contentLength = parseInt(req.headers.get('content-length') ?? '0', 10);

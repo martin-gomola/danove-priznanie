@@ -37,7 +37,7 @@ export default function DeveloperPage() {
               <li>Aplikácia automaticky prevezme dáta do formulára (polling každé 3s)</li>
             </ol>
             <p className="text-xs text-gray-400">
-              Žiadne API kľúče, žiadny cloud, všetko beží lokálne na vašom počítači.
+              Žiadny cloud, všetko beží lokálne. Na produkčnom serveri je POST chránený tokenom (FORM_API_TOKEN v .env).
             </p>
           </div>
         </section>
@@ -61,6 +61,7 @@ export default function DeveloperPage() {
               <div className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto">
                 <pre>{`curl -X POST http://localhost:3015/api/form \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer \$FORM_API_TOKEN" \\
   -d '{
     "employment": {
       "enabled": true,
@@ -174,10 +175,11 @@ export default function DeveloperPage() {
               <pre>{`# Agent reads the PDF, extracts values, then:
 curl -X POST http://localhost:3015/api/form \\
   -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer \$FORM_API_TOKEN" \\
   -d '{"employment":{"enabled":true,"r36":"32400.00","r37":"4341.60","r131":"3648.00"}}'`}</pre>
             </div>
             <p className="text-xs text-gray-400">
-              Žiadne API kľúče nie sú potrebné. PDF sa spracuje lokálne agentom, do aplikácie sa odošlú iba extrahované čísla.
+              Token z .env. Na localhoste bez tokenu funguje bez autentifikácie.
             </p>
           </div>
         </section>
