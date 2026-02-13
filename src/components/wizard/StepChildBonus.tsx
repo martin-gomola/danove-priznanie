@@ -6,6 +6,7 @@ import { DEFAULT_CHILD_ENTRY } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
 import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants';
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
+import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
 import { Plus, Trash2 } from 'lucide-react';
 
 const MONTH_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -26,10 +27,32 @@ function getAgeCategoryLabel(rc: string): string {
   const birth = parseRodneCislo(rc);
   if (!birth) return '';
   const rates = getMonthlyRates2025(birth);
-  const r0 = rates[0];
-  if (r0 === CHILD_BONUS_UNDER_15) return `do 15 r.: ${CHILD_BONUS_UNDER_15} EUR/mes`;
-  if (r0 === CHILD_BONUS_15_TO_18) return `15–18 r.: ${CHILD_BONUS_15_TO_18} EUR/mes`;
-  return '18+ r.: bez bonusu';
+  const unique = [...new Set(rates)];
+
+  // All months same rate
+  if (unique.length === 1) {
+    const total = unique[0] * 12;
+    if (unique[0] === CHILD_BONUS_UNDER_15) return `do 15 r.: ${CHILD_BONUS_UNDER_15} EUR × 12 mes = ${total} EUR/rok`;
+    if (unique[0] === CHILD_BONUS_15_TO_18) return `15–18 r.: ${CHILD_BONUS_15_TO_18} EUR × 12 mes = ${total} EUR/rok`;
+    return '18+ r.: bez bonusu';
+  }
+
+  // Mid-year age transition — show breakdown
+  const parts: string[] = [];
+  let start = 0;
+  for (let i = 1; i <= 12; i++) {
+    if (i === 12 || rates[i] !== rates[start]) {
+      const months = i - start;
+      const rate = rates[start];
+      if (rate > 0) {
+        parts.push(`${rate} EUR × ${months} mes`);
+      } else {
+        parts.push(`0 EUR × ${months} mes`);
+      }
+      start = i;
+    }
+  }
+  return parts.join(' → ') + ` = ${rates.reduce((a, b) => a + b, 0)} EUR/rok`;
 }
 
 export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpouseChange, calculatedR74 }: Props) {
@@ -108,11 +131,17 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                 placeholder="Nováková Mária"
               />
             </FormField>
-            <FormField label="Rodné číslo" hint="r.31" required>
+            <FormField
+              label="Rodné číslo"
+              hint="r.31 · bez lomítka"
+              required
+              error={spouse.rodneCislo ? validateRodneCislo(spouse.rodneCislo).error : undefined}
+            >
               <Input
                 value={spouse.rodneCislo}
-                onChange={(e) => onSpouseChange({ rodneCislo: e.target.value.replace(/\s/g, '') })}
+                onChange={(e) => onSpouseChange({ rodneCislo: e.target.value.replace(/\D/g, '') })}
                 placeholder="8501011234"
+                maxLength={10}
               />
             </FormField>
             <FormField label="Vlastné príjmy manžela/manželky (EUR)" hint="r.32: úhrn za zdaňovacie obdobie">
@@ -167,7 +196,7 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-                      <FormField label="Priezvisko a meno dieťaťa" hint="Napr. Novák Peter" required>
+                      <FormField label="Priezvisko a meno dieťaťa" required>
                         <Input
                           value={child.priezviskoMeno}
                           onChange={(e) => updateChild(child.id, { priezviskoMeno: e.target.value })}
@@ -176,13 +205,16 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                       </FormField>
                       <FormField
                         label="Rodné číslo"
-                        hint="Formát YYMMDD/XXXX alebo YYMMDDXXXX"
+                        hint="Formát YYMMDDXXXX (bez lomítka)"
+                        hintIcon
                         required
+                        error={child.rodneCislo ? validateRodneCislo(child.rodneCislo).error : undefined}
                       >
                         <Input
                           value={child.rodneCislo}
-                          onChange={(e) => updateChild(child.id, { rodneCislo: e.target.value.replace(/\s/g, '') })}
+                          onChange={(e) => updateChild(child.id, { rodneCislo: e.target.value.replace(/\D/g, '') })}
                           placeholder="0506151234"
+                          maxLength={10}
                         />
                       </FormField>
                     </div>
@@ -195,40 +227,53 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  {child.rodneCislo && (
-                    <div className="text-xs text-gray-500">
-                      {getAgeCategoryLabel(child.rodneCislo) || 'Neplatné rodné číslo'}
-                    </div>
-                  )}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-1.5 text-sm text-gray-700">
-                      <input
-                        type="checkbox"
-                        checked={child.wholeYear}
-                        onChange={(e) => setWholeYear(child.id, e.target.checked)}
-                        className="rounded border-gray-300"
-                      />
-                      Celý rok
-                    </label>
-                    {!child.wholeYear && (
-                      <div className="flex flex-wrap gap-1">
-                        {child.months.map((checked, i) => (
-                          <label
-                            key={i}
-                            className="flex items-center gap-0.5 text-xs cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleMonth(child.id, i)}
-                              className="rounded border-gray-300"
-                            />
-                            {MONTH_LABELS[i]}
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {(() => {
+                    const birth = child.rodneCislo ? parseRodneCislo(child.rodneCislo) : null;
+                    const rates = birth ? getMonthlyRates2025(birth) : null;
+                    const isFullyOver18 = rates ? rates.every((r) => r === 0) : false;
+                    const label = child.rodneCislo ? getAgeCategoryLabel(child.rodneCislo) : '';
+
+                    return (
+                      <>
+                        {child.rodneCislo && (
+                          <div className={`text-xs ${isFullyOver18 ? 'text-amber-600' : 'text-gray-500'}`}>
+                            {label || 'Neplatné rodné číslo'}
+                          </div>
+                        )}
+                        {!isFullyOver18 && (
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="flex items-center gap-1.5 text-sm text-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={child.wholeYear}
+                                onChange={(e) => setWholeYear(child.id, e.target.checked)}
+                                className="rounded border-gray-300"
+                              />
+                              Celý rok
+                            </label>
+                            {!child.wholeYear && (
+                              <div className="flex flex-wrap gap-1">
+                                {child.months.map((checked, i) => (
+                                  <label
+                                    key={i}
+                                    className="flex items-center gap-0.5 text-xs cursor-pointer"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={() => toggleMonth(child.id, i)}
+                                      className="rounded border-gray-300"
+                                    />
+                                    {MONTH_LABELS[i]}
+                                  </label>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               ))}
               {data.children.length < MAX_CHILDREN && (
@@ -261,7 +306,7 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
           </SectionCard>
 
           <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
               <div>
                 <span className="text-xs text-emerald-600">Celkový daňový bonus na deti (r.117)</span>
                 <p className="text-xs text-emerald-500 mt-0.5">

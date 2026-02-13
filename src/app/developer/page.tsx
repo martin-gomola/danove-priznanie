@@ -218,10 +218,10 @@ export default function DeveloperPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-gray-600">
-                <tr><td className="px-4 py-2">Oddiel IV, r. 01</td><td className="px-4 py-2 font-mono text-xs">r36</td><td className="px-4 py-2">Úhrn príjmov</td></tr>
-                <tr><td className="px-4 py-2">Oddiel IV, r. 01a</td><td className="px-4 py-2 font-mono text-xs">r36a</td><td className="px-4 py-2">Príjmy z dohôd</td></tr>
-                <tr><td className="px-4 py-2">Oddiel IV, r. 02</td><td className="px-4 py-2 font-mono text-xs">r37</td><td className="px-4 py-2">Povinné poistné (sociálne + zdravotné)</td></tr>
-                <tr><td className="px-4 py-2">Oddiel V, r. 04</td><td className="px-4 py-2 font-mono text-xs">r131</td><td className="px-4 py-2">Preddavky na daň</td></tr>
+                <tr><td className="px-4 py-2">II. oddiel, r. 01</td><td className="px-4 py-2 font-mono text-xs">r36</td><td className="px-4 py-2">Úhrn príjmov</td></tr>
+                <tr><td className="px-4 py-2">II. oddiel, r. 01a</td><td className="px-4 py-2 font-mono text-xs">r36a</td><td className="px-4 py-2">Príjmy z dohôd</td></tr>
+                <tr><td className="px-4 py-2">II. oddiel, r. 02</td><td className="px-4 py-2 font-mono text-xs">r37</td><td className="px-4 py-2">Povinné poistné (sociálne + zdravotné)</td></tr>
+                <tr><td className="px-4 py-2">II. oddiel, r. 04</td><td className="px-4 py-2 font-mono text-xs">r131</td><td className="px-4 py-2">Preddavky na daň</td></tr>
               </tbody>
             </table>
           </div>

@@ -285,9 +285,9 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         entries: [
           {
             id: '1',
-            name: 'Fond A',
+            fundName: 'Fond A',
             saleAmount: '5000.00',
-            purchasePrice: '4000.00',
+            purchaseAmount: '4000.00',
           },
         ],
       },

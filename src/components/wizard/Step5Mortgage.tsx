@@ -114,7 +114,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
 
               {/* Calculated bonus */}
               <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
                   <div>
                     <span className="text-xs text-emerald-600">Daňový bonus (výpočet)</span>
                     <p className="text-xs text-emerald-500 mt-0.5">

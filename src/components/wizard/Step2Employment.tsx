@@ -69,7 +69,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
 
           {/* Auto-calculated r38 */}
           <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
               <div>
                 <span className="text-xs text-gray-500">r. 38: Základ dane (automaticky)</span>
                 <p className="text-xs text-gray-400 mt-0.5">r.36 − r.37 (zodpovedá riadku 03 na potvrdení)</p>

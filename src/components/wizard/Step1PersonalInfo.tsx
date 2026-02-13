@@ -3,7 +3,21 @@
 import React, { useRef, useCallback } from 'react';
 import { PersonalInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard } from '@/components/ui/FormField';
+import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
 import { Upload } from 'lucide-react';
+
+/**
+ * Validate DIČ or rodné číslo (digits only, no slash).
+ * DIČ = exactly 10 digits. RC = 9 or 10 digits with valid checksum.
+ */
+function validateDicOrRc(value: string): string | undefined {
+  if (!value) return undefined;
+  // Exactly 10 digits → valid DIČ
+  if (/^\d{10}$/.test(value)) return undefined;
+  // Otherwise validate as rodné číslo (without delimiter)
+  const rc = validateRodneCislo(value);
+  return rc.valid ? undefined : rc.error;
+}
 
 interface Props {
   data: PersonalInfo;
@@ -61,10 +75,16 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
 
       <SectionCard title="Identifikácia">
         <div className="space-y-4">
-          <FormField label="DIČ" hint="Daňové identifikačné číslo (10 číslic)" required>
+          <FormField
+            label="DIČ / Rodné číslo"
+            hint="DIČ (10 číslic) alebo rodné číslo (YYMMDDXXXX, bez lomítka)"
+            hintIcon
+            required
+            error={validateDicOrRc(data.dic)}
+          >
             <Input
               value={data.dic}
-              onChange={(e) => onChange({ dic: e.target.value })}
+              onChange={(e) => onChange({ dic: e.target.value.replace(/\D/g, '') })}
               placeholder="1234567890"
               maxLength={10}
             />

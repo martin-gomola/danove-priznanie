@@ -103,13 +103,15 @@ export function convertToJson(
       m06: '0', m07: '0', m08: '0', m09: '0', m10: '0', m11: '0', m12: '0',
     });
     const entries = childBonus.children.map((child) => {
+      const allMonths = child.months.every(Boolean);
       const m: Record<string, string> = {
         priezviskoMeno: child.priezviskoMeno,
         rodneCislo: child.rodneCislo,
-        m00: '0',
+        m00: allMonths ? '1' : '0',
       };
       for (let i = 0; i < 12; i++) {
-        m[`m${(i + 1).toString().padStart(2, '0')}`] = child.months[i] ? '1' : '0';
+        // m00 and m01-m12 are mutually exclusive in the official form
+        m[`m${(i + 1).toString().padStart(2, '0')}`] = allMonths ? '0' : (child.months[i] ? '1' : '0');
       }
       return m;
     });

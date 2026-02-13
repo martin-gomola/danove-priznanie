@@ -9,10 +9,10 @@ description: Extract employment data from Slovak "Potvrdenie o zdaniteľných pr
 
 | Potvrdenie | API field | Description |
 |---|---|---|
-| Oddiel IV, r. 01 | `r36` | Úhrn príjmov (gross income) |
-| Oddiel IV, r. 01a | `r36a` | Príjmy z dohôd (use `"0.00"` if absent) |
-| Oddiel IV, r. 02 | `r37` | Povinné poistné (social + health) |
-| Oddiel V, r. 04 | `r131` | Preddavky na daň (tax advances) |
+| II. oddiel, r. 01 | `r36` | Úhrn príjmov (gross income) |
+| II. oddiel, r. 01a | `r36a` | Príjmy z dohôd (use `"0.00"` if absent) |
+| II. oddiel, r. 02 | `r37` | Povinné poistné (social + health) |
+| II. oddiel, r. 04 | `r131` | Preddavky na daň (tax advances) |
 
 ## Workflow
 

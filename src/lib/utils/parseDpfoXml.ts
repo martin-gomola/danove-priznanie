@@ -243,17 +243,23 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
 
   for (const childNode of dietaList) {
     if (!isObj(childNode)) continue;
+    const name = extractText(childNode.priezviskoMeno);
+    const rc = extractText(childNode.rodneCislo);
+    // Skip empty placeholder entries (XSD requires 4 dieta slots)
+    if (!name && !rc) continue;
+    const m00 = extractText(childNode.m00) === '1';
     const months: boolean[] = [];
     for (let m = 1; m <= 12; m++) {
       const key = `m${String(m).padStart(2, '0')}`;
-      months.push(extractText(childNode[key]) === '1');
+      // If m00 (whole year) is checked, all months are true
+      months.push(m00 || extractText(childNode[key]) === '1');
     }
     children.push({
       id: `imported-c-${children.length}`,
-      priezviskoMeno: extractText(childNode.priezviskoMeno),
-      rodneCislo: extractText(childNode.rodneCislo),
+      priezviskoMeno: name,
+      rodneCislo: rc,
       months,
-      wholeYear: months.length === 12 && months.every(Boolean),
+      wholeYear: months.every(Boolean),
     });
   }
 

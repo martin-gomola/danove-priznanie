@@ -4,6 +4,7 @@ import React from 'react';
 import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, ParentInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
+import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
 
 interface Props {
   data: TwoPercentAllocation;
@@ -42,11 +43,18 @@ function ParentForm({
           placeholder="Priezvisko"
         />
       </FormField>
-      <FormField label="Rodné číslo" required hint="Bez lomítka, napr. 5001011234">
+      <FormField
+        label="Rodné číslo"
+        required
+          hint="Formát YYMMDDXXXX (bez lomítka)"
+        hintIcon
+        error={parent.rodneCislo ? validateRodneCislo(parent.rodneCislo).error : undefined}
+      >
         <Input
           value={parent.rodneCislo}
-          onChange={(e) => onParentChange({ rodneCislo: e.target.value })}
-          placeholder="Rodné číslo"
+          onChange={(e) => onParentChange({ rodneCislo: e.target.value.replace(/\D/g, '') })}
+          placeholder="5001011234"
+          maxLength={10}
         />
       </FormField>
     </div>
@@ -156,7 +164,7 @@ export function Step6TwoPercent({
 
               {/* Calculated amount */}
               <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
                   <div>
                     <span className="text-xs text-gray-500">
                       Poukázaná suma ({data.splnam3per ? '3 %' : '2 %'})
@@ -252,7 +260,7 @@ export function Step6TwoPercent({
 
                 {/* Calculated amount */}
                 <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
                     <div>
                       <span className="text-xs text-gray-500">
                         Suma na {parentCount === 2 ? 'každého rodiča' : 'rodiča'} (2 %)

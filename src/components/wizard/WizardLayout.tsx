@@ -97,11 +97,11 @@ export function WizardLayout({
 
       {/* Header */}
       <header className="shrink-0 border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5 min-w-0">
               {/* Logo */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 shrink-0 opacity-90">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="w-8 h-8 shrink-0">
                 <defs>
                   <linearGradient id="hdr-bg" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="#0f172a"/>
@@ -113,56 +113,60 @@ export function WizardLayout({
                 <circle cx="24" cy="8" r="4.5" fill="#10b981"/>
                 <path d="M22 8l1.5 1.5L25.5 6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
               </svg>
-              <div>
-              <h1 className="text-lg font-semibold tracking-tight text-gray-900">
-                Daňové priznanie
-              </h1>
-              <a
-                href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-gray-500 mt-0.5 hover:text-gray-700 hover:underline block"
-              >
-                DPFO typ B · 2025
-              </a>
+              <div className="min-w-0">
+                <h1 className="text-sm sm:text-base font-semibold tracking-tight text-gray-900 truncate leading-tight">
+                  Daňové priznanie
+                </h1>
+                <a
+                  href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-gray-400 hover:text-gray-600 hover:underline block leading-tight"
+                >
+                  DPFO typ B · 2025
+                </a>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Actions toolbar */}
+            <div className="flex items-center gap-1">
               {lastSaved && (
-                <span className="text-[10px] text-gray-400 mr-2">
-                  <Save className="w-3 h-3 inline mr-1 opacity-50" />
+                <span className="hidden md:inline text-[10px] text-gray-400 tabular-nums mr-2">
+                  <Save className="w-3 h-3 inline mr-0.5 opacity-40" />
                   {new Date(lastSaved).toLocaleTimeString('sk-SK')}
                 </span>
               )}
-              <a
-                href="/developer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                title="API & AI integrácia"
-              >
-                <Terminal className="w-4 h-4" />
-              </a>
-              <button
-                onClick={onExport}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                title="Exportovať XML"
-              >
-                <FileDown className="w-4 h-4" />
-              </button>
-              <button
-                onClick={handleImportClick}
-                className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
-                title="Importovať z XML"
-              >
-                <FileUp className="w-4 h-4" />
-              </button>
+              <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50/60 p-0.5">
+                <a
+                  href="/developer"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hidden sm:flex p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-white transition-colors cursor-pointer"
+                  title="API & AI integrácia"
+                >
+                  <Terminal className="w-3.5 h-3.5" />
+                </a>
+                <button
+                  onClick={onExport}
+                  className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-white transition-colors cursor-pointer"
+                  title="Exportovať XML"
+                >
+                  <FileDown className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={handleImportClick}
+                  className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-white transition-colors cursor-pointer"
+                  title="Importovať z XML"
+                >
+                  <FileUp className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <button
                 onClick={onReset}
-                className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-gray-100 transition-colors"
+                className="p-1.5 rounded-md text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer ml-0.5"
                 title="Vymazať všetky dáta"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
               <input
                 ref={fileInputRef}
@@ -178,8 +182,8 @@ export function WizardLayout({
 
       {/* Step indicator - single row; wider container so all steps fit */}
       <div className="shrink-0 border-b border-gray-200 bg-white">
-        <div className="max-w-6xl mx-auto px-0 py-2">
-          <div className="flex flex-nowrap items-center justify-center gap-1 overflow-x-auto scrollbar-hide">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2">
+          <div className="flex flex-nowrap items-center justify-between overflow-x-auto scrollbar-hide">
             {stepLabels.map((label, i) => (
               <button
                 key={i}
@@ -222,7 +226,7 @@ export function WizardLayout({
 
       {/* Footer navigation + disclaimer */}
       <footer className="shrink-0 border-t border-gray-200 bg-white/80 backdrop-blur-xl mt-auto">
-        <div className="max-w-4xl mx-auto px-6 py-3">
+        <div className="max-w-6xl mx-auto px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <button
               onClick={onPrev}
