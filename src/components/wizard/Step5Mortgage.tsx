@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MortgageInterest } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, Toggle, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, Toggle, MarginNote, Disclosure } from '@/components/ui/FormField';
 import { MORTGAGE_MAX_OLD, MORTGAGE_MAX_NEW } from '@/lib/tax/constants';
 
 interface Props {
@@ -15,24 +15,25 @@ interface Props {
 export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = false }: Props) {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+      <div className="relative">
+        <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
           IV. ODDIEL
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           §33a Daňový bonus na zaplatené úroky
         </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §33a: Daňový bonus na zaplatené úroky"
+        <MarginNote
+          section="§33a"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-33a"
-        />
+        >
+          Zákon č. 595/2003 Z.z. §33a: Daňový bonus na zaplatené úroky z hypotéky.
+        </MarginNote>
       </div>
 
       <Toggle
         enabled={data.enabled}
         onToggle={(enabled) => onChange({ enabled })}
         label="Uplatňujem daňový bonus na zaplatené úroky"
-        description="Aktivujte, ak máte hypotéku a chcete uplatniť bonus"
       />
 
       {data.enabled && (
@@ -86,7 +87,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                 </FormField>
                 <FormField
                   label="Dátum uzavretia zmluvy"
-                  hint="Kedy bola podpísaná zmluva o úvere (určuje limit 400 vs 1200 EUR)"
+                  hint="Kedy bola podpísaná zmluva o úvere"
                   required
                   error={showErrors && !data.datumUzavretiaZmluvy ? 'Povinné pole' : undefined}
                 >
@@ -119,7 +120,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                       50 % z úrokov, max {data.datumUzavretiaZmluvy && data.datumUzavretiaZmluvy <= '2023-12-31' ? MORTGAGE_MAX_OLD : MORTGAGE_MAX_NEW} EUR
                     </p>
                   </div>
-                  <span className="text-lg font-semibold text-emerald-600 tabular-nums">
+                  <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
                     {calculatedBonus ? `${parseFloat(calculatedBonus).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '-- EUR'}
                   </span>
                 </div>
@@ -127,8 +128,8 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
             </div>
           </SectionCard>
 
-          <SectionCard title="Podmienky nároku (§33a)" subtitle="Skontrolujte, či spĺňate všetky podmienky">
-            <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700">
+          <Disclosure summary="Podmienky nároku (§33a) — Skontrolujte, či spĺňate všetky">
+            <ul className="list-disc list-inside space-y-1.5 text-gray-700">
               <li>Máte <strong>potvrdenie z banky</strong> o zaplatených úrokoch za zdaňovacie obdobie</li>
               <li>Úver bol poskytnutý na <strong>obstaranie alebo budovanie obydlia</strong> (vlastné bývanie)</li>
               <li>Úroky boli skutočne <strong>zaplatené v zdaňovacom období</strong> (rok 2025)</li>
@@ -136,7 +137,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
               <li>Obydlie musí byť na <strong>území Slovenskej republiky</strong></li>
               <li>Suma bonusu = 50 % zo zaplatených úrokov, max {MORTGAGE_MAX_OLD} EUR (zmluva do 31.12.2023) alebo {MORTGAGE_MAX_NEW} EUR (zmluva od 1.1.2024)</li>
             </ul>
-          </SectionCard>
+          </Disclosure>
         </>
       )}
     </div>

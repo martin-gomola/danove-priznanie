@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lora, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const inter = Inter({
+const lora = Lora({
   subsets: ["latin", "latin-ext"],
-  variable: "--font-inter",
+  variable: "--font-heading",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-body",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -25,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sk">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${lora.variable} ${dmSans.variable} font-sans antialiased`}>
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

@@ -70,7 +70,7 @@ export function WizardLayout({
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-stone-50 text-gray-900 paper-bg">
       {/* Info notice */}
       {!noticeDismissed && (
         <div className="shrink-0 bg-slate-800 text-slate-200 text-xs relative z-50">
@@ -123,7 +123,7 @@ export function WizardLayout({
                   href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] text-gray-400 hover:text-gray-600 hover:underline block leading-tight"
+                  className="text-xs text-gray-600 hover:text-gray-800 hover:underline block leading-tight"
                 >
                   DPFO typ B · 2025
                 </a>
@@ -133,14 +133,14 @@ export function WizardLayout({
             {/* Actions toolbar */}
             <div className="flex items-center gap-1">
               {lastSaved && (
-                <span className="hidden md:inline text-[10px] tabular-nums mr-2 transition-colors duration-200">
+                <span className="hidden md:inline text-xs tabular-nums mr-2 transition-colors duration-200">
                   {saveStatus === 'saving' ? (
                     <span className="text-amber-500 flex items-center gap-0.5">
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                       Ukladám...
                     </span>
                   ) : (
-                    <span className="text-gray-400">
+                    <span className="text-gray-600">
                       <Save className="w-3 h-3 inline mr-0.5 opacity-40" />
                       {new Date(lastSaved).toLocaleTimeString('sk-SK')}
                     </span>
@@ -207,7 +207,7 @@ export function WizardLayout({
                       ? 'bg-gray-900 text-white'
                       : i < currentStep
                       ? 'text-emerald-600 hover:bg-gray-100'
-                      : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-800'
                   }
                 `}
               >
@@ -219,7 +219,7 @@ export function WizardLayout({
                         ? 'bg-white/20 text-white'
                         : i < currentStep
                         ? 'bg-emerald-100 text-emerald-600'
-                        : 'bg-gray-100 text-gray-400'
+                        : 'bg-gray-100 text-gray-600'
                     }
                   `}
                 >
@@ -232,8 +232,10 @@ export function WizardLayout({
         </div>
       </div>
 
-      {/* Content - grows to fill space so footer stays at bottom */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8">{children}</main>
+      {/* Content - 2xl: wide left column (max-w-6xl), gap + notes strip; extra bottom padding so last block isn't hidden by footer */}
+      <main className="relative flex-1 max-w-4xl 2xl:max-w-6xl w-full mx-auto 2xl:mr-auto 2xl:ml-[max(1.5rem,calc(50vw-576px))] 2xl:pr-[18.5rem] px-6 pt-8 pb-24 before:content-[''] before:absolute before:top-0 before:right-0 before:bottom-0 before:w-64 before:2xl:w-[17rem] before:bg-stone-100/60 before:border-l before:border-stone-200 before:hidden 2xl:before:block">
+        {children}
+      </main>
 
       {/* Footer navigation + disclaimer */}
       <footer className="shrink-0 border-t border-gray-200 bg-white/80 backdrop-blur-xl mt-auto">
@@ -255,7 +257,7 @@ export function WizardLayout({
               Späť
             </button>
 
-            <span className="text-xs text-gray-400 shrink-0">
+            <span className="text-xs text-gray-600 shrink-0">
               {currentStep + 1} / {totalSteps}
             </span>
 
@@ -276,7 +278,7 @@ export function WizardLayout({
             </button>
           </div>
           <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-gray-100">
-            <p className="text-[11px] text-gray-400 text-center">
+            <p className="text-xs text-gray-600 text-center">
               This application is provided as-is for informational purposes.
             </p>
             <a

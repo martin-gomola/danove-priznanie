@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 import { ForeignDividends, DividendEntry } from '@/types/TaxForm';
-import { FormField, Input, Select, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel } from '@/components/ui/FormField';
 import { DIVIDEND_COUNTRIES, findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
@@ -138,32 +138,58 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const creditableAmount = Decimal.min(slovakTax, totalWithheldEur);
   const taxAfterCredit = Decimal.max(slovakTax.minus(creditableAmount), new Decimal(0));
 
+  const note51e = <>Zákon č. 595/2003 Z.z. §51e: Sadzba dane z podielov na zisku (dividendy) 7 %.</>;
+  const noteUsdEur = <>Údaje o kurze: ECB – ročný priemer USD/EUR.</>;
+  const noteCzkEur = <>Údaje o kurze: ECB – ročný priemer CZK/EUR.</>;
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
-          PRÍLOHA Č.2 / XIII. ODDIEL
-        </h2>
-        <p className="text-sm text-gray-500">
-          Podiely na zisku (dividendy)
-        </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §51e -- Sadzba dane z podielov na zisku (7%)"
-          href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e"
-        />
+    <div className="relative">
+      {/* Single notes column on 2xl so aside panels don't overlap */}
+      <div
+        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-0 2xl:w-56 2xl:pt-1"
+        style={{ right: '-17rem' }}
+      >
+        <MarginNotePanel section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
+          {note51e}
+        </MarginNotePanel>
+        {data.enabled && hasUsdEntries && (
+          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB – kurz USD/EUR (údaje)">
+            {noteUsdEur}
+          </MarginNotePanel>
+        )}
+        {data.enabled && hasCzkEntries && (
+          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB – kurz CZK/EUR (údaje)">
+            {noteCzkEur}
+          </MarginNotePanel>
+        )}
       </div>
 
-      <Toggle
-        enabled={data.enabled}
-        onToggle={(enabled) => onChange({ enabled })}
-        label="Mal/a som zahranicne dividendy"
-        description="Aktivujte ak ste v roku 2025 dostali dividendy zo zahranicia"
-      />
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
+            PRÍLOHA Č.2 / XIII. ODDIEL
+          </h2>
+          <p className="text-sm text-gray-600">
+            Podiely na zisku (dividendy)
+          </p>
+          <MarginNote skipDesktopAside section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
+            {note51e}
+          </MarginNote>
+        </div>
 
-      {data.enabled && (
-        <>
-          {hasUsdEntries && (
-            <SectionCard title="Kurz USD/EUR" subtitle="Prepočet dividend na EUR (ročný priemer)">
+        <Toggle
+          enabled={data.enabled}
+          onToggle={(enabled) => onChange({ enabled })}
+          label="Mal/a som zahranicne dividendy"
+        />
+
+        {data.enabled && (
+          <>
+            {hasUsdEntries && (
+              <SectionCard title="Kurz USD/EUR" subtitle="Prepočet dividend na EUR (ročný priemer)">
+              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB – kurz USD/EUR (údaje)">
+                {noteUsdEur}
+              </MarginNote>
               <div className="space-y-3">
                 <FormField
                   label="USD za 1 EUR"
@@ -177,10 +203,6 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                     placeholder="1.13"
                   />
                 </FormField>
-                <SourceNote
-                  text="Údaje o kurze: ECB – ročný priemer USD/EUR"
-                  href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A"
-                />
                 {data.ecbRateOverride && (
                   <InfoBox variant="warning">
                     Používate vlastný kurz. Oficiálny ECB kurz za 2025 sa zverejní začiatkom 2026.
@@ -192,6 +214,9 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
 
           {hasCzkEntries && (
             <SectionCard title="Kurz CZK/EUR" subtitle="Prepočet dividend z CZK na EUR (ročný priemer)">
+              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB – kurz CZK/EUR (údaje)">
+                {noteCzkEur}
+              </MarginNote>
               <div className="space-y-3">
                 <FormField
                   label="CZK za 1 EUR"
@@ -205,10 +230,6 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                     placeholder="25.21"
                   />
                 </FormField>
-                <SourceNote
-                  text="Údaje o kurze: ECB – ročný priemer CZK/EUR"
-                  href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A"
-                />
                 {data.czkRateOverride && (
                   <InfoBox variant="warning">
                     Používate vlastný kurz. Oficiálny ECB kurz za 2025 sa zverejní začiatkom 2026.
@@ -241,12 +262,12 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                           #{index + 1}
                         </span>
                         {isEur && (
-                          <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                             EUR
                           </span>
                         )}
                         {cur === 'CZK' && (
-                          <span className="text-[10px] font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                          <span className="text-xs font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
                             CZK
                           </span>
                         )}
@@ -342,7 +363,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                         <div className="hidden sm:block" />
                       )}
                       <FormField label="Sadzba">
-                        <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-400 tabular-nums h-[38px] flex items-center">
+                        <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
                           {entry.amountUsd && entry.withheldTaxUsd && parseFloat(entry.amountUsd) > 0
                             ? `${((parseFloat(entry.withheldTaxUsd) / parseFloat(entry.amountUsd)) * 100).toFixed(1)}%`
                             : '-'}
@@ -374,31 +395,31 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Daň zrazená v zahraničí</span>
+                    <span className="text-gray-600">Daň zrazená v zahraničí</span>
                     <span className="text-gray-500 tabular-nums">
                       {totalWithheldEur.toFixed(2)} EUR
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Slovenská daň 7% (pred zápočtom)</span>
+                    <span className="text-gray-600">Slovenská daň 7% (pred zápočtom)</span>
                     <span className="text-gray-500 tabular-nums">
                       {slovakTax.toFixed(2)} EUR
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Zápočet zahraničnej dane</span>
+                    <span className="text-gray-600">Zápočet zahraničnej dane</span>
                     <span className="text-emerald-600 tabular-nums">
                       −{creditableAmount.toFixed(2)} EUR
                     </span>
                   </div>
                   <div className="border-t border-gray-200 pt-1 flex items-center justify-between text-sm">
                     <span className="text-gray-600 font-medium">Daň po zápočte</span>
-                    <span className={`font-semibold tabular-nums ${taxAfterCredit.isZero() ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    <span className={`font-heading font-semibold tabular-nums ${taxAfterCredit.isZero() ? 'text-emerald-600' : 'text-amber-600'}`}>
                       {taxAfterCredit.toFixed(2)} EUR
                     </span>
                   </div>
                   {taxAfterCredit.isZero() && totalWithheldEur.gt(0) && (
-                    <p className="text-[11px] text-emerald-600 mt-1">
+                    <p className="text-xs text-emerald-600 mt-1">
                       Zahraničná daň ({totalWithheldEur.gt(0) && slovakTax.gt(0) ? `${totalWithheldEur.div(totalEur).mul(100).toFixed(1)}%` : '0%'}) prevyšuje slovenskú sadzbu 7% - neplatíte nič navyše.
                     </p>
                   )}
@@ -408,6 +429,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
           </SectionCard>
         </>
       )}
+      </div>
     </div>
   );
 }

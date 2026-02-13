@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Info } from 'lucide-react';
+import { Info, ChevronRight } from 'lucide-react';
 
 interface FormFieldProps {
   label: string;
@@ -35,7 +35,7 @@ export function FormField({ label, hint, hintIcon, required, error, children }: 
           </span>
         )}
       </label>
-      {hint && !hintIcon && <p className="text-xs text-gray-500">{hint}</p>}
+      {hint && !hintIcon && <p className="text-xs text-gray-600">{hint}</p>}
       {children}
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
@@ -62,7 +62,7 @@ export function Input({ suffix, className = '', ...props }: InputProps) {
         `}
       />
       {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 font-medium">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600 font-medium">
           {suffix}
         </span>
       )}
@@ -96,10 +96,11 @@ interface ToggleProps {
   enabled: boolean;
   onToggle: (enabled: boolean) => void;
   label: string;
+  /** No longer shown on the toggle; move to MarginNote or expanded content. */
   description?: string;
 }
 
-export function Toggle({ enabled, onToggle, label, description }: ToggleProps) {
+export function Toggle({ enabled, onToggle, label }: ToggleProps) {
   return (
     <button
       type="button"
@@ -116,9 +117,6 @@ export function Toggle({ enabled, onToggle, label, description }: ToggleProps) {
     >
       <div className="text-left">
         <span className="text-sm font-medium text-gray-800">{label}</span>
-        {description && (
-          <p className="text-xs text-gray-500 mt-0.5">{description}</p>
-        )}
       </div>
       <div
         className={`
@@ -151,7 +149,7 @@ export function SectionCard({
       <div className="mb-5">
         <h2 className="text-base font-semibold text-gray-900">{title}</h2>
         {subtitle && (
-          <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
+          <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
         )}
       </div>
       {children}
@@ -190,10 +188,126 @@ export function SourceNote({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-gray-600 transition-colors mt-1"
+      className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-gray-800 transition-colors mt-1"
     >
       <Info className="w-3 h-3 flex-shrink-0" />
       <span>{text}</span>
     </a>
+  );
+}
+
+export interface MarginNoteProps {
+  section?: string;
+  href?: string;
+  /** Optional link text; when not set, defaults to "Zákon na slov-lex.sk" for legal refs. */
+  hrefLabel?: string;
+  children: React.ReactNode;
+  /** When true, only render the collapsible details (for use with a shared notes column on desktop). */
+  skipDesktopAside?: boolean;
+}
+
+const DEFAULT_LINK_LABEL = 'Zákon na slov-lex.sk';
+
+/** Block-level note panel for use inside a shared notes column (no absolute positioning). */
+export function MarginNotePanel({ section, href, hrefLabel, children }: MarginNoteProps) {
+  return (
+    <div className="w-full pl-8 pr-7 py-5 text-sm text-gray-600 leading-relaxed bg-white/90 border border-stone-200 rounded-lg shadow-sm max-h-[22rem] overflow-y-auto break-words">
+      {section && (
+        <span className="inline-block font-mono text-xs uppercase tracking-wide text-gray-600 bg-gray-100 rounded px-1.5 py-0.5 mb-3">
+          {section}
+        </span>
+      )}
+      <div className="space-y-3 min-h-0">
+        {typeof children === 'string' ? <span>{children}</span> : children}
+        {href && (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-gray-600 hover:text-gray-800 underline underline-offset-1 mt-3"
+          >
+            {hrefLabel ?? DEFAULT_LINK_LABEL}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Legal/explanatory note: margin on 2xl+, collapsible details below.
+ * Parent must be `position: relative` for margin placement (unless skipDesktopAside).
+ */
+export function MarginNote({ section, href, hrefLabel, children, skipDesktopAside = false }: MarginNoteProps) {
+  const summary = section ? `${section} — Viac info` : 'Viac info';
+  const linkLabel = hrefLabel ?? DEFAULT_LINK_LABEL;
+  return (
+    <>
+      {!skipDesktopAside && (
+        <aside
+          className="hidden 2xl:block absolute top-0 mt-6 mb-8 w-56 pl-8 pr-7 py-5 text-sm text-gray-600 leading-relaxed bg-white/90 border border-stone-200 rounded-r-lg shadow-sm max-h-[22rem] overflow-y-auto break-words"
+          style={{ right: '-17rem' }}
+        >
+          {section && (
+            <span className="inline-block font-mono text-xs uppercase tracking-wide text-gray-600 bg-gray-100 rounded px-1.5 py-0.5 mb-3">
+              {section}
+            </span>
+          )}
+          <div className="space-y-3 min-h-0">
+            {typeof children === 'string' ? <span>{children}</span> : children}
+            {href && (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-gray-600 hover:text-gray-800 underline underline-offset-1 mt-3"
+              >
+                {linkLabel}
+              </a>
+            )}
+          </div>
+        </aside>
+      )}
+      {/* Below 2xl: collapsible details */}
+      <details className="2xl:hidden group mt-1">
+        <summary className="text-xs text-gray-600 cursor-pointer hover:text-gray-800 list-none inline-flex items-center gap-1">
+          <ChevronRight className="w-3.5 h-3.5 group-open:rotate-90 transition-transform shrink-0 text-gray-500" />
+          {summary}
+        </summary>
+        <div className="mt-2 pl-4 border-l border-gray-200 text-sm text-gray-600 leading-relaxed space-y-1">
+          {typeof children === 'string' ? <span>{children}</span> : children}
+          {href && (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-gray-600 hover:text-gray-800 underline underline-offset-1"
+            >
+              {linkLabel}
+            </a>
+          )}
+        </div>
+      </details>
+    </>
+  );
+}
+
+export interface DisclosureProps {
+  summary: string;
+  children: React.ReactNode;
+}
+
+/** Collapsible block: summary line + expandable body. */
+export function Disclosure({ summary, children }: DisclosureProps) {
+  return (
+    <details className="rounded-xl border border-gray-200 bg-white overflow-hidden group">
+      <summary className="flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <span>{summary}</span>
+        <ChevronRight className="w-4 h-4 shrink-0 text-gray-400 group-open:rotate-90 transition-transform" />
+      </summary>
+      <div className="px-4 pt-4 pb-4 border-t border-gray-100 text-sm text-gray-600">
+        {children}
+      </div>
+    </details>
   );
 }

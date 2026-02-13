@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import { ChildBonus, ChildEntry, SpouseNCZD } from '@/types/TaxForm';
 import { DEFAULT_CHILD_ENTRY } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants';
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
@@ -112,17 +112,19 @@ export function StepChildBonus({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+      <div className="relative">
+        <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
           III. ODDIEL
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Údaje na uplatnenie zníženia základu dane (§11) a daňového bonusu (§33)
         </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §33: Daňový bonus na vyživované dieťa"
+        <MarginNote
+          section="§11, §33"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-33"
-        />
+        >
+          Zákon č. 595/2003 Z.z. §33: Daňový bonus na vyživované dieťa. §11 ods.3: nezdaniteľná časť na manžela/manželku.
+        </MarginNote>
       </div>
 
       {/* §11 ods.3 - NCZD na manžela/manželku (r.31, r.32) */}
@@ -130,7 +132,6 @@ export function StepChildBonus({
         enabled={spouse.enabled}
         onToggle={(enabled) => onSpouseChange({ enabled })}
         label="Uplatňujem nezdaniteľnú časť na manžela/manželku (§11 ods.3)"
-        description="Aktivujte, ak máte manželku/manžela so spoločnou domácnosťou a spĺňate podmienky (r.31, r.32)"
       />
       {spouse.enabled && (
         <SectionCard title="Údaje o manželovi / manželke" subtitle="Riadky 31–32">
@@ -183,7 +184,7 @@ export function StepChildBonus({
           {calculatedR74 != null && parseFloat(calculatedR74) > 0 && (
             <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
               <span className="text-slate-500">NCZD na manžela/manželku (r.74):</span>{' '}
-              <strong className="tabular-nums">{parseFloat(calculatedR74).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+              <strong className="font-heading tabular-nums">{parseFloat(calculatedR74).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
             </div>
           )}
         </SectionCard>
@@ -194,14 +195,13 @@ export function StepChildBonus({
         enabled={data.enabled}
         onToggle={(enabled) => onChange({ enabled })}
         label="Uplatňujem daňový bonus na deti (§33)"
-        description="Aktivujte, ak máte vyživované deti a spĺňate podmienky (90 % príjmov zo SR, spoločná domácnosť)"
       />
       {data.enabled && (
         <>
-          <InfoBox>
-            V roku 2025: <strong>{CHILD_BONUS_UNDER_15} EUR</strong> mesačne na dieťa do 15 r.,{' '}
-            <strong>{CHILD_BONUS_15_TO_18} EUR</strong> mesačne na dieťa 15–18 r. Bonus sa znižuje pri vyššom príjme.
-          </InfoBox>
+          <p className="text-xs text-gray-600">
+            V roku 2025: <strong className="text-gray-700">{CHILD_BONUS_UNDER_15} EUR</strong>/mesiac do 15 r.,{' '}
+            <strong className="text-gray-700">{CHILD_BONUS_15_TO_18} EUR</strong>/mesiac 15–18 r. Bonus sa znižuje pri vyššom príjme.
+          </p>
           {showErrors && !hasCompleteChild && (
             <InfoBox variant="warning">Pridajte aspoň 1 dieťa.</InfoBox>
           )}
@@ -336,7 +336,7 @@ export function StepChildBonus({
                   Po znížení o príjem a po mesiacoch
                 </p>
               </div>
-              <span className="text-lg font-semibold text-emerald-600 tabular-nums">
+              <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
                 {calculatedBonus
                   ? `${parseFloat(calculatedBonus).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR`
                   : '0,00 EUR'}

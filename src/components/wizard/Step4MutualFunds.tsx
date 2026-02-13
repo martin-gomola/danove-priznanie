@@ -3,7 +3,7 @@
 import React, { useCallback } from 'react';
 import { MutualFundSales, MutualFundEntry, StockSales, StockEntry } from '@/types/TaxForm';
 import { STOCK_SHORT_TERM_EXEMPTION } from '@/lib/tax/constants';
-import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel } from '@/components/ui/FormField';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
 
@@ -94,35 +94,69 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
     (entry) => parseFloat(entry.saleAmount) > 0 || parseFloat(entry.purchaseAmount) > 0
   );
 
+  const noteSection78 = (
+    <>
+      Zákon č. 595/2003 Z.z. §7 ods.1 písm.g (podielové fondy), §8 ods.1 písm.e (akcie). Príjem z fondov zdaňuje sa 19 %. Akcie držané menej ako 1 rok — ostatný príjem, progresívna sadzba.
+    </>
+  );
+  const noteFondy = (
+    <>
+      Zadajte každý fond osobitne: kúpna cena (investícia vrátane poplatkov) a predajná cena (výnos). Daň zo zisku, jednotná sadzba 19 %.
+    </>
+  );
+  const noteSection8 = (
+    <>
+      Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i. Ďalší postup: akcie.sk (daň z akcií, ETF).
+    </>
+  );
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
-          Fondy a akcie
-        </h2>
-        <p className="text-sm text-gray-500">
-          §7 podielové fondy (19 %) · §8 akcie držané menej ako 1 rok (progresívna daň)
-        </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §7 ods.1 písm.g, §8 ods.1 písm.e"
-          href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/"
-        />
+    <div className="relative">
+      {/* Single notes column on 2xl: all panels stack with consistent gap, no layout-driven spacing */}
+      <div
+        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-0 2xl:w-56 2xl:pt-1"
+        style={{ right: '-17rem' }}
+      >
+        <MarginNotePanel section="§7, §8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
+          {noteSection78}
+        </MarginNotePanel>
+        {data.enabled && (
+          <MarginNotePanel>{noteFondy}</MarginNotePanel>
+        )}
+        {stockData.enabled && (
+          <MarginNotePanel section="§8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
+            {noteSection8}
+          </MarginNotePanel>
+        )}
       </div>
 
-      <Toggle
-        enabled={data.enabled}
-        onToggle={(enabled) => onChange({ enabled })}
-        label="Predal/a som podielové fondy"
-        description="Aktivujte, ak ste v roku 2025 predali alebo vyplatili podielové listy"
-      />
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
+            Fondy a akcie
+          </h2>
+          <p className="text-sm text-gray-600">
+            §7 podielové fondy (19 %) · §8 akcie držané menej ako 1 rok (progresívna daň)
+          </p>
+          <MarginNote
+            skipDesktopAside
+            section="§7, §8"
+            href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/"
+          >
+            {noteSection78}
+          </MarginNote>
+        </div>
 
-      {data.enabled && (
-        <>
-          <InfoBox>
-            Zadajte každý fond osobitne - <strong>kúpna cena</strong> (koľko ste investovali, vrátane vstupných/nákupných poplatkov, ak ste ich mali) a <strong>predajná cena</strong> (koľko ste skutočne dostali pri výplate/predaji). Daň sa platí len zo zisku. Príjem z podielových fondov (§7) tvorí <strong>osobitný základ dane</strong> a zdaňuje sa <strong>jednotnou sadzbou 19&nbsp;%</strong>
-          </InfoBox>
+        <Toggle
+          enabled={data.enabled}
+          onToggle={(enabled) => onChange({ enabled })}
+          label="Predal/a som podielové fondy"
+        />
 
-          <SectionCard title="Podielové fondy" subtitle="Tabuľka 2, riadok 7: §7 ods. 1 písm. g">
+        {data.enabled && (
+          <>
+            <SectionCard title="Podielové fondy" subtitle="Tabuľka 2, riadok 7: §7 ods. 1 písm. g">
+            <MarginNote skipDesktopAside>{noteFondy}</MarginNote>
             <div className="space-y-4">
               {showErrors && !hasFundSale && (
                 <InfoBox variant="warning">Pridajte aspoň 1 predaj fondu.</InfoBox>
@@ -213,11 +247,11 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
                   </div>
                   <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200">
                     <span className="text-gray-600">Základ dane (zisk)</span>
-                    <span className="text-gray-900 font-semibold tabular-nums">{profit.toFixed(2)} EUR</span>
+                    <span className="font-heading text-gray-900 font-semibold tabular-nums">{profit.toFixed(2)} EUR</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-400">Daň 19 %</span>
-                    <span className="text-amber-600 tabular-nums">{profit.mul(0.19).toDecimalPlaces(2).toFixed(2)} EUR</span>
+                    <span className="text-gray-600">Daň 19 %</span>
+                    <span className="font-heading text-amber-600 tabular-nums">{profit.mul(0.19).toDecimalPlaces(2).toFixed(2)} EUR</span>
                   </div>
                 </div>
               )}
@@ -230,7 +264,6 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
         enabled={stockData.enabled}
         onToggle={(enabled) => onStockChange({ enabled })}
         label="Predal/a som akcie (držané menej ako 1 rok)"
-        description="§8 ods.1 písm.e – príjem z prevodu cenných papierov na regulovanom trhu. Ak ste držali nad 1 rok, celý príjem je oslobodený od dane – neuvádzajte."
       />
 
       {stockData.enabled && (
@@ -240,16 +273,9 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           </InfoBox>
 
           <SectionCard title="Predaj akcií (§8)" subtitle="Tabuľka 3: cenné papiere držané menej ako 1 rok">
-            <div className="space-y-2 mb-4">
-              <SourceNote
-                text="Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i – SLOV-LEX"
-                href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/"
-              />
-              <SourceNote
-                text="Daň z akcií, ETF a cenných papierov (akcie.sk)"
-                href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/"
-              />
-            </div>
+            <MarginNote skipDesktopAside section="§8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
+              {noteSection8}
+            </MarginNote>
             <div className="space-y-4">
               {showErrors && !hasStockTrade && (
                 <InfoBox variant="warning">Pridajte aspoň 1 obchod.</InfoBox>
@@ -353,9 +379,9 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
                     )}
                     <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200">
                       <span className="text-gray-600">Základ dane (r.71)</span>
-                      <span className="text-gray-900 font-semibold tabular-nums">{taxableBase.toFixed(2)} EUR</span>
+                      <span className="font-heading text-gray-900 font-semibold tabular-nums">{taxableBase.toFixed(2)} EUR</span>
                     </div>
-                    <p className="text-xs text-gray-500 pt-1">
+                    <p className="text-xs text-gray-600 pt-1">
                       Zapríčítava sa do r.80 a zdaňuje sa progresívnou sadzbou 19&nbsp;/&nbsp;25&nbsp;%.
                     </p>
                   </div>
@@ -365,6 +391,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           </SectionCard>
         </>
       )}
+      </div>
     </div>
   );
 }

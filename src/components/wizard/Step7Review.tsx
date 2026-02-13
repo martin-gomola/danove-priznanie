@@ -43,7 +43,7 @@ function Row({
   return (
     <div className={`flex items-center justify-between py-1.5 ${indent ? 'pl-4' : ''}`}>
       <span className="text-xs text-gray-600">
-        {row && <span className="text-gray-400 font-mono mr-2">{row}</span>}
+        {row && <span className="text-gray-600 font-mono mr-2">{row}</span>}
         {label}
       </span>
       <span className={`text-sm font-medium ${numeric ? 'tabular-nums' : ''} ${valueColor} ${!numeric && value ? 'text-right max-w-[60%] truncate' : ''}`} title={!numeric && value ? value : undefined}>
@@ -96,10 +96,10 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+        <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
           SÚHRN
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Kontrola výpočtu dane a export XML
         </p>
       </div>
@@ -143,11 +143,11 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
         }`}
       >
         <div className="text-center">
-          <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+          <p className="text-xs uppercase tracking-widest text-gray-600 mb-2">
             {calc.isRefund ? 'Daňový preplatok (vrátka)' : 'Daň na úhradu (doplatok)'}
           </p>
           <p
-            className={`text-4xl font-bold tabular-nums ${
+            className={`font-heading text-4xl font-bold tabular-nums ${
               calc.isRefund ? 'text-emerald-600' : 'text-red-500'
             }`}
           >
@@ -375,7 +375,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
         >
           <div>
             <h2 className="text-base font-semibold text-gray-900">Prílohy k daňovému priznaniu</h2>
-            <p className="text-xs text-gray-500 mt-0.5">Dokumenty, ktoré môžete priložiť (voliteľné prehľad)</p>
+            <p className="text-xs text-gray-600 mt-0.5">Dokumenty, ktoré môžete priložiť (voliteľné prehľad)</p>
           </div>
           {attachmentsOpen ? (
             <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -387,7 +387,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           <div className="px-6 pb-5 pt-0 border-t border-gray-100">
             <div className="space-y-2 pt-4">
               {neededDocs.length === 0 ? (
-                <p className="text-xs text-gray-500">Žiadne prílohy nie sú potrebné.</p>
+                <p className="text-xs text-gray-600">Žiadne prílohy nie sú potrebné.</p>
               ) : (
                 neededDocs.map((doc, i) => (
                   <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
@@ -397,7 +397,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
                 ))
               )}
             </div>
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-gray-600">
               FS vyžaduje doklady o príjmoch zo všetkých zdrojov; pri dividendách sú povinne výkazy od brokera. Pre príjmy z §7 (podielové fondy) sa konkrétny názov dokladu v znení FS neuvádza - postačujú výkazy alebo potvrdenia, z ktorých vyplývajú príjmy a výdavky (r.66, r.67).
             </p>
           </div>
@@ -431,7 +431,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
             </div>
             <div className="pt-1">
               <h3 className="text-sm font-semibold text-gray-900">Stiahnite XML súbor</h3>
-              <p className="text-xs text-gray-500 mt-0.5 mb-3">Vygenerovaný súbor s vašimi údajmi pre Finančnú správu.</p>
+              <p className="text-xs text-gray-600 mt-0.5 mb-3">Vygenerovaný súbor s vašimi údajmi pre Finančnú správu.</p>
               <button
                 onClick={onDownloadXml}
                 className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 ${
@@ -451,15 +451,15 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
             {/* Connector line */}
             <div className="absolute left-[15px] top-7 bottom-0 w-px bg-gray-200" />
             {/* Step number */}
-            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-500 flex items-center justify-center text-xs font-bold">
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-600 flex items-center justify-center text-xs font-bold">
               2
             </div>
             <div className="pt-1">
               <h3 className="text-sm font-semibold text-gray-900">Overte vo vzore formulára</h3>
-              <p className="text-xs text-gray-500 mt-0.5 mb-1">
+              <p className="text-xs text-gray-600 mt-0.5 mb-1">
                 Otvorte vzor na stránke FS a nahrajte stiahnutý XML:
               </p>
-              <ol className="text-xs text-gray-500 mb-3 space-y-0.5 list-none">
+              <ol className="text-xs text-gray-600 mb-3 space-y-0.5 list-none">
                 <li className="flex items-start gap-1.5">
                   <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
                   <span>Kliknite <strong className="text-gray-700">&quot;Načítaj&quot;</strong> na nahranie súboru</span>
@@ -487,12 +487,12 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           {/* Step 3: Submit */}
           <div className="relative pl-10">
             {/* Step number */}
-            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-500 flex items-center justify-center text-xs font-bold">
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-600 flex items-center justify-center text-xs font-bold">
               3
             </div>
             <div className="pt-1">
               <h3 className="text-sm font-semibold text-gray-900">Podajte cez portál FS</h3>
-              <p className="text-xs text-gray-500 mt-0.5 mb-3">
+              <p className="text-xs text-gray-600 mt-0.5 mb-3">
                 Prihláste sa cez eID alebo KEP a nahrajte overený XML súbor.
               </p>
               <a

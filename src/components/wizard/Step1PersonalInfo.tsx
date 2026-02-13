@@ -50,10 +50,10 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-1">
+          <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
             I. ODDIEL
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-600">
             Údaje o daňovníkovi
           </p>
         </div>

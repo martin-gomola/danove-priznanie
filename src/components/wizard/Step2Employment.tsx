@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, InfoBox, SourceNote, Toggle } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, MarginNote, Toggle } from '@/components/ui/FormField';
 
 interface Props {
   data: EmploymentIncome;
@@ -18,28 +18,23 @@ interface Props {
 export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75, showErrors = false }: Props) {
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+      <div className="relative">
+        <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
           V. ODDIEL
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Výpočet základu dane z príjmov zo závislej činnosti (§5)
         </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §5 -- Príjmy zo závislej činnosti"
+        <MarginNote
+          section="§5"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-5"
-        />
+        >
+          Zákon č. 595/2003 Z.z. §5: Príjmy zo závislej činnosti. Všetky hodnoty (r.36, r.37, r.131, r.36a) nájdete na &quot;Potvrdení o zdaniteľných príjmoch&quot; od zamestnávateľa — II. oddiel (ročné zúčtovanie).
+        </MarginNote>
       </div>
 
-      <InfoBox>
-        <strong>Kde nájdete tieto údaje?</strong>
-        <br />
-        Všetky hodnoty nájdete na dokumente{' '}
-        <strong>&quot;Potvrdenie o zdaniteľných príjmoch&quot;</strong> (ročné
-        zúčtovanie) od zamestnávateľa - II. oddiel.
-      </InfoBox>
-
-      <SectionCard title="Údaje z ročného zúčtovania" subtitle="Zadajte hodnoty z potvrdenia od zamestnávateľa">
+      <div className="relative">
+        <SectionCard title="Údaje z ročného zúčtovania" subtitle="Potvrdenie od zamestnávateľa — II. oddiel">
         <div className="space-y-5">
           <FormField
             label="r. 36: Úhrn príjmov"
@@ -78,9 +73,9 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
               <div>
                 <span className="text-xs text-gray-500">r. 38: Základ dane (automaticky)</span>
-                <p className="text-xs text-gray-400 mt-0.5">r.36 − r.37 (zodpovedá riadku 03 na potvrdení)</p>
+                <p className="text-xs text-gray-600 mt-0.5">r.36 − r.37 (zodpovedá riadku 03 na potvrdení)</p>
               </div>
-              <span className="text-lg font-semibold text-gray-900 tabular-nums">
+              <span className="font-heading text-lg font-semibold text-gray-900 tabular-nums">
                 {calculatedR38 ? `${parseFloat(calculatedR38).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '- EUR'}
               </span>
             </div>
@@ -117,6 +112,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
           </FormField>
         </div>
       </SectionCard>
+      </div>
 
       {/* IX. ODDIEL – nezdaniteľná časť ZD (§11) a DDS (r.75) */}
       <div className="pt-6 border-t border-gray-200">
@@ -124,7 +120,6 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
           enabled={dds.enabled}
           onToggle={(enabled) => onDdsChange({ enabled })}
           label="Príspevky na III. pilier / DDS (§11 ods.8)"
-          description="Uplatňujem zníženie základu dane o zaplatené príspevky na DDS, max 180 EUR/rok"
         />
         {dds.enabled && (
           <div className="mt-4">
@@ -145,7 +140,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             {calculatedR75 != null && parseFloat(calculatedR75) > 0 && parseFloat(calculatedR75) < parseFloat(dds.prispevky || '0') && (
               <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
                 <span className="text-slate-500">NCZD na DDS (r.75):</span>{' '}
-                <strong className="tabular-nums">{parseFloat(calculatedR75).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+                <strong className="font-heading tabular-nums">{parseFloat(calculatedR75).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
                 <span className="text-slate-500 ml-1">(max. limit)</span>
               </div>
             )}

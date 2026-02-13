@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, ParentInfo } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
 
@@ -87,44 +87,33 @@ export function Step6TwoPercent({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">
+      <div className="relative">
+        <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
           XII. ODDIEL
         </h2>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Podiel zaplatenej dane (§50 + §50aa)
         </p>
-        <SourceNote
-          text="Zákon č. 595/2003 Z.z. §50 a §50aa: Použitie podielu zaplatenej dane"
+        <MarginNote
+          section="§50, §50aa"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-50"
-        />
+        >
+          Zákon č. 595/2003 Z.z. §50 a §50aa: Použitie podielu zaplatenej dane. 2 % (alebo 3 % pre dobrovoľníkov), min. 3 EUR. Zoznam prijímateľov: financnasprava.sk.
+        </MarginNote>
       </div>
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* §50: 2%/3% to NGO                                 */}
-      {/* ═══════════════════════════════════════════════════ */}
-
+      {/* §50: 2%/3% to NGO */}
       <Toggle
         enabled={data.enabled}
         onToggle={(enabled) => onChange({ enabled })}
         label="Chcem poukázať 2 % (alebo 3 %) z dane organizácii"
-        description="§50 - Poukážete časť zaplatenej dane vybranej organizácii"
       />
 
       {data.enabled && (
         <>
-          <InfoBox>
-            Môžete poukázať <strong>2&nbsp;%</strong> zaplatenej dane (alebo <strong>3&nbsp;%</strong> ak ste dobrovoľník
-            s potvrdením o odpracovaní min. 40 hodín). Minimum je <strong>3 EUR</strong>.
-            Táto suma vám nebude strhnutá - je to časť dane, ktorú by ste zaplatili tak či tak.
-          </InfoBox>
-
-          <SectionCard title="Príjemca podielu" subtitle="Organizácia, ktorej poukážete podiel dane">
+          <div className="relative">
+          <SectionCard title="Príjemca podielu" subtitle="Organizácia, ktorej poukážete podiel dane. Zoznam prijímateľov: financnasprava.sk">
             <div className="space-y-4">
-              <SourceNote
-                text="Zoznam oprávnených prijímateľov 2 % (Finančná správa)"
-                href="https://www.financnasprava.sk/sk/elektronicke-sluzby/verejne-sluzby/zoznamy/zoznam-prijimatelov-dane"
-              />
               <FormField
                 label="Organizácia (príjemca 2 %)"
                 hint="Vyberte z oficiálneho zoznamu FS alebo hľadajte podľa názvu / IČO"
@@ -174,9 +163,9 @@ export function Step6TwoPercent({
                     <span className="text-xs text-gray-500">
                       Poukázaná suma ({data.splnam3per ? '3 %' : '2 %'})
                     </span>
-                    <p className="text-xs text-gray-400 mt-0.5">Automaticky z riadku 124</p>
+                    <p className="text-xs text-gray-600 mt-0.5">Automaticky z riadku 124</p>
                   </div>
-                  <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                  <span className="font-heading text-lg font-semibold text-gray-900 tabular-nums">
                     {calculatedAmount && parseFloat(calculatedAmount) > 0
                       ? `${parseFloat(calculatedAmount).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR`
                       : '-- EUR'}
@@ -185,11 +174,11 @@ export function Step6TwoPercent({
               </div>
             </div>
           </SectionCard>
+          </div>
         </>
       )}
 
-      {/* ═══════════════════════════════════════════════════ */}
-      {/* §50aa: 2% to parents                              */}
+      {/* §50aa: 2% to parents */}
       {/* ═══════════════════════════════════════════════════ */}
 
       <div className="border-t border-gray-200 pt-6">
@@ -270,16 +259,16 @@ export function Step6TwoPercent({
                       <span className="text-xs text-gray-500">
                         Suma na {parentCount === 2 ? 'každého rodiča' : 'rodiča'} (2 %)
                       </span>
-                      <p className="text-xs text-gray-400 mt-0.5">Automaticky z riadku 124</p>
+                      <p className="text-xs text-gray-600 mt-0.5">Automaticky z riadku 124</p>
                     </div>
-                    <span className="text-lg font-semibold text-gray-900 tabular-nums">
+                    <span className="font-heading text-lg font-semibold text-gray-900 tabular-nums">
                       {parentAmount > 0
                         ? `${parentAmount.toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR`
                         : '-- EUR'}
                     </span>
                   </div>
                   {parentCount === 2 && parentAmount > 0 && (
-                    <p className="text-xs text-gray-400 text-right mt-1">
+                    <p className="text-xs text-gray-600 text-right mt-1">
                       Spolu: {(parentAmount * 2).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR
                     </p>
                   )}
