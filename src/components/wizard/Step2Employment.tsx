@@ -115,11 +115,8 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
         </div>
       </SectionCard>
 
-      {/* IX. ODDIEL – zníženie ZD o DDS (§11 ods.8), r.75 */}
-      <div className="pt-2 border-t border-gray-200">
-        <p className="text-sm text-gray-500 mb-3">
-          Zníženie základu dane o nezdaniteľné časti (§11) – príspevky na doplnkové dôchodkové sporenie (r.75)
-        </p>
+      {/* IX. ODDIEL – nezdaniteľná časť ZD (§11) a DDS (r.75) */}
+      <div className="pt-6 border-t border-gray-200">
         <Toggle
           enabled={dds.enabled}
           onToggle={(enabled) => onDdsChange({ enabled })}
@@ -127,10 +124,10 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
           description="Uplatňujem zníženie základu dane o zaplatené príspevky na DDS, max 180 EUR/rok"
         />
         {dds.enabled && (
-          <SectionCard title="Príspevky na DDS" subtitle="Riadok 75">
+          <div className="mt-4">
+            <SectionCard title="Príspevky na DDS" subtitle="Riadok 75">
             <FormField
               label="Ročná suma príspevkov (EUR)"
-              hint="Max 180 EUR"
             >
               <Input
                 type="number"
@@ -142,13 +139,15 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
                 suffix="EUR"
               />
             </FormField>
-            {calculatedR75 != null && parseFloat(calculatedR75) > 0 && (
+            {calculatedR75 != null && parseFloat(calculatedR75) > 0 && parseFloat(calculatedR75) < parseFloat(dds.prispevky || '0') && (
               <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
                 <span className="text-slate-500">NCZD na DDS (r.75):</span>{' '}
                 <strong className="tabular-nums">{parseFloat(calculatedR75).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+                <span className="text-slate-500 ml-1">(max. limit)</span>
               </div>
             )}
-          </SectionCard>
+            </SectionCard>
+          </div>
         )}
       </div>
     </div>

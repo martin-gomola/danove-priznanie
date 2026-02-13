@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { MortgageInterest } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { FormField, Input, SectionCard, Toggle, SourceNote } from '@/components/ui/FormField';
 import { MORTGAGE_MAX_OLD, MORTGAGE_MAX_NEW } from '@/lib/tax/constants';
 
 interface Props {
@@ -36,14 +36,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
 
       {data.enabled && (
         <>
-          <InfoBox>
-            Daňový bonus = <strong>50&nbsp;%</strong> zo zaplatených úrokov, maximálne{' '}
-            <strong>{MORTGAGE_MAX_OLD} EUR</strong> (zmluva do 31.12.2023) alebo{' '}
-            <strong>{MORTGAGE_MAX_NEW} EUR</strong> (zmluva od 1.1.2024). Údaje nájdete na potvrdení od banky.
-            Bonus môžete uplatniť najviac <strong>4 zdaňovacie obdobia</strong> po sebe.
-          </InfoBox>
-
-          <SectionCard title="Údaje o hypotéke" subtitle="Podľa potvrdenia od banky">
+          <SectionCard title="Údaje o hypotéke" subtitle="Údaje nájdete na potvrdení od banky">
             <div className="space-y-4">
               <FormField
                 label="Zaplatené úroky za rok 2025"
@@ -127,6 +120,17 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
                 </div>
               </div>
             </div>
+          </SectionCard>
+
+          <SectionCard title="Podmienky nároku (§33a)" subtitle="Skontrolujte, či spĺňate všetky podmienky">
+            <ul className="list-disc list-inside space-y-1.5 text-sm text-gray-700">
+              <li>Máte <strong>potvrdenie z banky</strong> o zaplatených úrokoch za zdaňovacie obdobie</li>
+              <li>Úver bol poskytnutý na <strong>obstaranie alebo budovanie obydlia</strong> (vlastné bývanie)</li>
+              <li>Úroky boli skutočne <strong>zaplatené v zdaňovacom období</strong> (rok 2025)</li>
+              <li>Bonus môžete uplatniť najviac <strong>4 zdaňovacie obdobia po sebe</strong> (od prvého uplatnenia)</li>
+              <li>Obydlie musí byť na <strong>území Slovenskej republiky</strong></li>
+              <li>Suma bonusu = 50 % zo zaplatených úrokov, max {MORTGAGE_MAX_OLD} EUR (zmluva do 31.12.2023) alebo {MORTGAGE_MAX_NEW} EUR (zmluva od 1.1.2024)</li>
+            </ul>
           </SectionCard>
         </>
       )}
