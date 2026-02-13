@@ -16,6 +16,7 @@ import {
   NCZD_MULTIPLIER_HIGH,
   NCZD_SPOUSE_ZAKLAD,
   NCZD_SPOUSE_MULTIPLIER_HIGH,
+  DDS_MAX,
   TAX_RATE_LOWER,
   TAX_RATE_UPPER,
   TAX_BRACKET_THRESHOLD,
@@ -230,6 +231,7 @@ interface TaxCalculationSectionResult {
   r72: Decimal;
   r73: Decimal;
   r74: Decimal;
+  r75: Decimal;
   r77: Decimal;
   r78: Decimal;
   r80: Decimal;
@@ -358,7 +360,13 @@ function taxCalculationSection(
     const spouseIncome = d(form.spouse.vlastnePrijmy);
     r74 = calculateSpouseNCZD(r72, spouseIncome, months);
   }
-  const r77 = Decimal.min(r73.plus(r74), r72);
+  // r.75: NCZD na príspevky na DDS (§11 ods.8), max 180 EUR
+  let r75 = new Decimal(0);
+  if (form.dds?.enabled) {
+    const prispevky = d(form.dds.prispevky);
+    r75 = Decimal.min(prispevky, new Decimal(DDS_MAX));
+  }
+  const r77 = Decimal.min(r73.plus(r74).plus(r75), r72);
   const r78 = Decimal.max(r38.minus(r77), new Decimal(0));
   const r80 = r78.plus(r71);
   const r81 = calculateProgressiveTax(r80);
@@ -366,7 +374,7 @@ function taxCalculationSection(
   const r106 = r68.mul(CAPITAL_TAX_RATE);
   const r115 = r106;
   const r116 = r90.plus(r115).plus(pril2_pr28);
-  return { r72, r73, r74, r77, r78, r80, r81, r90, r106, r115, r116 };
+  return { r72, r73, r74, r75, r77, r78, r80, r81, r90, r106, r115, r116 };
 }
 
 /** Bonuses: child (§33), mortgage (§33a), rows 117–127. */
@@ -452,6 +460,7 @@ function buildResult(
     r72: fmt(tax.r72),
     r73: fmt(tax.r73),
     r74: fmt(tax.r74),
+    r75: fmt(tax.r75),
     r77: fmt(tax.r77),
     r78: fmt(tax.r78),
     r80: fmt(tax.r80),

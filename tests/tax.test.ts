@@ -18,6 +18,7 @@ import {
   NCZD_MULTIPLIER_HIGH,
   NCZD_SPOUSE_ZAKLAD,
   NCZD_SPOUSE_MULTIPLIER_HIGH,
+  DDS_MAX,
   TAX_BRACKET_THRESHOLD,
   TAX_RATE_LOWER,
   TAX_RATE_UPPER,
@@ -226,6 +227,55 @@ describe('Oddiel IX: NCZD Spouse (r74) - §11 ods.3', () => {
       })
     );
     expect(result.r74).toBe('0.00');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// NCZD DDS (§11 ods.8) - r75
+// ═══════════════════════════════════════════════════════════════════════
+
+describe('Oddiel IX: NCZD DDS (r75) - §11 ods.8', () => {
+  it('r75 = min(prispevky, 180) when DDS enabled', () => {
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
+        dds: { ...DEFAULT_TAX_FORM.dds, enabled: true, prispevky: '100' },
+      })
+    );
+    expect(result.r75).toBe('100.00');
+  });
+
+  it('r75 capped at 180 EUR', () => {
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
+        dds: { ...DEFAULT_TAX_FORM.dds, enabled: true, prispevky: '250' },
+      })
+    );
+    expect(result.r75).toBe('180.00');
+  });
+
+  it('r75 = 0 when DDS disabled', () => {
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
+        dds: { ...DEFAULT_TAX_FORM.dds, enabled: false, prispevky: '100' },
+      })
+    );
+    expect(result.r75).toBe('0.00');
+  });
+
+  it('r77 includes r75 (r77 = r73 + r74 + r75, capped at r72)', () => {
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '30000', r37: '0', r131: '0' },
+        dds: { ...DEFAULT_TAX_FORM.dds, enabled: true, prispevky: '100' },
+      })
+    );
+    const r73 = p(result.r73);
+    const r74 = p(result.r74);
+    const r75 = p(result.r75);
+    expect(p(result.r77)).toBeCloseTo(r73 + r74 + r75, 2);
   });
 });
 

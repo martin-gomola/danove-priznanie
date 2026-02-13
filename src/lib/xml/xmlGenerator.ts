@@ -168,7 +168,8 @@ export function convertToJson(
   // ── NCZD reduction (rows 72-78) ────────────────────────
   t.r72 = decStr(calc.r72);  // ZD pred znížením (§5 only, NOT §7)
   t.r73 = decStr(calc.r73);  // NCZD na daňovníka
-  // r.74, r.75: not implemented (spouse, pension contributions)
+  t.r74 = decStr(calc.r74);  // NCZD na manžela/manželku
+  t.r75 = decStr(calc.r75);  // NCZD na DDS (§11 ods.8)
   t.r77 = decStr(calc.r77);  // nezdaniteľná časť celkom
   t.r78 = decStr(calc.r78);  // ZD z §5 po znížení
 

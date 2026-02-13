@@ -1,16 +1,20 @@
 'use client';
 
 import React from 'react';
-import { EmploymentIncome } from '@/types/TaxForm';
-import { FormField, Input, SectionCard, InfoBox, SourceNote } from '@/components/ui/FormField';
+import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
+import { FormField, Input, SectionCard, InfoBox, SourceNote, Toggle } from '@/components/ui/FormField';
 
 interface Props {
   data: EmploymentIncome;
   onChange: (updates: Partial<EmploymentIncome>) => void;
   calculatedR38: string;
+  /** IX. ODDIEL – zníženie ZD o príspevky na DDS (§11 ods.8), r.75 */
+  dds: DDSContributions;
+  onDdsChange: (updates: Partial<DDSContributions>) => void;
+  calculatedR75?: string;
 }
 
-export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
+export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75 }: Props) {
   return (
     <div className="space-y-6">
       <div>
@@ -110,6 +114,43 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
           </FormField>
         </div>
       </SectionCard>
+
+      {/* IX. ODDIEL – zníženie ZD o DDS (§11 ods.8), r.75 */}
+      <div className="pt-2 border-t border-gray-200">
+        <p className="text-sm text-gray-500 mb-3">
+          Zníženie základu dane o nezdaniteľné časti (§11) – príspevky na doplnkové dôchodkové sporenie (r.75)
+        </p>
+        <Toggle
+          enabled={dds.enabled}
+          onToggle={(enabled) => onDdsChange({ enabled })}
+          label="Príspevky na III. pilier / DDS (§11 ods.8)"
+          description="Uplatňujem zníženie základu dane o zaplatené príspevky na DDS, max 180 EUR/rok"
+        />
+        {dds.enabled && (
+          <SectionCard title="Príspevky na DDS" subtitle="Riadok 75">
+            <FormField
+              label="Ročná suma príspevkov (EUR)"
+              hint="Max 180 EUR"
+            >
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                value={dds.prispevky}
+                onChange={(e) => onDdsChange({ prispevky: e.target.value })}
+                placeholder="0.00"
+                suffix="EUR"
+              />
+            </FormField>
+            {calculatedR75 != null && parseFloat(calculatedR75) > 0 && (
+              <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
+                <span className="text-slate-500">NCZD na DDS (r.75):</span>{' '}
+                <strong className="tabular-nums">{parseFloat(calculatedR75).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+              </div>
+            )}
+          </SectionCard>
+        )}
+      </div>
     </div>
   );
 }

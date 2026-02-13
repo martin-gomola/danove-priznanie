@@ -37,6 +37,7 @@ export default function Home() {
     updateStockSales,
     updateMortgage,
     updateSpouse,
+    updateDds,
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
@@ -113,6 +114,9 @@ export default function Home() {
             data={form.employment}
             onChange={updateEmployment}
             calculatedR38={calc.r38}
+            dds={form.dds}
+            onDdsChange={updateDds}
+            calculatedR75={calc.r75}
           />
         );
       case 4:

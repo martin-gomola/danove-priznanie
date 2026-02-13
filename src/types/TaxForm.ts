@@ -99,6 +99,12 @@ export interface SpouseNCZD {
   pocetMesiacov: string; // r.32 - months qualifying (1–12)
 }
 
+// ── III. pillar DDS (Oddiel III, §11 ods.8 - príspevky na doplnkové dôchodkové sporenie)
+export interface DDSContributions {
+  enabled: boolean;
+  prispevky: string; // annual contributions EUR, max 180
+}
+
 // ── Child Tax Bonus (Oddiel III, §33) ─────────────────────────────────
 export interface ChildEntry {
   id: string;
@@ -152,8 +158,9 @@ export interface TaxFormData {
   stockSales: StockSales;
   // Step 5
   mortgage: MortgageInterest;
-  // Step 6 - Oddiel III: spouse (§11 ods.3) + child bonus (§33)
+  // Step 6 - Oddiel III: spouse (§11 ods.3), DDS (§11 ods.8), child bonus (§33)
   spouse: SpouseNCZD;
+  dds: DDSContributions;
   childBonus: ChildBonus;
   // Step 7
   twoPercent: TwoPercentAllocation;
@@ -206,7 +213,8 @@ export interface TaxCalculationResult {
   r72: string; // ZD z §5 pred znížením o NCZD (= r38, no §6)
   r73: string; // NCZD na daňovníka (§11 ods.2)
   r74: string; // NCZD na manžela/manželku (§11 ods.3)
-  r77: string; // nezdaniteľná časť celkom = r73 + r74 (+ r75), max r.72
+  r75: string; // NCZD na príspevky na DDS (§11 ods.8), max 180 EUR
+  r77: string; // nezdaniteľná časť celkom = r73 + r74 + r75, max r.72
   r78: string; // ZD z §5 po znížení = max(r38 - r77, 0)
 
   // Tax base totals
@@ -325,6 +333,11 @@ export const DEFAULT_SPOUSE: SpouseNCZD = {
   pocetMesiacov: '',
 };
 
+export const DEFAULT_DDS: DDSContributions = {
+  enabled: false,
+  prispevky: '',
+};
+
 export const DEFAULT_CHILD_BONUS: ChildBonus = {
   enabled: false,
   children: [],
@@ -360,6 +373,7 @@ export const DEFAULT_TAX_FORM: TaxFormData = {
   stockSales: DEFAULT_STOCK_SALES,
   mortgage: DEFAULT_MORTGAGE,
   spouse: DEFAULT_SPOUSE,
+  dds: DEFAULT_DDS,
   childBonus: DEFAULT_CHILD_BONUS,
   twoPercent: DEFAULT_TWO_PERCENT,
   parentAllocation: DEFAULT_PARENT_ALLOCATION,

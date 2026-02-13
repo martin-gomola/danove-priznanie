@@ -332,6 +332,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           {form.spouse?.enabled && (
             <Row row="r.74" label="NCZD na manžela/manželku (§11 ods.3)" value={calc.r74} />
           )}
+          {form.dds?.enabled && parseFloat(calc.r75 ?? '0') > 0 && (
+            <Row row="r.75" label="NCZD na príspevky na DDS (§11 ods.8)" value={calc.r75} />
+          )}
           <Row row="r.77" label="Nezdaniteľná časť celkom" value={calc.r77} />
           <Divider />
           <Row row="r.78" label="ZD z §5 po znížení o NCZD" value={calc.r78} />

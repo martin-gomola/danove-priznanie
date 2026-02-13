@@ -15,6 +15,7 @@ import {
   MutualFundSales,
   ForeignDividends,
   SpouseNCZD,
+  DDSContributions,
   ChildBonus,
   DEFAULT_TAX_FORM,
   type TwoPercentAllocation,
@@ -235,6 +236,17 @@ function parseSpouse(telo: Record<string, unknown>): SpouseNCZD {
   };
 }
 
+/** Parse DDS contributions (§11 ods.8 - r75) from telo. */
+function parseDds(telo: Record<string, unknown>): DDSContributions {
+  const r75 = extractText(getChild(telo, 'r75'));
+  const num = r75 ? parseFloat(r75) : NaN;
+  const hasValue = !Number.isNaN(num) && num > 0;
+  return {
+    enabled: hasValue,
+    prispevky: hasValue ? String(num.toFixed(2)) : '',
+  };
+}
+
 /** Parse child bonus (r33.dieta, r119) from telo. */
 function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
   const r33 = getChild(telo, 'r33');
@@ -379,6 +391,7 @@ export function parseDpfoXmlToFormData(xmlString: string): TaxFormData {
     if (isPreviousYear) {
       return {
         ...base,
+        dds: parseDds(telo),
         twoPercent: parseTwoPercent(telo),
         parentAllocation: parseParentAllocation(telo),
       };
@@ -393,6 +406,7 @@ export function parseDpfoXmlToFormData(xmlString: string): TaxFormData {
       stockSales: parseStockSales(telo),
       dividends: parseDividends(telo),
       spouse: parseSpouse(telo),
+      dds: parseDds(telo),
       childBonus: parseChildBonus(telo),
       twoPercent: parseTwoPercent(telo),
       parentAllocation: parseParentAllocation(telo),

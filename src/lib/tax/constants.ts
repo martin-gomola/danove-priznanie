@@ -30,6 +30,10 @@ export const NCZD_SPOUSE_ZAKLAD = 19.2 * ZIVOTNE_MINIMUM; // 5,260.61 EUR
 // If taxpayer's tax base > 176.8 × ŽM: NCZD = 63.4 × ŽM - (tax_base / 4) - spouse_income
 export const NCZD_SPOUSE_MULTIPLIER_HIGH = 63.4 * ZIVOTNE_MINIMUM; // 17,370.97 EUR
 
+// ── NCZD for III. pillar DDS (§11 ods. 8) ────────────────────────────
+// Príspevky na doplnkové dôchodkové sporenie – max odpočítateľná suma za rok
+export const DDS_MAX = 180; // EUR/year
+
 // ── Tax rates ────────────────────────────────────────────────────────
 export const TAX_RATE_LOWER = 0.19; // 19% for base up to threshold
 export const TAX_RATE_UPPER = 0.25; // 25% for base above threshold

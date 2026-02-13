@@ -45,6 +45,7 @@ export function useTaxForm() {
           stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
           mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
           spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
+          dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
           childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
           twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
           parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
@@ -91,6 +92,7 @@ export function useTaxForm() {
           if (data.stockSales) next.stockSales = { ...prev.stockSales, ...data.stockSales };
           if (data.mortgage) next.mortgage = { ...prev.mortgage, ...data.mortgage };
           if (data.spouse) next.spouse = { ...prev.spouse, ...data.spouse };
+          if (data.dds) next.dds = { ...prev.dds, ...data.dds };
           if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
           if (data.twoPercent) next.twoPercent = { ...prev.twoPercent, ...data.twoPercent };
           if (data.parentAllocation) next.parentAllocation = { ...prev.parentAllocation, ...data.parentAllocation };
@@ -194,6 +196,16 @@ export function useTaxForm() {
     []
   );
 
+  const updateDds = useCallback(
+    (updates: Partial<TaxFormData['dds']>) => {
+      setForm((prev) => ({
+        ...prev,
+        dds: { ...prev.dds, ...updates },
+      }));
+    },
+    []
+  );
+
   const updateChildBonus = useCallback(
     (updates: Partial<TaxFormData['childBonus']>) => {
       setForm((prev) => ({
@@ -270,6 +282,7 @@ export function useTaxForm() {
     updateStockSales,
     updateMortgage,
     updateSpouse,
+    updateDds,
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
