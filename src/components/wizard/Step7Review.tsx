@@ -4,93 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
 import { SectionCard, InfoBox } from '@/components/ui/FormField';
 import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight } from 'lucide-react';
-
-interface ValidationWarning {
-  step: number;
-  section: string;
-  field: string;
-}
-
-function validateForm(form: TaxFormData): ValidationWarning[] {
-  const warnings: ValidationWarning[] = [];
-
-  // Personal info (step 0) - always required
-  if (!form.personalInfo.dic) warnings.push({ step: 0, section: 'Osobné údaje', field: 'DIČ' });
-  if (!form.personalInfo.meno) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Meno' });
-  if (!form.personalInfo.priezvisko) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Priezvisko' });
-  if (!form.personalInfo.ulica) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Ulica' });
-  if (!form.personalInfo.cislo) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Číslo' });
-  if (!form.personalInfo.psc) warnings.push({ step: 0, section: 'Osobné údaje', field: 'PSČ' });
-  if (!form.personalInfo.obec) warnings.push({ step: 0, section: 'Osobné údaje', field: 'Obec' });
-
-  // Employment (step 3) - if enabled
-  if (form.employment.enabled) {
-    if (!form.employment.r36) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Úhrn príjmov (r.01)' });
-    if (!form.employment.r37) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Povinné poistné (r.02)' });
-    if (!form.employment.r131) warnings.push({ step: 3, section: 'Zamestnanie', field: 'Preddavky na daň (r.04)' });
-  }
-
-  // Child bonus (step 1) - if enabled
-  if (form.childBonus.enabled) {
-    const hasChild = form.childBonus.children.some(
-      (c) => c.priezviskoMeno && c.rodneCislo
-    );
-    if (!hasChild) warnings.push({ step: 1, section: 'Deti', field: 'Aspoň 1 dieťa (meno + rodné číslo)' });
-  }
-
-  // Mortgage (step 2) - if enabled
-  if (form.mortgage.enabled) {
-    if (!form.mortgage.zaplateneUroky) warnings.push({ step: 2, section: 'Hypoteka', field: 'Zaplatené úroky' });
-    if (!form.mortgage.pocetMesiacov) warnings.push({ step: 2, section: 'Hypoteka', field: 'Počet mesiacov' });
-    if (!form.mortgage.datumZacatiaUroceniaUveru) warnings.push({ step: 2, section: 'Hypoteka', field: 'Dátum začiatia úročenia' });
-    if (!form.mortgage.datumUzavretiaZmluvy) warnings.push({ step: 2, section: 'Hypoteka', field: 'Dátum uzavretia zmluvy' });
-  }
-
-  // Dividends (step 5) - if enabled
-  if (form.dividends.enabled) {
-    const hasEntry = form.dividends.entries.some(
-      (e) => e.country && (parseFloat(e.amountUsd) > 0 || parseFloat(e.amountEur) > 0)
-    );
-    if (!hasEntry) warnings.push({ step: 5, section: 'Dividendy', field: 'Aspoň 1 dividendový príjem' });
-  }
-
-  // Mutual funds (step 4) - if enabled
-  if (form.mutualFunds.enabled) {
-    const hasEntry = form.mutualFunds.entries.some(
-      (e) => parseFloat(e.saleAmount) > 0
-    );
-    if (!hasEntry) warnings.push({ step: 4, section: 'Fondy', field: 'Aspoň 1 predaj (príjem)' });
-  }
-
-  // Stock sales (step 4) - if enabled
-  if (form.stockSales.enabled) {
-    const hasEntry = form.stockSales.entries.some(
-      (e) => parseFloat(e.saleAmount) > 0 || parseFloat(e.purchaseAmount) > 0
-    );
-    if (!hasEntry) warnings.push({ step: 4, section: 'Akcie (§8)', field: 'Aspoň 1 obchod (kúpna/predajná cena)' });
-  }
-
-  // 2% allocation (step 6) - if enabled
-  if (form.twoPercent.enabled) {
-    if (!form.twoPercent.ico) warnings.push({ step: 6, section: '2% dane', field: 'IČO organizácie' });
-  }
-
-  // Parent allocation (step 6) - if choice != none
-  if (form.parentAllocation.choice !== 'none') {
-    const p1 = form.parentAllocation.parent1;
-    if (!p1.priezvisko || !p1.meno || !p1.rodneCislo) {
-      warnings.push({ step: 6, section: '2% rodičom', field: 'Rodič 1 (meno, priezvisko, rodné číslo)' });
-    }
-    if (form.parentAllocation.choice === 'both') {
-      const p2 = form.parentAllocation.parent2;
-      if (!p2.priezvisko || !p2.meno || !p2.rodneCislo) {
-        warnings.push({ step: 6, section: '2% rodičom', field: 'Rodič 2 (meno, priezvisko, rodné číslo)' });
-      }
-    }
-  }
-
-  return warnings;
-}
+import { getValidationWarnings } from '@/lib/validation/wizard';
 
 interface Props {
   form: TaxFormData;
@@ -145,7 +59,7 @@ function Divider() {
 
 export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
-  const warnings = useMemo(() => validateForm(form), [form]);
+  const warnings = useMemo(() => getValidationWarnings(form), [form]);
   const documents: { label: string; needed: boolean }[] = [
     {
       label: 'Potvrdenie o zdaniteľných príjmoch (od zamestnávateľa)',

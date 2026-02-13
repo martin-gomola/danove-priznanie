@@ -97,3 +97,17 @@ export function validateRodneCislo(input: string): RodneCisloValidation {
 
   return { valid: true };
 }
+
+/**
+ * Return an inline error string for a rodné číslo field.
+ * - Empty + showErrors  → 'Povinné pole'
+ * - Non-empty + invalid → 'Neplatný formát'
+ * - Otherwise           → undefined (no error)
+ */
+export function getRodneCisloError(
+  value: string,
+  showErrors: boolean,
+): string | undefined {
+  if (!value) return showErrors ? 'Povinné pole' : undefined;
+  return validateRodneCislo(value).error ? 'Neplatný formát' : undefined;
+}

@@ -45,3 +45,4 @@ tests/.tmp/
 # .cursor/
 .claude/settings.local.json
 .cursor/plans/*
+.cursor/rules/*

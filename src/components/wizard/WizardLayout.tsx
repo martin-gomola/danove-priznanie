@@ -27,6 +27,7 @@ interface WizardLayoutProps {
   onExport: () => void;
   onImport: (file: File) => void;
   lastSaved: string;
+  saveStatus?: 'saving' | 'saved' | 'error';
   children: React.ReactNode;
 }
 
@@ -41,6 +42,7 @@ export function WizardLayout({
   onExport,
   onImport,
   lastSaved,
+  saveStatus = 'saved',
   children,
 }: WizardLayoutProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -131,9 +133,18 @@ export function WizardLayout({
             {/* Actions toolbar */}
             <div className="flex items-center gap-1">
               {lastSaved && (
-                <span className="hidden md:inline text-[10px] text-gray-400 tabular-nums mr-2">
-                  <Save className="w-3 h-3 inline mr-0.5 opacity-40" />
-                  {new Date(lastSaved).toLocaleTimeString('sk-SK')}
+                <span className="hidden md:inline text-[10px] tabular-nums mr-2 transition-colors duration-200">
+                  {saveStatus === 'saving' ? (
+                    <span className="text-amber-500 flex items-center gap-0.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      Ukladám...
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">
+                      <Save className="w-3 h-3 inline mr-0.5 opacity-40" />
+                      {new Date(lastSaved).toLocaleTimeString('sk-SK')}
+                    </span>
+                  )}
                 </span>
               )}
               <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50/60 p-0.5">
@@ -190,7 +201,7 @@ export function WizardLayout({
                 onClick={() => onGoToStep(i)}
                 className={`
                   flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium
-                  whitespace-nowrap transition-all duration-200 shrink-0
+                  whitespace-nowrap transition-all duration-200 shrink-0 cursor-pointer
                   ${
                     i === currentStep
                       ? 'bg-gray-900 text-white'

@@ -12,9 +12,10 @@ interface Props {
   onChange: (updates: Partial<MutualFundSales>) => void;
   stockData: StockSales;
   onStockChange: (updates: Partial<StockSales>) => void;
+  showErrors?: boolean;
 }
 
-export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: Props) {
+export function Step4MutualFunds({ data, onChange, stockData, onStockChange, showErrors = false }: Props) {
   const addEntry = useCallback(() => {
     const newEntry: MutualFundEntry = {
       id: Date.now().toString(),
@@ -88,6 +89,10 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: P
     try { return sum.plus(new Decimal(e.purchaseAmount || '0')); } catch { return sum; }
   }, new Decimal(0));
   const stockProfit = Decimal.max(stockIncome.minus(stockExpense), new Decimal(0));
+  const hasFundSale = data.entries.some((entry) => parseFloat(entry.saleAmount) > 0);
+  const hasStockTrade = stockData.entries.some(
+    (entry) => parseFloat(entry.saleAmount) > 0 || parseFloat(entry.purchaseAmount) > 0
+  );
 
   return (
     <div className="space-y-6">
@@ -114,11 +119,14 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: P
       {data.enabled && (
         <>
           <InfoBox>
-            Zadajte každý fond osobitne - <strong>kúpna cena</strong> (koľko ste investovali, vrátane vstupných/nákupných poplatkov, ak ste ich mali) a <strong>predajná cena</strong> (koľko ste skutočne dostali pri výplate/predaji). Daň sa platí len zo zisku. Príjem z podielových fondov (§7) tvorí <strong>osobitný základ dane</strong> a zdaňuje sa <strong>jednotnou sadzbou 19&nbsp;%</strong> - nie progresívnou 19/25&nbsp;% ako pri príjmoch zo zamestnania.
+            Zadajte každý fond osobitne - <strong>kúpna cena</strong> (koľko ste investovali, vrátane vstupných/nákupných poplatkov, ak ste ich mali) a <strong>predajná cena</strong> (koľko ste skutočne dostali pri výplate/predaji). Daň sa platí len zo zisku. Príjem z podielových fondov (§7) tvorí <strong>osobitný základ dane</strong> a zdaňuje sa <strong>jednotnou sadzbou 19&nbsp;%</strong>
           </InfoBox>
 
           <SectionCard title="Podielové fondy" subtitle="Tabuľka 2, riadok 7: §7 ods. 1 písm. g">
             <div className="space-y-4">
+              {showErrors && !hasFundSale && (
+                <InfoBox variant="warning">Pridajte aspoň 1 predaj fondu.</InfoBox>
+              )}
               {data.entries.map((entry, index) => (
                 <div
                   key={entry.id}
@@ -131,6 +139,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: P
                     <button
                       onClick={() => removeEntry(entry.id)}
                       className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
+                      aria-label={`Odstrániť fond ${index + 1}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -242,6 +251,9 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: P
               />
             </div>
             <div className="space-y-4">
+              {showErrors && !hasStockTrade && (
+                <InfoBox variant="warning">Pridajte aspoň 1 obchod.</InfoBox>
+              )}
               {stockData.entries.map((entry, index) => (
                 <div
                   key={entry.id}
@@ -254,6 +266,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange }: P
                     <button
                       onClick={() => removeStockEntry(entry.id)}
                       className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
+                      aria-label={`Odstrániť obchod ${index + 1}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { TaxFormData, DEFAULT_TAX_FORM } from '@/types/TaxForm';
 import { parseDpfoXmlToFormData } from '@/lib/utils/parseDpfoXml';
 import { useToast } from '@/components/ui/Toast';
@@ -27,6 +27,15 @@ export function useTaxForm() {
   const [form, setForm] = useState<TaxFormData>(DEFAULT_TAX_FORM);
   const [isLoaded, setIsLoaded] = useState(false);
   const [sessionToken, setSessionToken] = useState('');
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error'>('saved');
+  const saveTimerRef = useRef<number | null>(null);
+
+  const markSaving = useCallback(() => {
+    setSaveStatus('saving');
+    if (typeof window === 'undefined') return;
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = window.setTimeout(() => setSaveStatus('saved'), 250);
+  }, []);
 
   // Load from localStorage on mount - deep-merge each section so newly added
   // fields (e.g. czkRate) get their defaults even when saved data is older.
@@ -56,6 +65,12 @@ export function useTaxForm() {
     }
     setSessionToken(getSessionToken());
     setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
   }, []);
 
   // Sync session token across tabs (e.g. when changed on /developer page)
@@ -123,127 +138,141 @@ export function useTaxForm() {
   }, [form, isLoaded]);
 
   const updateForm = useCallback((updates: Partial<TaxFormData>) => {
+    markSaving();
     setForm((prev) => ({ ...prev, ...updates }));
-  }, []);
+  }, [markSaving]);
 
   const updatePersonalInfo = useCallback(
     (updates: Partial<TaxFormData['personalInfo']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         personalInfo: { ...prev.personalInfo, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateEmployment = useCallback(
     (updates: Partial<TaxFormData['employment']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         employment: { ...prev.employment, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateDividends = useCallback(
     (updates: Partial<TaxFormData['dividends']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         dividends: { ...prev.dividends, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateMutualFunds = useCallback(
     (updates: Partial<TaxFormData['mutualFunds']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         mutualFunds: { ...prev.mutualFunds, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateStockSales = useCallback(
     (updates: Partial<TaxFormData['stockSales']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         stockSales: { ...prev.stockSales, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateMortgage = useCallback(
     (updates: Partial<TaxFormData['mortgage']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         mortgage: { ...prev.mortgage, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateSpouse = useCallback(
     (updates: Partial<TaxFormData['spouse']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         spouse: { ...prev.spouse, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateDds = useCallback(
     (updates: Partial<TaxFormData['dds']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         dds: { ...prev.dds, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateChildBonus = useCallback(
     (updates: Partial<TaxFormData['childBonus']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         childBonus: { ...prev.childBonus, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateTwoPercent = useCallback(
     (updates: Partial<TaxFormData['twoPercent']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         twoPercent: { ...prev.twoPercent, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const updateParentAllocation = useCallback(
     (updates: Partial<TaxFormData['parentAllocation']>) => {
+      markSaving();
       setForm((prev) => ({
         ...prev,
         parentAllocation: { ...prev.parentAllocation, ...updates },
       }));
     },
-    []
+    [markSaving]
   );
 
   const setStep = useCallback((step: number) => {
+    markSaving();
     setForm((prev) => ({ ...prev, currentStep: step }));
-  }, []);
+  }, [markSaving]);
 
   const resetForm = useCallback(() => {
+    markSaving();
     setForm(DEFAULT_TAX_FORM);
     localStorage.removeItem(STORAGE_KEY);
-  }, []);
+  }, [markSaving]);
 
   /** Import form from DPFO XML (same format as real form / export). */
   const importXml = useCallback(
@@ -259,6 +288,7 @@ export function useTaxForm() {
             dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
             stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
           });
+          markSaving();
           toast.success('XML importované');
         } catch (err) {
           console.error('Failed to import XML:', err);
@@ -267,13 +297,14 @@ export function useTaxForm() {
       };
       reader.readAsText(file);
     },
-    [toast]
+    [toast, markSaving]
   );
 
   return {
     form,
     isLoaded,
     sessionToken,
+    saveStatus,
     updateForm,
     updatePersonalInfo,
     updateEmployment,

@@ -10,6 +10,7 @@ import Decimal from 'decimal.js';
 interface Props {
   data: ForeignDividends;
   onChange: (updates: Partial<ForeignDividends>) => void;
+  showErrors?: boolean;
 }
 
 /** Convert a foreign-currency amount to EUR by dividing by the rate (units per 1 EUR). */
@@ -32,7 +33,7 @@ function rateForCurrency(currency: 'USD' | 'EUR' | 'CZK', ecbRate: string, czkRa
   return ecbRate; // USD
 }
 
-export function Step3Dividends({ data, onChange }: Props) {
+export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const addEntry = useCallback(() => {
     const newEntry: DividendEntry = {
       id: Date.now().toString(),
@@ -121,6 +122,9 @@ export function Step3Dividends({ data, onChange }: Props) {
 
   const hasUsdEntries = data.entries.some((e) => (e.currency ?? 'USD') === 'USD');
   const hasCzkEntries = data.entries.some((e) => e.currency === 'CZK');
+  const hasDividendEntry = data.entries.some(
+    (entry) => Boolean(entry.country) && (parseFloat(entry.amountUsd) > 0 || parseFloat(entry.amountEur) > 0)
+  );
 
   const totalEur = data.entries.reduce((sum, e) => {
     try { return sum.plus(new Decimal(e.amountEur || '0')); } catch { return sum; }
@@ -216,6 +220,9 @@ export function Step3Dividends({ data, onChange }: Props) {
 
           <SectionCard title="Dividendove prijmy" subtitle="Pridajte kazdy ticker a celkovu sumu dividend za rok 2025">
             <div className="space-y-4">
+              {showErrors && !hasDividendEntry && (
+                <InfoBox variant="warning">Pridajte aspoň 1 položku.</InfoBox>
+              )}
               {data.entries.map((entry, index) => {
                 const cur = entry.currency ?? 'USD';
                 const isEur = cur === 'EUR';
@@ -247,6 +254,7 @@ export function Step3Dividends({ data, onChange }: Props) {
                       <button
                         onClick={() => removeEntry(entry.id)}
                         className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
+                        aria-label={`Odstrániť ticker ${index + 1}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

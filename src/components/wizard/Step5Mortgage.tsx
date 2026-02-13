@@ -9,9 +9,10 @@ interface Props {
   data: MortgageInterest;
   onChange: (updates: Partial<MortgageInterest>) => void;
   calculatedBonus: string;
+  showErrors?: boolean;
 }
 
-export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
+export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = false }: Props) {
   return (
     <div className="space-y-6">
       <div>
@@ -42,6 +43,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
                 label="Zaplatené úroky za rok 2025"
                 hint="Suma úrokov z potvrdenia banky"
                 required
+                error={showErrors && !data.zaplateneUroky ? 'Povinné pole' : undefined}
               >
                 <Input
                   type="number"
@@ -57,6 +59,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
                 label="Počet mesiacov"
                 hint="Počet mesiacov v roku 2025, počas ktorých ste splácali"
                 required
+                error={showErrors && !data.pocetMesiacov ? 'Povinné pole' : undefined}
               >
                 <Input
                   type="number"
@@ -73,6 +76,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
                   label="Dátum začatia úročenia úveru"
                   hint="Kedy začínate platiť úroky"
                   required
+                  error={showErrors && !data.datumZacatiaUroceniaUveru ? 'Povinné pole' : undefined}
                 >
                   <Input
                     type="date"
@@ -84,6 +88,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus }: Props) {
                   label="Dátum uzavretia zmluvy"
                   hint="Kedy bola podpísaná zmluva o úvere (určuje limit 400 vs 1200 EUR)"
                   required
+                  error={showErrors && !data.datumUzavretiaZmluvy ? 'Povinné pole' : undefined}
                 >
                   <Input
                     type="date"

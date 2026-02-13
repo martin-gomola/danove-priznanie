@@ -4,7 +4,7 @@ import React from 'react';
 import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, ParentInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
-import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
+import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
 
 interface Props {
   data: TwoPercentAllocation;
@@ -13,30 +13,33 @@ interface Props {
   parentData: ParentTaxAllocation;
   onParentChange: (updates: Partial<ParentTaxAllocation>) => void;
   calculatedPerParent: string;
+  showErrors?: boolean;
 }
 
 function ParentForm({
   label,
   parent,
   onParentChange,
+  showErrors,
 }: {
   label: string;
   parent: ParentInfo;
   onParentChange: (updates: Partial<ParentInfo>) => void;
+  showErrors: boolean;
 }) {
   return (
     <div className="space-y-3">
       <h4 className="text-sm font-semibold text-gray-700 border-l-2 border-gray-300 pl-3">
         {label}
       </h4>
-      <FormField label="Meno" required>
+      <FormField label="Meno" required error={showErrors && !parent.meno ? 'Povinné pole' : undefined}>
         <Input
           value={parent.meno}
           onChange={(e) => onParentChange({ meno: e.target.value })}
           placeholder="Meno"
         />
       </FormField>
-      <FormField label="Priezvisko" required>
+      <FormField label="Priezvisko" required error={showErrors && !parent.priezvisko ? 'Povinné pole' : undefined}>
         <Input
           value={parent.priezvisko}
           onChange={(e) => onParentChange({ priezvisko: e.target.value })}
@@ -48,7 +51,7 @@ function ParentForm({
         required
           hint="Formát YYMMDDXXXX (bez lomítka)"
         hintIcon
-        error={parent.rodneCislo ? validateRodneCislo(parent.rodneCislo).error : undefined}
+        error={getRodneCisloError(parent.rodneCislo, showErrors)}
       >
         <Input
           value={parent.rodneCislo}
@@ -70,6 +73,7 @@ const PARENT_CHOICES: { value: ParentAllocationChoice; label: string; descriptio
 export function Step6TwoPercent({
   data, onChange, calculatedAmount,
   parentData, onParentChange, calculatedPerParent,
+  showErrors = false,
 }: Props) {
   const parentAmount = parseFloat(calculatedPerParent) || 0;
   const parentCount = parentData.choice === 'both' ? 2 : parentData.choice === 'one' ? 1 : 0;
@@ -125,6 +129,7 @@ export function Step6TwoPercent({
                 label="Organizácia (príjemca 2 %)"
                 hint="Vyberte z oficiálneho zoznamu FS alebo hľadajte podľa názvu / IČO"
                 required
+                error={showErrors && data.enabled && !data.ico ? 'Povinné pole' : undefined}
               >
                 <PrijimatelSelect
                   valueIco={data.ico}
@@ -236,11 +241,11 @@ export function Step6TwoPercent({
                 <div className="pt-2">
                   {parentData.choice === 'both' ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                      <ParentForm label="Údaje o rodičovi 1" parent={parentData.parent1} onParentChange={updateParent1} />
-                      <ParentForm label="Údaje o rodičovi 2" parent={parentData.parent2} onParentChange={updateParent2} />
+                      <ParentForm label="Údaje o rodičovi 1" parent={parentData.parent1} onParentChange={updateParent1} showErrors={showErrors} />
+                      <ParentForm label="Údaje o rodičovi 2" parent={parentData.parent2} onParentChange={updateParent2} showErrors={showErrors} />
                     </div>
                   ) : (
-                    <ParentForm label="Údaje o rodičovi" parent={parentData.parent1} onParentChange={updateParent1} />
+                    <ParentForm label="Údaje o rodičovi" parent={parentData.parent1} onParentChange={updateParent1} showErrors={showErrors} />
                   )}
                 </div>
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useTaxForm } from '@/hooks/useTaxForm';
 import { calculateTax } from '@/lib/tax/calculator';
 import { convertToXML, downloadXML } from '@/lib/xml/xmlGenerator';
@@ -14,6 +14,7 @@ import { StepChildBonus } from '@/components/wizard/StepChildBonus';
 import { Step6TwoPercent } from '@/components/wizard/Step6TwoPercent';
 import { Step7Review } from '@/components/wizard/Step7Review';
 import { useToast } from '@/components/ui/Toast';
+import { getStepBlockingIssues } from '@/lib/validation/wizard';
 
 const STEP_LABELS = [
   'Osobné údaje',
@@ -44,8 +45,10 @@ export default function Home() {
     setStep,
     resetForm,
     importXml,
+    saveStatus,
   } = useTaxForm();
   const toast = useToast();
+  const [showStepErrors, setShowStepErrors] = useState(false);
 
   // Calculate tax whenever form changes
   const calc = useMemo(() => calculateTax(form), [form]);
@@ -57,12 +60,24 @@ export default function Home() {
   }, [form, calc, toast]);
 
   const handleNext = useCallback(() => {
+    const issues = getStepBlockingIssues(form, form.currentStep);
+    if (issues.length > 0) {
+      setShowStepErrors(true);
+      return;
+    }
+    setShowStepErrors(false);
     setStep(Math.min(form.currentStep + 1, STEP_LABELS.length - 1));
-  }, [form.currentStep, setStep]);
+  }, [form, setStep]);
 
   const handlePrev = useCallback(() => {
+    setShowStepErrors(false);
     setStep(Math.max(form.currentStep - 1, 0));
   }, [form.currentStep, setStep]);
+
+  const handleGoToStep = useCallback((step: number) => {
+    setShowStepErrors(false);
+    setStep(step);
+  }, [setStep]);
 
   const handleReset = useCallback(() => {
     if (window.confirm('Naozaj chcete vymazat vsetky ulozene udaje? Tato akcia sa neda vratit.')) {
@@ -87,6 +102,7 @@ export default function Home() {
             data={form.personalInfo}
             onChange={updatePersonalInfo}
             onImport={importXml}
+            showErrors={showStepErrors}
           />
         );
       case 1:
@@ -98,6 +114,7 @@ export default function Home() {
             spouse={form.spouse}
             onSpouseChange={updateSpouse}
             calculatedR74={calc.r74}
+            showErrors={showStepErrors}
           />
         );
       case 2:
@@ -106,6 +123,7 @@ export default function Home() {
             data={form.mortgage}
             onChange={updateMortgage}
             calculatedBonus={calc.r123}
+            showErrors={showStepErrors}
           />
         );
       case 3:
@@ -117,6 +135,7 @@ export default function Home() {
             dds={form.dds}
             onDdsChange={updateDds}
             calculatedR75={calc.r75}
+            showErrors={showStepErrors}
           />
         );
       case 4:
@@ -126,6 +145,7 @@ export default function Home() {
             onChange={updateMutualFunds}
             stockData={form.stockSales}
             onStockChange={updateStockSales}
+            showErrors={showStepErrors}
           />
         );
       case 5:
@@ -133,6 +153,7 @@ export default function Home() {
           <Step3Dividends
             data={form.dividends}
             onChange={updateDividends}
+            showErrors={showStepErrors}
           />
         );
       case 6:
@@ -144,6 +165,7 @@ export default function Home() {
             parentData={form.parentAllocation}
             onParentChange={updateParentAllocation}
             calculatedPerParent={calc.parentAllocPerParent}
+            showErrors={showStepErrors}
           />
         );
       case 7:
@@ -152,7 +174,7 @@ export default function Home() {
             form={form}
             calc={calc}
             onDownloadXml={handleDownloadXml}
-            onGoToStep={setStep}
+            onGoToStep={handleGoToStep}
           />
         );
       default:
@@ -167,11 +189,12 @@ export default function Home() {
       stepLabels={STEP_LABELS}
       onNext={handleNext}
       onPrev={handlePrev}
-      onGoToStep={setStep}
+      onGoToStep={handleGoToStep}
       onReset={handleReset}
       onExport={handleDownloadXml}
       onImport={importXml}
       lastSaved={form.lastSaved}
+      saveStatus={saveStatus}
     >
       {renderStep()}
     </WizardLayout>

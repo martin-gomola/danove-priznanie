@@ -6,7 +6,7 @@ import { DEFAULT_CHILD_ENTRY } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, SourceNote } from '@/components/ui/FormField';
 import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants';
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
-import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
+import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
 import { Plus, Trash2 } from 'lucide-react';
 
 const MONTH_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
@@ -21,6 +21,7 @@ interface Props {
   onSpouseChange: (updates: Partial<SpouseNCZD>) => void;
   /** Calculated r.74 (NCZD na manžela) for display */
   calculatedR74?: string;
+  showErrors?: boolean;
 }
 
 function getAgeCategoryLabel(rc: string): string {
@@ -55,7 +56,15 @@ function getAgeCategoryLabel(rc: string): string {
   return parts.join(' → ') + ` = ${rates.reduce((a, b) => a + b, 0)} EUR/rok`;
 }
 
-export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpouseChange, calculatedR74 }: Props) {
+export function StepChildBonus({
+  data,
+  onChange,
+  calculatedBonus,
+  spouse,
+  onSpouseChange,
+  calculatedR74,
+  showErrors = false,
+}: Props) {
   const addChild = useCallback(() => {
     if (data.children.length >= MAX_CHILDREN) return;
     const newChild = DEFAULT_CHILD_ENTRY(Date.now().toString());
@@ -99,6 +108,8 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
     [data.children, updateChild]
   );
 
+  const hasCompleteChild = data.children.some((child) => child.priezviskoMeno && child.rodneCislo);
+
   return (
     <div className="space-y-6">
       <div>
@@ -124,7 +135,12 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
       {spouse.enabled && (
         <SectionCard title="Údaje o manželovi / manželke" subtitle="Riadky 31–32">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField label="Priezvisko a meno" hint="r.31" required>
+            <FormField
+              label="Priezvisko a meno"
+              hint="r.31"
+              required
+              error={showErrors && !spouse.priezviskoMeno ? 'Povinné pole' : undefined}
+            >
               <Input
                 value={spouse.priezviskoMeno}
                 onChange={(e) => onSpouseChange({ priezviskoMeno: e.target.value })}
@@ -135,7 +151,7 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
               label="Rodné číslo"
               hint="r.31 · bez lomítka"
               required
-              error={spouse.rodneCislo ? validateRodneCislo(spouse.rodneCislo).error : undefined}
+              error={getRodneCisloError(spouse.rodneCislo, showErrors)}
             >
               <Input
                 value={spouse.rodneCislo}
@@ -186,6 +202,9 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
             V roku 2025: <strong>{CHILD_BONUS_UNDER_15} EUR</strong> mesačne na dieťa do 15 r.,{' '}
             <strong>{CHILD_BONUS_15_TO_18} EUR</strong> mesačne na dieťa 15–18 r. Bonus sa znižuje pri vyššom príjme.
           </InfoBox>
+          {showErrors && !hasCompleteChild && (
+            <InfoBox variant="warning">Pridajte aspoň 1 dieťa.</InfoBox>
+          )}
 
           <SectionCard title="Vyživované deti" subtitle="Priezvisko a meno, rodné číslo, mesiace nároku">
             <div className="space-y-6">
@@ -196,7 +215,11 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
-                      <FormField label="Priezvisko a meno dieťaťa" required>
+                      <FormField
+                        label="Priezvisko a meno dieťaťa"
+                        required
+                        error={showErrors && !child.priezviskoMeno ? 'Povinné pole' : undefined}
+                      >
                         <Input
                           value={child.priezviskoMeno}
                           onChange={(e) => updateChild(child.id, { priezviskoMeno: e.target.value })}
@@ -208,7 +231,7 @@ export function StepChildBonus({ data, onChange, calculatedBonus, spouse, onSpou
                         hint="Formát YYMMDDXXXX (bez lomítka)"
                         hintIcon
                         required
-                        error={child.rodneCislo ? validateRodneCislo(child.rodneCislo).error : undefined}
+                        error={getRodneCisloError(child.rodneCislo, showErrors)}
                       >
                         <Input
                           value={child.rodneCislo}

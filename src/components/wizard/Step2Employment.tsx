@@ -12,9 +12,10 @@ interface Props {
   dds: DDSContributions;
   onDdsChange: (updates: Partial<DDSContributions>) => void;
   calculatedR75?: string;
+  showErrors?: boolean;
 }
 
-export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75 }: Props) {
+export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75, showErrors = false }: Props) {
   return (
     <div className="space-y-6">
       <div>
@@ -35,8 +36,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
         <br />
         Všetky hodnoty nájdete na dokumente{' '}
         <strong>&quot;Potvrdenie o zdaniteľných príjmoch&quot;</strong> (ročné
-        zúčtovanie) od zamestnávateľa - II. oddiel. Nižšie je pri každom
-        poli uvedené číslo riadku z potvrdenia.
+        zúčtovanie) od zamestnávateľa - II. oddiel.
       </InfoBox>
 
       <SectionCard title="Údaje z ročného zúčtovania" subtitle="Zadajte hodnoty z potvrdenia od zamestnávateľa">
@@ -45,6 +45,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 36: Úhrn príjmov"
             hint="Potvrdenie → II. oddiel, riadok 01"
             required
+            error={showErrors && !data.r36 ? 'Povinné pole' : undefined}
           >
             <Input
               type="number"
@@ -60,6 +61,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 37: Úhrn povinného poistného"
             hint="Potvrdenie → II. oddiel, riadok 02 (súčet sociálneho a zdravotného poistenia)"
             required
+            error={showErrors && !data.r37 ? 'Povinné pole' : undefined}
           >
             <Input
               type="number"
@@ -88,6 +90,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 131: Úhrn preddavkov na daň"
             hint="Potvrdenie → II. oddiel, riadok 04"
             required
+            error={showErrors && !data.r131 ? 'Povinné pole' : undefined}
           >
             <Input
               type="number"

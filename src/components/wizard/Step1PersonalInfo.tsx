@@ -23,9 +23,10 @@ interface Props {
   data: PersonalInfo;
   onChange: (updates: Partial<PersonalInfo>) => void;
   onImport: (file: File) => void;
+  showErrors?: boolean;
 }
 
-export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
+export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportXml = useCallback(() => {
@@ -41,6 +42,9 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
     },
     [onImport]
   );
+
+  const dicFormatError = validateDicOrRc(data.dic);
+  const dicError = showErrors && !data.dic ? 'Povinné pole' : dicFormatError ? 'Neplatný formát' : undefined;
 
   return (
     <div className="space-y-6">
@@ -80,7 +84,7 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
             hint="DIČ (10 číslic) alebo rodné číslo (YYMMDDXXXX, bez lomítka)"
             hintIcon
             required
-            error={validateDicOrRc(data.dic)}
+            error={dicError}
           >
             <Input
               value={data.dic}
@@ -108,14 +112,14 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Meno" required>
+            <FormField label="Meno" required error={showErrors && !data.meno ? 'Povinné pole' : undefined}>
               <Input
                 value={data.meno}
                 onChange={(e) => onChange({ meno: e.target.value })}
                 placeholder="Ján"
               />
             </FormField>
-            <FormField label="Priezvisko" required>
+            <FormField label="Priezvisko" required error={showErrors && !data.priezvisko ? 'Povinné pole' : undefined}>
               <Input
                 value={data.priezvisko}
                 onChange={(e) => onChange({ priezvisko: e.target.value })}
@@ -130,7 +134,7 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <FormField label="Ulica" required>
+              <FormField label="Ulica" required error={showErrors && !data.ulica ? 'Povinné pole' : undefined}>
                 <Input
                   value={data.ulica}
                   onChange={(e) => onChange({ ulica: e.target.value })}
@@ -138,7 +142,7 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
                 />
               </FormField>
             </div>
-            <FormField label="Číslo" required>
+            <FormField label="Číslo" required error={showErrors && !data.cislo ? 'Povinné pole' : undefined}>
               <Input
                 value={data.cislo}
                 onChange={(e) => onChange({ cislo: e.target.value })}
@@ -148,7 +152,7 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <FormField label="PSČ" required>
+            <FormField label="PSČ" required error={showErrors && !data.psc ? 'Povinné pole' : undefined}>
               <Input
                 value={data.psc}
                 onChange={(e) => onChange({ psc: e.target.value })}
@@ -157,7 +161,7 @@ export function Step1PersonalInfo({ data, onChange, onImport }: Props) {
               />
             </FormField>
             <div className="col-span-2">
-              <FormField label="Obec" required>
+              <FormField label="Obec" required error={showErrors && !data.obec ? 'Povinné pole' : undefined}>
                 <Input
                   value={data.obec}
                   onChange={(e) => onChange({ obec: e.target.value })}
