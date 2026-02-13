@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
 import { SectionCard, InfoBox } from '@/components/ui/FormField';
-import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight } from 'lucide-react';
 
 interface ValidationWarning {
   step: number;
@@ -487,54 +487,111 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
         )}
       </div>
 
-      {/* Export + Validation */}
-      <div className="flex flex-col gap-3">
-        {warnings.length > 0 && (
-          <p className="text-xs text-amber-600 text-center">
-            <AlertTriangle className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" />
-            XML bude obsahovať neúplné údaje. Doplňte chýbajúce polia vyššie.
-          </p>
-        )}
-        <button
-          onClick={onDownloadXml}
-          className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-medium transition-all duration-200 ${
-            warnings.length > 0
-              ? 'bg-gray-400 border border-gray-400 text-white hover:bg-gray-500 hover:border-gray-500'
-              : 'bg-gray-900 border border-gray-900 text-white hover:bg-gray-800 hover:border-gray-800'
-          }`}
-        >
-          <Download className="w-5 h-5" />
-          Stiahnuť XML súbor
-        </button>
-        <a
-          href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl
-            bg-emerald-600 border border-emerald-600 text-white font-medium text-center
-            hover:bg-emerald-500 hover:border-emerald-500 transition-all duration-200"
-        >
-          <FileText className="w-4 h-4 flex-shrink-0" />
-          Overiť vo vzore formulára (otvorí FS)
-        </a>
-        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800">
-          <p className="font-medium mb-1">Pre nahranie XML do formulara FS:</p>
-          <p>
-            Kliknite <strong>&quot;Nacitaj&quot;</strong> na nahranie suboru, potom <strong>&quot;Skontroluj&quot;</strong> na prepocitanie vsetkych hodnot.
-          </p>
+      {/* Filing Steps */}
+      <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
+        <div className="px-6 pt-6 pb-4">
+          <h2 className="text-base font-semibold text-gray-900">Ako podať daňové priznanie</h2>
         </div>
-        <p className="text-center text-xs text-gray-400">
-          XML nahrate a DPFO podáte cez{' '}
-          <a
-            href="https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-gray-600 underline decoration-gray-300 hover:text-gray-900"
-          >
-            financnasprava.sk
-          </a>
-          {' '}(prihlasenie eID / KEP)
-        </p>
+
+        {/* Warning banner inside the card */}
+        {warnings.length > 0 && (
+          <div className="mx-6 mb-4 flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 leading-relaxed">
+              XML bude obsahovať neúplné údaje. <button type="button" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="underline decoration-amber-300 hover:decoration-amber-500 font-medium">Doplňte chýbajúce polia</button> vyššie.
+            </p>
+          </div>
+        )}
+
+        <div className="px-6 pb-6 space-y-0">
+          {/* Step 1: Download */}
+          <div className="relative pl-10 pb-6">
+            {/* Connector line */}
+            <div className="absolute left-[15px] top-7 bottom-0 w-px bg-gray-200" />
+            {/* Step number */}
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold">
+              1
+            </div>
+            <div className="pt-1">
+              <h3 className="text-sm font-semibold text-gray-900">Stiahnite XML súbor</h3>
+              <p className="text-xs text-gray-500 mt-0.5 mb-3">Vygenerovaný súbor s vašimi údajmi pre Finančnú správu.</p>
+              <button
+                onClick={onDownloadXml}
+                className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 ${
+                  warnings.length > 0
+                    ? 'bg-gray-100 border border-gray-300 text-gray-600 hover:bg-gray-200'
+                    : 'bg-emerald-600 border border-emerald-600 text-white hover:bg-emerald-500 hover:border-emerald-500'
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                Stiahnuť XML
+              </button>
+            </div>
+          </div>
+
+          {/* Step 2: Verify */}
+          <div className="relative pl-10 pb-6">
+            {/* Connector line */}
+            <div className="absolute left-[15px] top-7 bottom-0 w-px bg-gray-200" />
+            {/* Step number */}
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-500 flex items-center justify-center text-xs font-bold">
+              2
+            </div>
+            <div className="pt-1">
+              <h3 className="text-sm font-semibold text-gray-900">Overte vo vzore formulára</h3>
+              <p className="text-xs text-gray-500 mt-0.5 mb-1">
+                Otvorte vzor na stránke FS a nahrajte stiahnutý XML:
+              </p>
+              <ol className="text-xs text-gray-500 mb-3 space-y-0.5 list-none">
+                <li className="flex items-start gap-1.5">
+                  <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span>Kliknite <strong className="text-gray-700">&quot;Načítaj&quot;</strong> na nahranie súboru</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span>Kliknite <strong className="text-gray-700">&quot;Skontroluj&quot;</strong> na prepočítanie hodnôt</span>
+                </li>
+              </ol>
+              <a
+                href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+                  bg-white border border-gray-200 text-gray-700
+                  hover:border-gray-400 hover:text-gray-900 transition-all duration-200"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                Otvoriť vzor formulára
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </a>
+            </div>
+          </div>
+
+          {/* Step 3: Submit */}
+          <div className="relative pl-10">
+            {/* Step number */}
+            <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 text-gray-500 flex items-center justify-center text-xs font-bold">
+              3
+            </div>
+            <div className="pt-1">
+              <h3 className="text-sm font-semibold text-gray-900">Podajte cez portál FS</h3>
+              <p className="text-xs text-gray-500 mt-0.5 mb-3">
+                Prihláste sa cez eID alebo KEP a nahrajte overený XML súbor.
+              </p>
+              <a
+                href="https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
+                  bg-white border border-gray-200 text-gray-700
+                  hover:border-gray-400 hover:text-gray-900 transition-all duration-200"
+              >
+                financnasprava.sk
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
