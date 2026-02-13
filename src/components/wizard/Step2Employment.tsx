@@ -31,7 +31,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
         <br />
         Všetky hodnoty nájdete na dokumente{' '}
         <strong>&quot;Potvrdenie o zdaniteľných príjmoch&quot;</strong> (ročné
-        zúčtovanie) od zamestnávateľa - oddiel IV a V. Nižšie je pri každom
+        zúčtovanie) od zamestnávateľa - II. oddiel. Nižšie je pri každom
         poli uvedené číslo riadku z potvrdenia.
       </InfoBox>
 
@@ -39,7 +39,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
         <div className="space-y-5">
           <FormField
             label="r. 36: Úhrn príjmov"
-            hint="Potvrdenie → oddiel IV, riadok 01"
+            hint="Potvrdenie → II. oddiel, riadok 01"
             required
           >
             <Input
@@ -54,7 +54,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
 
           <FormField
             label="r. 37: Úhrn povinného poistného"
-            hint="Potvrdenie → oddiel IV, riadok 02 (súčet sociálneho a zdravotného poistenia)"
+            hint="Potvrdenie → II. oddiel, riadok 02 (súčet sociálneho a zdravotného poistenia)"
             required
           >
             <Input
@@ -82,7 +82,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
 
           <FormField
             label="r. 131: Úhrn preddavkov na daň"
-            hint="Potvrdenie → oddiel V, riadok 04"
+            hint="Potvrdenie → II. oddiel, riadok 04"
             required
           >
             <Input
@@ -97,7 +97,7 @@ export function Step2Employment({ data, onChange, calculatedR38 }: Props) {
 
           <FormField
             label="r. 36a: Príjmy z dohôd"
-            hint="Potvrdenie → oddiel IV, riadok 01a (len ak ste mali príjmy z dohôd)"
+            hint="Potvrdenie → II. oddiel, riadok 01a (len ak ste mali príjmy z dohôd)"
           >
             <Input
               type="number"
