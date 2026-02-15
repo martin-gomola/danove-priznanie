@@ -28,6 +28,8 @@ interface WizardLayoutProps {
   onImport: (file: File) => void;
   lastSaved: string;
   saveStatus?: 'saving' | 'saved' | 'error';
+  /** When false the right-hand notes strip is hidden (e.g. on steps with no margin notes). */
+  hasAsideNotes?: boolean;
   children: React.ReactNode;
 }
 
@@ -43,6 +45,7 @@ export function WizardLayout({
   onImport,
   lastSaved,
   saveStatus = 'saved',
+  hasAsideNotes = true,
   children,
 }: WizardLayoutProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -73,14 +76,14 @@ export function WizardLayout({
     <div className="min-h-screen flex flex-col bg-stone-50 text-gray-900 paper-bg">
       {/* Info notice */}
       {!noticeDismissed && (
-        <div className="shrink-0 bg-slate-800 text-slate-200 text-xs relative z-50">
+        <div className="shrink-0 bg-slate-800 text-slate-200 relative z-50">
           <div className="max-w-4xl mx-auto px-6 py-2.5 flex items-start gap-3">
             <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div className="flex-1 space-y-0.5">
-              <p className="font-medium text-slate-100">
+              <p className="text-sm font-medium text-slate-100">
               LocalStorage only architecture
               </p>
-              <p className="text-slate-400 leading-relaxed">
+              <p className="text-xs text-slate-400 leading-relaxed">
                 Aplikácia pokrýva priznanie pre <span className="text-slate-300">zamestnanca s príjmom z dividend a podielových fondov</span>.
                 Dáta sú uložené v localStorage vášho prehliadača, nič sa neposiela na server.
                 Exportujte XML pravidelne, dáta sa stratia pri vymazaní cache.
@@ -133,15 +136,15 @@ export function WizardLayout({
             {/* Actions toolbar */}
             <div className="flex items-center gap-1">
               {lastSaved && (
-                <span className="hidden md:inline text-xs tabular-nums mr-2 transition-colors duration-200">
+                <span className="hidden md:flex items-center text-xs tabular-nums mr-2 transition-colors duration-200">
                   {saveStatus === 'saving' ? (
-                    <span className="text-amber-500 flex items-center gap-0.5">
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="text-amber-500 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
                       Ukladám...
                     </span>
                   ) : (
-                    <span className="text-gray-600">
-                      <Save className="w-3 h-3 inline mr-0.5 opacity-40" />
+                    <span className="text-gray-600 flex items-center gap-1">
+                      <Save className="w-3 h-3 opacity-40" />
                       {new Date(lastSaved).toLocaleTimeString('sk-SK')}
                     </span>
                   )}
@@ -233,7 +236,7 @@ export function WizardLayout({
       </div>
 
       {/* Content - 2xl: wide left column (max-w-6xl), gap + notes strip; extra bottom padding so last block isn't hidden by footer */}
-      <main className="relative flex-1 max-w-4xl 2xl:max-w-6xl w-full mx-auto 2xl:mr-auto 2xl:ml-[max(1.5rem,calc(50vw-576px))] 2xl:pr-[18.5rem] px-6 pt-8 pb-24 before:content-[''] before:absolute before:top-0 before:right-0 before:bottom-0 before:w-64 before:2xl:w-[17rem] before:bg-stone-100/60 before:border-l before:border-stone-200 before:hidden 2xl:before:block">
+      <main className={`relative flex-1 max-w-4xl w-full mx-auto px-6 pt-8 pb-24 ${hasAsideNotes ? "2xl:max-w-6xl 2xl:mr-auto 2xl:ml-[max(1.5rem,calc(50vw-576px))] 2xl:pr-[18.5rem] before:content-[''] before:absolute before:top-0 before:right-0 before:bottom-0 before:w-64 before:2xl:w-[17rem] before:bg-stone-100/60 before:border-l before:border-stone-200 before:hidden 2xl:before:block" : ''}`}>
         {children}
       </main>
 
@@ -279,7 +282,7 @@ export function WizardLayout({
           </div>
           <div className="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-gray-100">
             <p className="text-xs text-gray-600 text-center">
-              This application is provided as-is for informational purposes.
+              Táto aplikácia sa poskytuje v stave „tak, ako je“, na informačné účely.
             </p>
             <a
               href="https://github.com/martin-gomola/danove-priznanie"

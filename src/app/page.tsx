@@ -182,6 +182,9 @@ export default function Home() {
     }
   };
 
+  // Steps 0 (Osobné údaje) and 7 (Súhrn) have no margin notes
+  const hasAsideNotes = form.currentStep !== 0 && form.currentStep !== STEP_LABELS.length - 1;
+
   return (
     <WizardLayout
       currentStep={form.currentStep}
@@ -195,6 +198,7 @@ export default function Home() {
       onImport={importXml}
       lastSaved={form.lastSaved}
       saveStatus={saveStatus}
+      hasAsideNotes={hasAsideNotes}
     >
       {renderStep()}
     </WizardLayout>
