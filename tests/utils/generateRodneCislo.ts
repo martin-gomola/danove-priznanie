@@ -82,7 +82,7 @@ function calculateCheckDigit(nineDigits: string, year: number): string | null {
   const checkDigit = 11 - remainder;
 
   if (checkDigit === 10) {
-    // Special case: 1954–1985 allows using 0 when check digit would be 10
+    // Special case: 1954-1985 allows using 0 when check digit would be 10
     if (year >= 1954 && year <= 1985) return '0';
     return null; // Need different serial
   }

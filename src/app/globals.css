@@ -84,6 +84,16 @@ input[type="checkbox"] {
   border-radius: 4px;
 }
 
+/* Intro modal animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Very faint paper grain overlay (optional on stone background) */
 .paper-bg {
   position: relative;

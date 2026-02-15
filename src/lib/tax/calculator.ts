@@ -138,7 +138,7 @@ function calculateProgressiveTax(taxBase: Decimal): Decimal {
 
 /**
  * Calculate child tax bonus (§33) for 2025
- * 100 EUR/month under 15, 50 EUR/month 15–17, income phase-out above 2,145 EUR/month base.
+ * 100 EUR/month under 15, 50 EUR/month 15-17, income phase-out above 2,145 EUR/month base.
  */
 function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): Decimal {
   const childBonus = form.childBonus;
@@ -286,7 +286,7 @@ function mutualFundsSection(form: TaxFormData): MutualFundsSectionResult {
   return { totalFundIncome, totalFundExpense, r66, r67, r68 };
 }
 
-/** Oddiel VIII: Stock sales (§8 ods.1 písm.e), Tabulka 3 – held under 1 year.
+/** Oddiel VIII: Stock sales (§8 ods.1 písm.e), Tabulka 3 - held under 1 year.
  * Tax base r71 is reduced by STOCK_SHORT_TERM_EXEMPTION (500 EUR) once per return. */
 function stockSalesSection(form: TaxFormData): StockSalesSectionResult {
   let r69 = new Decimal(0);
@@ -342,7 +342,7 @@ function dividendsSection(form: TaxFormData): DividendsSectionResult {
   };
 }
 
-/** Oddiel IX: NCZD reduction, tax base §4 (r78 + r71), tax from §7, grand total (r.72–r.116). */
+/** Oddiel IX: NCZD reduction, tax base §4 (r78 + r71), tax from §7, grand total (r.72-r.116). */
 function taxCalculationSection(
   form: TaxFormData,
   r38: Decimal,
@@ -377,7 +377,7 @@ function taxCalculationSection(
   return { r72, r73, r74, r75, r77, r78, r80, r81, r90, r106, r115, r116 };
 }
 
-/** Bonuses: child (§33), mortgage (§33a), rows 117–127. */
+/** Bonuses: child (§33), mortgage (§33a), rows 117-127. */
 function bonusesSection(form: TaxFormData, r116: Decimal, r38: Decimal): BonusesSectionResult {
   const r117 = calculateChildBonus(form, r38);
   const r118 = Decimal.max(r116.minus(r117), new Decimal(0));

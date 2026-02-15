@@ -35,7 +35,7 @@ function getAgeCategoryLabel(rc: string): string {
   if (unique.length === 1) {
     const total = unique[0] * 12;
     if (unique[0] === CHILD_BONUS_UNDER_15) return `do 15 r.: ${CHILD_BONUS_UNDER_15} EUR × 12 mes = ${total} EUR/rok`;
-    if (unique[0] === CHILD_BONUS_15_TO_18) return `15–18 r.: ${CHILD_BONUS_15_TO_18} EUR × 12 mes = ${total} EUR/rok`;
+    if (unique[0] === CHILD_BONUS_15_TO_18) return `15-18 r.: ${CHILD_BONUS_15_TO_18} EUR × 12 mes = ${total} EUR/rok`;
     return '18+ r.: bez bonusu';
   }
 
@@ -135,7 +135,7 @@ export function StepChildBonus({
         label="Uplatňujem nezdaniteľnú časť na manžela/manželku (§11 ods.3)"
       />
       {spouse.enabled && (
-        <SectionCard title="Údaje o manželovi / manželke" subtitle="Riadky 31–32">
+        <SectionCard title="Údaje o manželovi / manželke" subtitle="Riadky 31-32">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               label="Priezvisko a meno"
@@ -171,7 +171,7 @@ export function StepChildBonus({
                 placeholder="0.00"
               />
             </FormField>
-            <FormField label="Počet mesiacov nároku" hint="r.32: 1–12 mesiacov so spoločnou domácnosťou">
+            <FormField label="Počet mesiacov nároku" hint="r.32: 1-12 mesiacov so spoločnou domácnosťou">
               <Input
                 type="number"
                 min={1}
@@ -201,7 +201,7 @@ export function StepChildBonus({
         <>
           <p className="text-xs text-gray-600">
             V roku 2025: <strong className="text-gray-700">{CHILD_BONUS_UNDER_15} EUR</strong>/mesiac do 15 r.,{' '}
-            <strong className="text-gray-700">{CHILD_BONUS_15_TO_18} EUR</strong>/mesiac 15–18 r. Bonus sa znižuje pri vyššom príjme.
+            <strong className="text-gray-700">{CHILD_BONUS_15_TO_18} EUR</strong>/mesiac 15-18 r. Bonus sa znižuje pri vyššom príjme.
           </p>
           {showErrors && !hasCompleteChild && (
             <InfoBox variant="warning">Pridajte aspoň 1 dieťa.</InfoBox>

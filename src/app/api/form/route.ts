@@ -11,7 +11,7 @@ import { NextRequest } from 'next/server';
  * - Each browser session generates a random UUID token (stored in localStorage).
  * - POST requires Authorization: Bearer <session-token>.
  * - GET requires ?session=<token> query param to scope data retrieval.
- * - Tokens are random UUIDs (128-bit entropy) – practically unguessable.
+ * - Tokens are random UUIDs (128-bit entropy) - practically unguessable.
  * - Pending data expires after 60 seconds and sessions are cleaned up automatically.
  *
  * Multi-user safe: each session token has its own isolated pending update.

@@ -14,6 +14,7 @@ import { StepChildBonus } from '@/components/wizard/StepChildBonus';
 import { Step6TwoPercent } from '@/components/wizard/Step6TwoPercent';
 import { Step7Review } from '@/components/wizard/Step7Review';
 import { useToast } from '@/components/ui/Toast';
+import { IntroModal } from '@/components/ui/IntroModal';
 import { getStepBlockingIssues } from '@/lib/validation/wizard';
 
 const STEP_LABELS = [
@@ -186,6 +187,8 @@ export default function Home() {
   const hasAsideNotes = form.currentStep !== 0 && form.currentStep !== STEP_LABELS.length - 1;
 
   return (
+    <>
+    <IntroModal />
     <WizardLayout
       currentStep={form.currentStep}
       totalSteps={STEP_LABELS.length}
@@ -202,5 +205,6 @@ export default function Home() {
     >
       {renderStep()}
     </WizardLayout>
+    </>
   );
 }

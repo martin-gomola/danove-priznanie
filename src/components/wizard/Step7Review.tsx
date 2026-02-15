@@ -193,7 +193,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
 
       {/* Stock Sales Section (§8) */}
       {form.stockSales.enabled && (
-        <SectionCard title="Oddiel VIII: Ostatné príjmy (§8) – predaj akcií">
+        <SectionCard title="Oddiel VIII: Ostatné príjmy (§8) - predaj akcií">
           <div className="space-y-0.5">
             <Row row="r.69" label="Úhrn príjmov z tabuľky 3" value={calc.r69} />
             <Row row="r.70" label="Úhrn výdavkov z tabuľky 3" value={calc.r70} />

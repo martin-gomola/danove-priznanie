@@ -10,11 +10,8 @@ import {
   FileUp,
   Terminal,
   GithubIcon,
-  Info,
-  X,
+  HardDrive,
 } from 'lucide-react';
-
-const NOTICE_DISMISSED_KEY = 'dane-priznanie-notice-dismissed';
 
 interface WizardLayoutProps {
   currentStep: number;
@@ -49,16 +46,6 @@ export function WizardLayout({
   children,
 }: WizardLayoutProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const [noticeDismissed, setNoticeDismissed] = React.useState(true); // default hidden to avoid flash
-
-  React.useEffect(() => {
-    setNoticeDismissed(localStorage.getItem(NOTICE_DISMISSED_KEY) === '1');
-  }, []);
-
-  const dismissNotice = () => {
-    setNoticeDismissed(true);
-    localStorage.setItem(NOTICE_DISMISSED_KEY, '1');
-  };
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -74,32 +61,6 @@ export function WizardLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-stone-50 text-gray-900 paper-bg">
-      {/* Info notice */}
-      {!noticeDismissed && (
-        <div className="shrink-0 bg-slate-800 text-slate-200 relative z-50">
-          <div className="max-w-4xl mx-auto px-6 py-2.5 flex items-start gap-3">
-            <Info className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-0.5">
-              <p className="text-sm font-medium text-slate-100">
-              LocalStorage only architecture
-              </p>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Aplikácia pokrýva priznanie pre <span className="text-slate-300">zamestnanca s príjmom z dividend a podielových fondov</span>.
-                Dáta sú uložené v localStorage vášho prehliadača, nič sa neposiela na server.
-                Exportujte XML pravidelne, dáta sa stratia pri vymazaní cache.
-              </p>
-            </div>
-            <button
-              onClick={dismissNotice}
-              className="p-1 rounded hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition-colors shrink-0 mt-0.5"
-              aria-label="Zavrieť"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="shrink-0 border-b border-gray-200 bg-white/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 sm:py-3">
@@ -135,6 +96,19 @@ export function WizardLayout({
 
             {/* Actions toolbar */}
             <div className="flex items-center gap-1">
+              {/* Persistent "Lokálne" badge with hover popover */}
+              <div className="relative group hidden sm:block mr-1.5">
+                <span className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-stone-100 border border-stone-200/80 text-stone-500 text-xs cursor-default select-none">
+                  <HardDrive className="w-3 h-3" />
+                  localStorage
+                </span>
+                <div className="absolute right-0 top-full mt-1.5 w-56 px-3 py-2.5 rounded-lg bg-gray-900 text-gray-200 text-xs leading-relaxed shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 z-50">
+                  <p>Dáta sú uložené výlučne v prehliadači (localStorage).</p>
+                  <p className="text-gray-400 mt-1">Exportujte XML pravidelne - dáta sa stratia pri vymazaní cache.</p>
+                  <div className="absolute -top-1 right-4 w-2 h-2 bg-gray-900 rotate-45" />
+                </div>
+              </div>
+
               {lastSaved && (
                 <span className="hidden md:flex items-center text-xs tabular-nums mr-2 transition-colors duration-200">
                   {saveStatus === 'saving' ? (

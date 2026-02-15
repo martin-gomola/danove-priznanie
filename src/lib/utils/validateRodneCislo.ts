@@ -2,10 +2,10 @@
  * Slovak/Czech birth number (rodné číslo) validator.
  *
  * Format: YYMMDD/XXXX (10 digits) or YYMMDD/XXX (9 digits, pre-1954)
- * - Males: month 01–12 (or 21–32 for alternative post-2004)
- * - Females: month 51–62 (or 71–82 for alternative post-2004)
+ * - Males: month 01-12 (or 21-32 for alternative post-2004)
+ * - Females: month 51-62 (or 71-82 for alternative post-2004)
  * - Post-1953: full 10-digit number must be divisible by 11
- *   (exception 1954–1985: if remainder is 10, last digit may be 0)
+ *   (exception 1954-1985: if remainder is 10, last digit may be 0)
  *
  * Inspired by: slovensko-digital/priznanie-digital PR #1070
  * Source: https://sk.wikipedia.org/wiki/Rodné_číslo
@@ -54,7 +54,7 @@ export function validateRodneCislo(input: string): RodneCisloValidation {
     return { valid: false, error: 'Neplatný mesiac v rodnom čísle' };
   }
 
-  // Validate day (basic 1–31 check)
+  // Validate day (basic 1-31 check)
   if (dayPart < 1 || dayPart > 31) {
     return { valid: false, error: 'Neplatný deň v rodnom čísle' };
   }
@@ -87,7 +87,7 @@ export function validateRodneCislo(input: string): RodneCisloValidation {
     const lastDigit = parseInt(clean.substring(9), 10);
 
     const isDivisibleBy11 = num % 11 === 0;
-    // Special case 1954–1985: if first 9 digits mod 11 == 10, last digit may be 0
+    // Special case 1954-1985: if first 9 digits mod 11 == 10, last digit may be 0
     const isSpecialCase = fullYear >= 1954 && fullYear <= 1985 && firstNine % 11 === 10 && lastDigit === 0;
 
     if (!isDivisibleBy11 && !isSpecialCase) {

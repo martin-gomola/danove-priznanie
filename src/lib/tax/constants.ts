@@ -31,7 +31,7 @@ export const NCZD_SPOUSE_ZAKLAD = 19.2 * ZIVOTNE_MINIMUM; // 5,260.61 EUR
 export const NCZD_SPOUSE_MULTIPLIER_HIGH = 63.4 * ZIVOTNE_MINIMUM; // 17,370.97 EUR
 
 // ── NCZD for III. pillar DDS (§11 ods. 8) ────────────────────────────
-// Príspevky na doplnkové dôchodkové sporenie – max odpočítateľná suma za rok
+// Príspevky na doplnkové dôchodkové sporenie - max odpočítateľná suma za rok
 export const DDS_MAX = 180; // EUR/year
 
 // ── Tax rates ────────────────────────────────────────────────────────

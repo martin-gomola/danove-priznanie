@@ -129,7 +129,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
             <MarginNotePanel section="§8, §9" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-8">
               {noteSection8Law}
             </MarginNotePanel>
-            <MarginNotePanel href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
+            <MarginNotePanel href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk - daň z akcií a ETF">
               {noteSection8Blog}
             </MarginNotePanel>
           </>
@@ -275,14 +275,14 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
       {stockData.enabled && (
         <>
           <InfoBox variant="warning">
-            Príjem z predaja akcií držaných <strong>menej ako 365 dní</strong> sa zdaňuje ako <strong>ostatný príjem (§8)</strong> – započíta sa do základu dane (r.80) spolu so mzdou a zdaňuje sa <strong>progresívnou sadzbou 19&nbsp;/&nbsp;25&nbsp;%</strong>. Základ dane sa znižuje o <strong>oslobodenie do 500&nbsp;EUR</strong> (raz za priznanie). Strata v rámci §8 môže znížiť zisk (základ sa neprepočítava do mínusa).
+            Príjem z predaja akcií držaných <strong>menej ako 365 dní</strong> sa zdaňuje ako <strong>ostatný príjem (§8)</strong> - započíta sa do základu dane (r.80) spolu so mzdou a zdaňuje sa <strong>progresívnou sadzbou 19&nbsp;/&nbsp;25&nbsp;%</strong>. Základ dane sa znižuje o <strong>oslobodenie do 500&nbsp;EUR</strong> (raz za priznanie). Strata v rámci §8 môže znížiť zisk (základ sa neprepočítava do mínusa).
           </InfoBox>
 
           <SectionCard title="Predaj akcií (§8)" subtitle="Tabuľka 3: cenné papiere držané menej ako 1 rok">
             <MarginNote skipDesktopAside section="§8, §9" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-8">
               {noteSection8Law}
             </MarginNote>
-            <MarginNote skipDesktopAside href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
+            <MarginNote skipDesktopAside href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk - daň z akcií a ETF">
               {noteSection8Blog}
             </MarginNote>
             <div className="space-y-4">

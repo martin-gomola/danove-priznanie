@@ -9,7 +9,7 @@ interface Props {
   data: EmploymentIncome;
   onChange: (updates: Partial<EmploymentIncome>) => void;
   calculatedR38: string;
-  /** IX. ODDIEL – zníženie ZD o príspevky na DDS (§11 ods.8), r.75 */
+  /** IX. ODDIEL - zníženie ZD o príspevky na DDS (§11 ods.8), r.75 */
   dds: DDSContributions;
   onDdsChange: (updates: Partial<DDSContributions>) => void;
   calculatedR75?: string;
@@ -115,7 +115,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
       </SectionCard>
       </div>
 
-      {/* IX. ODDIEL – nezdaniteľná časť ZD (§11) a DDS (r.75) */}
+      {/* IX. ODDIEL - nezdaniteľná časť ZD (§11) a DDS (r.75) */}
       <div className="pt-6 border-t border-gray-200">
         <Toggle
           enabled={dds.enabled}

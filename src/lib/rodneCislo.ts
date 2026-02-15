@@ -1,7 +1,7 @@
 /**
  * Slovak rodné číslo (birth number) parser for tax form.
  * Format: YYMMDD or YYMMDD/XXXX (women have month + 50, e.g. 12 → 62).
- * Year: 00–23 → 2000–2023, 24–99 → 1924–1999 (commonly used convention).
+ * Year: 00-23 → 2000-2023, 24-99 → 1924-1999 (commonly used convention).
  */
 
 export interface BirthDate {
@@ -37,7 +37,7 @@ export function ageAt(birth: BirthDate, year: number, month: number): number {
 }
 
 /**
- * Get monthly bonus rate in EUR for 2025 rules: 100 (under 15), 50 (15–17), 0 (18+).
+ * Get monthly bonus rate in EUR for 2025 rules: 100 (under 15), 50 (15-17), 0 (18+).
  */
 export function getMonthlyBonusRateForAge(age: number): number {
   if (age < 15) return 100;
@@ -46,7 +46,7 @@ export function getMonthlyBonusRateForAge(age: number): number {
 }
 
 /**
- * For a child with given birth date, return 12 rates (EUR) for months 1–12 of 2025.
+ * For a child with given birth date, return 12 rates (EUR) for months 1-12 of 2025.
  */
 export function getMonthlyRates2025(birth: BirthDate): number[] {
   const rates: number[] = [];

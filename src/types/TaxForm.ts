@@ -66,7 +66,7 @@ export interface MutualFundSales {
   entries: MutualFundEntry[];
 }
 
-// ── Stock Sales (§8 ods.1 písm.e, Tabulka 3 – held under 1 year) ─────
+// ── Stock Sales (§8 ods.1 písm.e, Tabulka 3 - held under 1 year) ─────
 export interface StockEntry {
   id: string;
   ticker: string;
@@ -96,7 +96,7 @@ export interface SpouseNCZD {
   priezviskoMeno: string; // r.31
   rodneCislo: string; // r.31
   vlastnePrijmy: string; // r.32 - spouse's own income (EUR)
-  pocetMesiacov: string; // r.32 - months qualifying (1–12)
+  pocetMesiacov: string; // r.32 - months qualifying (1-12)
 }
 
 // ── III. pillar DDS (Oddiel III, §11 ods.8 - príspevky na doplnkové dôchodkové sporenie)
@@ -110,7 +110,7 @@ export interface ChildEntry {
   id: string;
   priezviskoMeno: string; // child's full name (surname first)
   rodneCislo: string; // birth number (YYMMDD/XXXX) - determines age
-  months: boolean[]; // 12 booleans for m01–m12 (eligibility per month)
+  months: boolean[]; // 12 booleans for m01-m12 (eligibility per month)
   wholeYear: boolean; // convenience: all 12 months
 }
 
@@ -186,7 +186,7 @@ export interface TaxCalculationResult {
   r67: string; // úhrn výdavkov z tabuľky 2 (= totalFundExpense)
   r68: string; // osobitný základ dane z §7 = max(r66 - r67, 0)
 
-  // ── Oddiel VIII: Other income (§8, Tabulka 3 – stocks held under 1 year)
+  // ── Oddiel VIII: Other income (§8, Tabulka 3 - stocks held under 1 year)
   r69: string; // úhrn príjmov z tabuľky 3
   r70: string; // úhrn výdavkov z tabuľky 3
   r71: string; // osobitný základ dane z §8 = max(r69 - r70, 0)

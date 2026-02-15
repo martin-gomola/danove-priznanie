@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { TaxFormData, DEFAULT_TAX_FORM } from '@/types/TaxForm';
 import { parseDpfoXmlToFormData } from '@/lib/utils/parseDpfoXml';
 import { useToast } from '@/components/ui/Toast';
+import { INTRO_DISMISSED_KEY } from '@/components/ui/IntroModal';
 
 const STORAGE_KEY = 'dane-priznanie-2025';
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
@@ -272,6 +273,7 @@ export function useTaxForm() {
     markSaving();
     setForm(DEFAULT_TAX_FORM);
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(INTRO_DISMISSED_KEY);
   }, [markSaving]);
 
   /** Import form from DPFO XML (same format as real form / export). */

@@ -140,8 +140,8 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const taxAfterCredit = Decimal.max(slovakTax.minus(creditableAmount), new Decimal(0));
 
   const note51e = <>Zákon č. 595/2003 Z.z. §51e:<br />Sadzba dane z podielov na zisku (dividendy) 7 %.</>;
-  const noteUsdEur = <>Údaje o kurze: ECB – ročný priemer USD/EUR.</>;
-  const noteCzkEur = <>Údaje o kurze: ECB – ročný priemer CZK/EUR.</>;
+  const noteUsdEur = <>Údaje o kurze: ECB - ročný priemer USD/EUR.</>;
+  const noteCzkEur = <>Údaje o kurze: ECB - ročný priemer CZK/EUR.</>;
 
   return (
     <div className="relative">
@@ -153,12 +153,12 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
           {note51e}
         </MarginNotePanel>
         {data.enabled && hasUsdEntries && (
-          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB – kurz USD/EUR (údaje)">
+          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB - kurz USD/EUR (údaje)">
             {noteUsdEur}
           </MarginNotePanel>
         )}
         {data.enabled && hasCzkEntries && (
-          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB – kurz CZK/EUR (údaje)">
+          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB - kurz CZK/EUR (údaje)">
             {noteCzkEur}
           </MarginNotePanel>
         )}
@@ -187,7 +187,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
           <>
             {hasUsdEntries && (
               <SectionCard title="Kurz USD/EUR" subtitle="Prepočet dividend na EUR (ročný priemer)">
-              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB – kurz USD/EUR (údaje)">
+              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.USD.EUR.SP00.A" hrefLabel="ECB - kurz USD/EUR (údaje)">
                 {noteUsdEur}
               </MarginNote>
               <div className="space-y-3">
@@ -215,7 +215,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
 
           {hasCzkEntries && (
             <SectionCard title="Kurz CZK/EUR" subtitle="Prepočet dividend z CZK na EUR (ročný priemer)">
-              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB – kurz CZK/EUR (údaje)">
+              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB - kurz CZK/EUR (údaje)">
                 {noteCzkEur}
               </MarginNote>
               <div className="space-y-3">
