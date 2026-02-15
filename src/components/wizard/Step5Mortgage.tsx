@@ -4,6 +4,7 @@ import React from 'react';
 import { MortgageInterest } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, MarginNote, Disclosure } from '@/components/ui/FormField';
 import { MORTGAGE_MAX_OLD, MORTGAGE_MAX_NEW } from '@/lib/tax/constants';
+import { fmtEur } from '@/lib/utils/decimal';
 
 interface Props {
   data: MortgageInterest;
@@ -121,7 +122,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                     </p>
                   </div>
                   <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
-                    {calculatedBonus ? `${parseFloat(calculatedBonus).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '-- EUR'}
+                    {calculatedBonus ? `${fmtEur(calculatedBonus)} EUR` : '-- EUR'}
                   </span>
                 </div>
               </div>

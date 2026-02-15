@@ -5,6 +5,7 @@ import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, Pare
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
 interface Props {
   data: TwoPercentAllocation;
@@ -75,7 +76,7 @@ export function Step6TwoPercent({
   parentData, onParentChange, calculatedPerParent,
   showErrors = false,
 }: Props) {
-  const parentAmount = parseFloat(calculatedPerParent) || 0;
+  const parentAmount = safeDecimal(calculatedPerParent).toNumber();
   const parentCount = parentData.choice === 'both' ? 2 : parentData.choice === 'one' ? 1 : 0;
 
   const updateParent1 = (updates: Partial<ParentInfo>) => {
@@ -166,8 +167,8 @@ export function Step6TwoPercent({
                     <p className="text-xs text-gray-600 mt-0.5">Automaticky z riadku 124</p>
                   </div>
                   <span className="font-heading text-lg font-semibold text-gray-900 tabular-nums">
-                    {calculatedAmount && parseFloat(calculatedAmount) > 0
-                      ? `${parseFloat(calculatedAmount).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR`
+                    {calculatedAmount && safeDecimal(calculatedAmount).gt(0)
+                      ? `${fmtEur(calculatedAmount)} EUR`
                       : '-- EUR'}
                   </span>
                 </div>

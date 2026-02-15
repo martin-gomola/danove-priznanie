@@ -245,8 +245,7 @@ export function MarginNote({ section, href, hrefLabel, children, skipDesktopAsid
     <>
       {!skipDesktopAside && (
         <aside
-          className="hidden 2xl:block absolute top-0 mt-4 mb-6 w-56 pl-4 pr-2 py-0 border-l-2 border-stone-300/80 max-h-[22rem] overflow-y-auto break-words"
-          style={{ right: '-17rem' }}
+          className="hidden 2xl:block absolute top-0 right-[-17rem] mt-4 mb-6 w-56 pl-4 pr-2 py-0 border-l-2 border-stone-300/80 max-h-[22rem] overflow-y-auto break-words"
         >
           {section && (
             <span className="block font-mono text-[10px] uppercase tracking-widest text-stone-500 mb-1.5">

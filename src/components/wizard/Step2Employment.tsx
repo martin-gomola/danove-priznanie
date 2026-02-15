@@ -3,6 +3,7 @@
 import React from 'react';
 import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, MarginNote, Toggle } from '@/components/ui/FormField';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
 interface Props {
   data: EmploymentIncome;
@@ -76,7 +77,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
                 <p className="text-xs text-gray-600 mt-0.5">r.36 − r.37 (zodpovedá riadku 03 na potvrdení)</p>
               </div>
               <span className="font-heading text-lg font-semibold text-gray-900 tabular-nums">
-                {calculatedR38 ? `${parseFloat(calculatedR38).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '- EUR'}
+                {calculatedR38 ? `${fmtEur(calculatedR38)} EUR` : '- EUR'}
               </span>
             </div>
           </div>
@@ -137,10 +138,10 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
                 suffix="EUR"
               />
             </FormField>
-            {calculatedR75 != null && parseFloat(calculatedR75) > 0 && parseFloat(calculatedR75) < parseFloat(dds.prispevky || '0') && (
+            {calculatedR75 != null && safeDecimal(calculatedR75).gt(0) && safeDecimal(calculatedR75).lt(safeDecimal(dds.prispevky)) && (
               <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
                 <span className="text-slate-500">NCZD na DDS (r.75):</span>{' '}
-                <strong className="font-heading tabular-nums">{parseFloat(calculatedR75).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+                <strong className="font-heading tabular-nums">{fmtEur(calculatedR75)} EUR</strong>
                 <span className="text-slate-500 ml-1">(max. limit)</span>
               </div>
             )}

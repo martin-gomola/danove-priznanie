@@ -6,6 +6,7 @@ import { STOCK_SHORT_TERM_EXEMPTION } from '@/lib/tax/constants';
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel } from '@/components/ui/FormField';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
+import { safeDecimal } from '@/lib/utils/decimal';
 
 interface Props {
   data: MutualFundSales;
@@ -18,7 +19,7 @@ interface Props {
 export function Step4MutualFunds({ data, onChange, stockData, onStockChange, showErrors = false }: Props) {
   const addEntry = useCallback(() => {
     const newEntry: MutualFundEntry = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       fundName: '',
       purchaseAmount: '',
       saleAmount: '',
@@ -56,7 +57,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
 
   const addStockEntry = useCallback(() => {
     const newEntry: StockEntry = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       ticker: '',
       purchaseAmount: '',
       saleAmount: '',
@@ -89,9 +90,9 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
     try { return sum.plus(new Decimal(e.purchaseAmount || '0')); } catch { return sum; }
   }, new Decimal(0));
   const stockProfit = Decimal.max(stockIncome.minus(stockExpense), new Decimal(0));
-  const hasFundSale = data.entries.some((entry) => parseFloat(entry.saleAmount) > 0);
+  const hasFundSale = data.entries.some((entry) => safeDecimal(entry.saleAmount).gt(0));
   const hasStockTrade = stockData.entries.some(
-    (entry) => parseFloat(entry.saleAmount) > 0 || parseFloat(entry.purchaseAmount) > 0
+    (entry) => safeDecimal(entry.saleAmount).gt(0) || safeDecimal(entry.purchaseAmount).gt(0)
   );
 
   const noteSection78 = (
@@ -104,18 +105,18 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
       Zadajte každý fond osobitne: kúpna cena (investícia vrátane poplatkov) a predajná cena (výnos). Daň zo zisku, jednotná sadzba 19 %.
     </>
   );
-  const noteSection8 = (
-    <>
-      Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i.<br />Ďalší postup: akcie.sk (daň z akcií, ETF).
-    </>
+  const noteSection8Law = (
+    <>Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i.<br />Príjem z predaja cenných papierov držaných menej ako 1 rok. Oslobodenie do 500 EUR (§9 ods.1 písm.i).</>
+  );
+  const noteSection8Blog = (
+    <>Praktický návod na zdanenie akcií, ETF a cenných papierov.</>
   );
 
   return (
     <div className="relative">
       {/* Single notes column on 2xl: all panels stack with consistent gap, no layout-driven spacing */}
       <div
-        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-0 2xl:w-56 2xl:pt-1"
-        style={{ right: '-17rem' }}
+        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-[-17rem] 2xl:w-56 2xl:pt-1"
       >
         <MarginNotePanel section="§7, §8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
           {noteSection78}
@@ -124,9 +125,14 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           <MarginNotePanel>{noteFondy}</MarginNotePanel>
         )}
         {stockData.enabled && (
-          <MarginNotePanel section="§8" href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
-            {noteSection8}
-          </MarginNotePanel>
+          <>
+            <MarginNotePanel section="§8, §9" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-8">
+              {noteSection8Law}
+            </MarginNotePanel>
+            <MarginNotePanel href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
+              {noteSection8Blog}
+            </MarginNotePanel>
+          </>
         )}
       </div>
 
@@ -273,8 +279,11 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           </InfoBox>
 
           <SectionCard title="Predaj akcií (§8)" subtitle="Tabuľka 3: cenné papiere držané menej ako 1 rok">
-            <MarginNote skipDesktopAside section="§8" href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
-              {noteSection8}
+            <MarginNote skipDesktopAside section="§8, §9" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-8">
+              {noteSection8Law}
+            </MarginNote>
+            <MarginNote skipDesktopAside href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
+              {noteSection8Blog}
             </MarginNote>
             <div className="space-y-4">
               {showErrors && !hasStockTrade && (

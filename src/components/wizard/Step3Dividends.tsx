@@ -6,6 +6,7 @@ import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, Mar
 import { DIVIDEND_COUNTRIES, findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
 interface Props {
   data: ForeignDividends;
@@ -36,7 +37,7 @@ function rateForCurrency(currency: 'USD' | 'EUR' | 'CZK', ecbRate: string, czkRa
 export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const addEntry = useCallback(() => {
     const newEntry: DividendEntry = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       ticker: '',
       country: '840',
       countryName: 'USA',
@@ -123,7 +124,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const hasUsdEntries = data.entries.some((e) => (e.currency ?? 'USD') === 'USD');
   const hasCzkEntries = data.entries.some((e) => e.currency === 'CZK');
   const hasDividendEntry = data.entries.some(
-    (entry) => Boolean(entry.country) && (parseFloat(entry.amountUsd) > 0 || parseFloat(entry.amountEur) > 0)
+    (entry) => Boolean(entry.country) && (safeDecimal(entry.amountUsd).gt(0) || safeDecimal(entry.amountEur).gt(0))
   );
 
   const totalEur = data.entries.reduce((sum, e) => {
@@ -146,8 +147,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
     <div className="relative">
       {/* Single notes column on 2xl so aside panels don't overlap */}
       <div
-        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-0 2xl:w-56 2xl:pt-1"
-        style={{ right: '-17rem' }}
+        className="hidden 2xl:flex 2xl:flex-col 2xl:gap-4 2xl:absolute 2xl:top-0 2xl:right-[-17rem] 2xl:w-56 2xl:pt-1"
       >
         <MarginNotePanel section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
           {note51e}
@@ -180,7 +180,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
         <Toggle
           enabled={data.enabled}
           onToggle={(enabled) => onChange({ enabled })}
-          label="Mal/a som zahranicne dividendy"
+          label="Mal/a som zahraničné dividendy"
         />
 
         {data.enabled && (
@@ -198,6 +198,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                   <Input
                     type="number"
                     step="0.0001"
+                    min="0"
                     value={data.ecbRate}
                     onChange={(e) => handleUsdRateChange(e.target.value)}
                     placeholder="1.13"
@@ -225,6 +226,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                   <Input
                     type="number"
                     step="0.0001"
+                    min="0"
                     value={data.czkRate}
                     onChange={(e) => handleCzkRateChange(e.target.value)}
                     placeholder="25.21"
@@ -239,7 +241,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
             </SectionCard>
           )}
 
-          <SectionCard title="Dividendove prijmy" subtitle="Pridajte kazdy ticker a celkovu sumu dividend za rok 2025">
+          <SectionCard title="Dividendové príjmy" subtitle="Pridajte každý ticker a celkovú sumu dividend za rok 2025">
             <div className="space-y-4">
               {showErrors && !hasDividendEntry && (
                 <InfoBox variant="warning">Pridajte aspoň 1 položku.</InfoBox>
@@ -328,7 +330,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                       {needsConversion ? (
                         <FormField label="Dividendy (EUR)">
                           <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                            {entry.amountEur ? parseFloat(entry.amountEur).toLocaleString('sk-SK', { minimumFractionDigits: 2 }) : '-'}
+                            {entry.amountEur ? fmtEur(entry.amountEur) : '-'}
                           </div>
                         </FormField>
                       ) : (
@@ -356,7 +358,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                       {needsConversion ? (
                         <FormField label="Daň zrazená (EUR)">
                           <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                            {entry.withheldTaxEur ? parseFloat(entry.withheldTaxEur).toLocaleString('sk-SK', { minimumFractionDigits: 2 }) : '-'}
+                            {entry.withheldTaxEur ? fmtEur(entry.withheldTaxEur) : '-'}
                           </div>
                         </FormField>
                       ) : (
@@ -364,8 +366,8 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                       )}
                       <FormField label="Sadzba">
                         <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                          {entry.amountUsd && entry.withheldTaxUsd && parseFloat(entry.amountUsd) > 0
-                            ? `${((parseFloat(entry.withheldTaxUsd) / parseFloat(entry.amountUsd)) * 100).toFixed(1)}%`
+                          {entry.amountUsd && entry.withheldTaxUsd && safeDecimal(entry.amountUsd).gt(0)
+                            ? `${safeDecimal(entry.withheldTaxUsd).div(safeDecimal(entry.amountUsd)).mul(100).toDecimalPlaces(1).toFixed(1)}%`
                             : '-'}
                         </div>
                       </FormField>
@@ -383,7 +385,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
                   transition-all duration-200"
               >
                 <Plus className="w-4 h-4" />
-                Pridat ticker
+                Pridať ticker
               </button>
 
               {data.entries.length > 0 && (

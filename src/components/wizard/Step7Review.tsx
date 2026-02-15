@@ -5,6 +5,7 @@ import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
 import { SectionCard, InfoBox } from '@/components/ui/FormField';
 import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight } from 'lucide-react';
 import { getValidationWarnings } from '@/lib/validation/wizard';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
 interface Props {
   form: TaxFormData;
@@ -37,7 +38,7 @@ function Row({
   const valueColor = highlight ? colorMap[highlight] : 'text-gray-900';
 
   const displayValue = numeric
-    ? (value && parseFloat(value) !== 0 ? `${parseFloat(value).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR` : '--')
+    ? (value && !safeDecimal(value).isZero() ? `${fmtEur(value)} EUR` : '--')
     : (value || '--');
 
   return (
@@ -151,7 +152,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
               calc.isRefund ? 'text-emerald-600' : 'text-red-500'
             }`}
           >
-            {calc.isRefund ? '+' : ''}{parseFloat(calc.isRefund ? calc.finalTaxRefund : calc.finalTaxToPay).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR
+            {calc.isRefund ? '+' : ''}{fmtEur(calc.isRefund ? calc.finalTaxRefund : calc.finalTaxToPay)} EUR
           </p>
         </div>
       </div>
@@ -215,7 +216,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
             <Row row="pr.08" label="Sadzba dane" value="7%" />
             <Row row="pr.09" label="Daň pred zápočtom (7%)" value={calc.pril2_pr9} />
             <Divider />
-            {parseFloat(calc.totalWithheldTaxEur) > 0 && (
+            {safeDecimal(calc.totalWithheldTaxEur).gt(0) && (
               <>
                 <Row row="pr.14" label="Daň zaplatená v zahraničí" value={calc.pril2_pr14} />
                 <Row row="pr.17" label="Daň uznaná na zápočet" value={calc.pril2_pr17} highlight="green" />
@@ -225,11 +226,11 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
               row="pr.18"
               label="Daň po zápočte"
               value={calc.pril2_pr18}
-              highlight={parseFloat(calc.pril2_pr18) === 0 ? 'green' : 'amber'}
+              highlight={safeDecimal(calc.pril2_pr18).isZero() ? 'green' : 'amber'}
             />
             <Row row="pr.28" label="Celková daň z dividend" value={calc.pril2_pr28} highlight="amber" />
           </div>
-          {parseFloat(calc.pril2_pr18) === 0 && parseFloat(calc.totalWithheldTaxEur) > 0 && (
+          {safeDecimal(calc.pril2_pr18).isZero() && safeDecimal(calc.totalWithheldTaxEur).gt(0) && (
             <InfoBox variant="success">
               Zahraničná zrážková daň prevyšuje slovenskú sadzbu 7% - žiadna ďalšia daň z dividend.
             </InfoBox>
@@ -246,7 +247,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           {form.spouse?.enabled && (
             <Row row="r.74" label="NCZD na manžela/manželku (§11 ods.3)" value={calc.r74} />
           )}
-          {form.dds?.enabled && parseFloat(calc.r75 ?? '0') > 0 && (
+          {form.dds?.enabled && safeDecimal(calc.r75).gt(0) && (
             <Row row="r.75" label="NCZD na príspevky na DDS (§11 ods.8)" value={calc.r75} />
           )}
           <Row row="r.77" label="Nezdaniteľná časť celkom" value={calc.r77} />
@@ -306,13 +307,13 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
             row="r.135"
             label="Daň na úhradu (doplatok)"
             value={calc.r135}
-            highlight={parseFloat(calc.r135) > 0 ? 'red' : undefined}
+            highlight={safeDecimal(calc.r135).gt(0) ? 'red' : undefined}
           />
           <Row
             row="r.136"
             label="Daňový preplatok (vrátka)"
             value={calc.r136}
-            highlight={parseFloat(calc.r136) > 0 ? 'green' : undefined}
+            highlight={safeDecimal(calc.r136).gt(0) ? 'green' : undefined}
           />
         </div>
       </SectionCard>

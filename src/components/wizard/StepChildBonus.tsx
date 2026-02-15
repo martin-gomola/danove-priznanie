@@ -8,6 +8,7 @@ import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants'
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
 import { Plus, Trash2 } from 'lucide-react';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
 const MONTH_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const MAX_CHILDREN = 4;
@@ -67,7 +68,7 @@ export function StepChildBonus({
 }: Props) {
   const addChild = useCallback(() => {
     if (data.children.length >= MAX_CHILDREN) return;
-    const newChild = DEFAULT_CHILD_ENTRY(Date.now().toString());
+    const newChild = DEFAULT_CHILD_ENTRY(crypto.randomUUID());
     onChange({ children: [...data.children, newChild] });
   }, [data.children, onChange]);
 
@@ -181,10 +182,10 @@ export function StepChildBonus({
               />
             </FormField>
           </div>
-          {calculatedR74 != null && parseFloat(calculatedR74) > 0 && (
+          {calculatedR74 != null && safeDecimal(calculatedR74).gt(0) && (
             <div className="mt-3 rounded-lg bg-slate-50 border border-slate-200 px-3 py-2 text-sm text-slate-700">
               <span className="text-slate-500">NCZD na manžela/manželku (r.74):</span>{' '}
-              <strong className="font-heading tabular-nums">{parseFloat(calculatedR74).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR</strong>
+              <strong className="font-heading tabular-nums">{fmtEur(calculatedR74)} EUR</strong>
             </div>
           )}
         </SectionCard>
@@ -338,7 +339,7 @@ export function StepChildBonus({
               </div>
               <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
                 {calculatedBonus
-                  ? `${parseFloat(calculatedBonus).toLocaleString('sk-SK', { minimumFractionDigits: 2 })} EUR`
+                  ? `${fmtEur(calculatedBonus)} EUR`
                   : '0,00 EUR'}
               </span>
             </div>
