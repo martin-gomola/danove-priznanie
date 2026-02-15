@@ -38,7 +38,7 @@ function getAgeCategoryLabel(rc: string): string {
     return '18+ r.: bez bonusu';
   }
 
-  // Mid-year age transition — show breakdown
+  // Mid-year age transition - show breakdown
   const parts: string[] = [];
   let start = 0;
   for (let i = 1; i <= 12; i++) {
@@ -123,7 +123,7 @@ export function StepChildBonus({
           section="§11, §33"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-33"
         >
-          Zákon č. 595/2003 Z.z. §33: Daňový bonus na vyživované dieťa. §11 ods.3: nezdaniteľná časť na manžela/manželku.
+          Zákon č. 595/2003 Z.z. §33, §11 ods.3:<br />Daňový bonus na vyživované dieťa. Nezdaniteľná časť na manžela/manželku.
         </MarginNote>
       </div>
 

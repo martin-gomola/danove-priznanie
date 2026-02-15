@@ -26,7 +26,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
           section="§33a"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-33a"
         >
-          Zákon č. 595/2003 Z.z. §33a: Daňový bonus na zaplatené úroky z hypotéky.
+          Zákon č. 595/2003 Z.z. §33a:<br />Daňový bonus na zaplatené úroky z hypotéky.
         </MarginNote>
       </div>
 
@@ -128,7 +128,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
             </div>
           </SectionCard>
 
-          <Disclosure summary="Podmienky nároku (§33a) — Skontrolujte, či spĺňate všetky">
+          <Disclosure summary="Podmienky nároku (§33a) - Skontrolujte, či spĺňate všetky">
             <ul className="list-disc list-inside space-y-1.5 text-gray-700">
               <li>Máte <strong>potvrdenie z banky</strong> o zaplatených úrokoch za zdaňovacie obdobie</li>
               <li>Úver bol poskytnutý na <strong>obstaranie alebo budovanie obydlia</strong> (vlastné bývanie)</li>

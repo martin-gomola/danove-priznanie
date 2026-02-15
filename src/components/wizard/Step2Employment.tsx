@@ -29,12 +29,12 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
           section="§5"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-5"
         >
-          Zákon č. 595/2003 Z.z. §5: Príjmy zo závislej činnosti. Všetky hodnoty (r.36, r.37, r.131, r.36a) nájdete na &quot;Potvrdení o zdaniteľných príjmoch&quot; od zamestnávateľa — II. oddiel (ročné zúčtovanie).
+          Zákon č. 595/2003 Z.z. §5:<br />Príjmy zo závislej činnosti. Všetky hodnoty (r.36, r.37, r.131, r.36a) nájdete na &quot;Potvrdení o zdaniteľných príjmoch&quot; od zamestnávateľa - II. oddiel (ročné zúčtovanie).
         </MarginNote>
       </div>
 
       <div className="relative">
-        <SectionCard title="Údaje z ročného zúčtovania" subtitle="Potvrdenie od zamestnávateľa — II. oddiel">
+        <SectionCard title="Údaje z ročného zúčtovania" subtitle="Potvrdenie od zamestnávateľa - II. oddiel">
         <div className="space-y-5">
           <FormField
             label="r. 36: Úhrn príjmov"

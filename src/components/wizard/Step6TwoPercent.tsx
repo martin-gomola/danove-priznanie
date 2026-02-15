@@ -98,7 +98,7 @@ export function Step6TwoPercent({
           section="§50, §50aa"
           href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-50"
         >
-          Zákon č. 595/2003 Z.z. §50 a §50aa: Použitie podielu zaplatenej dane. 2 % (alebo 3 % pre dobrovoľníkov), min. 3 EUR. Zoznam prijímateľov: financnasprava.sk.
+          Zákon č. 595/2003 Z.z. §50 a §50aa:<br />Použitie podielu zaplatenej dane. 2 % (alebo 3 % pre dobrovoľníkov), min. 3 EUR. Zoznam prijímateľov: financnasprava.sk.
         </MarginNote>
       </div>
 

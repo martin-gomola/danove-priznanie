@@ -96,7 +96,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
 
   const noteSection78 = (
     <>
-      Zákon č. 595/2003 Z.z. §7 ods.1 písm.g (podielové fondy), §8 ods.1 písm.e (akcie). Príjem z fondov zdaňuje sa 19 %. Akcie držané menej ako 1 rok — ostatný príjem, progresívna sadzba.
+      Zákon č. 595/2003 Z.z. §7 ods.1 písm.g, §8 ods.1 písm.e.<br />Príjem z fondov zdaňuje sa 19 %. Akcie držané menej ako 1 rok - ostatný príjem, progresívna sadzba.
     </>
   );
   const noteFondy = (
@@ -106,7 +106,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
   );
   const noteSection8 = (
     <>
-      Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i. Ďalší postup: akcie.sk (daň z akcií, ETF).
+      Zákon 595/2003 Z.z. §8 ods.1 písm.e, §9 ods.1 písm.i.<br />Ďalší postup: akcie.sk (daň z akcií, ETF).
     </>
   );
 
@@ -124,7 +124,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           <MarginNotePanel>{noteFondy}</MarginNotePanel>
         )}
         {stockData.enabled && (
-          <MarginNotePanel section="§8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
+          <MarginNotePanel section="§8" href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
             {noteSection8}
           </MarginNotePanel>
         )}
@@ -273,7 +273,7 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
           </InfoBox>
 
           <SectionCard title="Predaj akcií (§8)" subtitle="Tabuľka 3: cenné papiere držané menej ako 1 rok">
-            <MarginNote skipDesktopAside section="§8" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/">
+            <MarginNote skipDesktopAside section="§8" href="https://akcie.sk/dan-z-akcii-etf-cennych-papierov-postup/" hrefLabel="akcie.sk – daň z akcií a ETF">
               {noteSection8}
             </MarginNote>
             <div className="space-y-4">

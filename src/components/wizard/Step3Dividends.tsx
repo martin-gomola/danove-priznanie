@@ -138,7 +138,7 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const creditableAmount = Decimal.min(slovakTax, totalWithheldEur);
   const taxAfterCredit = Decimal.max(slovakTax.minus(creditableAmount), new Decimal(0));
 
-  const note51e = <>Zákon č. 595/2003 Z.z. §51e: Sadzba dane z podielov na zisku (dividendy) 7 %.</>;
+  const note51e = <>Zákon č. 595/2003 Z.z. §51e:<br />Sadzba dane z podielov na zisku (dividendy) 7 %.</>;
   const noteUsdEur = <>Údaje o kurze: ECB – ročný priemer USD/EUR.</>;
   const noteCzkEur = <>Údaje o kurze: ECB – ročný priemer CZK/EUR.</>;
 
