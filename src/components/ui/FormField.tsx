@@ -211,20 +211,20 @@ const DEFAULT_LINK_LABEL = 'Zákon na slov-lex.sk';
 /** Block-level note panel for use inside a shared notes column (no absolute positioning). */
 export function MarginNotePanel({ section, href, hrefLabel, children }: MarginNoteProps) {
   return (
-    <div className="w-full pl-8 pr-7 py-5 text-sm text-gray-600 leading-relaxed bg-white/90 border border-stone-200 rounded-lg shadow-sm max-h-[22rem] overflow-y-auto break-words">
+    <div className="w-full pl-4 pr-2 py-0 border-l-2 border-stone-300/80 max-h-[22rem] overflow-y-auto break-words">
       {section && (
-        <span className="inline-block font-mono text-xs uppercase tracking-wide text-gray-600 bg-gray-100 rounded px-1.5 py-0.5 mb-3">
+        <span className="block font-mono text-[10px] uppercase tracking-widest text-stone-500 mb-1.5">
           {section}
         </span>
       )}
-      <div className="space-y-3 min-h-0">
+      <div className="text-[11px] text-stone-600 leading-relaxed space-y-1.5">
         {typeof children === 'string' ? <span>{children}</span> : children}
         {href && (
           <a
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-gray-600 hover:text-gray-800 underline underline-offset-1 mt-3"
+            className="block text-stone-500 hover:text-stone-700 underline decoration-stone-300 underline-offset-2 mt-1.5 transition-colors"
           >
             {hrefLabel ?? DEFAULT_LINK_LABEL}
           </a>
@@ -239,28 +239,28 @@ export function MarginNotePanel({ section, href, hrefLabel, children }: MarginNo
  * Parent must be `position: relative` for margin placement (unless skipDesktopAside).
  */
 export function MarginNote({ section, href, hrefLabel, children, skipDesktopAside = false }: MarginNoteProps) {
-  const summary = section ? `${section} — Viac info` : 'Viac info';
+  const summary = section ? `${section} - Viac info` : 'Viac info';
   const linkLabel = hrefLabel ?? DEFAULT_LINK_LABEL;
   return (
     <>
       {!skipDesktopAside && (
         <aside
-          className="hidden 2xl:block absolute top-0 mt-6 mb-8 w-56 pl-8 pr-7 py-5 text-sm text-gray-600 leading-relaxed bg-white/90 border border-stone-200 rounded-r-lg shadow-sm max-h-[22rem] overflow-y-auto break-words"
+          className="hidden 2xl:block absolute top-0 mt-4 mb-6 w-56 pl-4 pr-2 py-0 border-l-2 border-stone-300/80 max-h-[22rem] overflow-y-auto break-words"
           style={{ right: '-17rem' }}
         >
           {section && (
-            <span className="inline-block font-mono text-xs uppercase tracking-wide text-gray-600 bg-gray-100 rounded px-1.5 py-0.5 mb-3">
+            <span className="block font-mono text-[10px] uppercase tracking-widest text-stone-500 mb-1.5">
               {section}
             </span>
           )}
-          <div className="space-y-3 min-h-0">
+          <div className="text-[11px] text-stone-600 leading-relaxed space-y-1.5">
             {typeof children === 'string' ? <span>{children}</span> : children}
             {href && (
               <a
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-gray-600 hover:text-gray-800 underline underline-offset-1 mt-3"
+                className="block text-stone-500 hover:text-stone-700 underline decoration-stone-300 underline-offset-2 mt-1.5 transition-colors"
               >
                 {linkLabel}
               </a>
@@ -274,7 +274,7 @@ export function MarginNote({ section, href, hrefLabel, children, skipDesktopAsid
           <ChevronRight className="w-3.5 h-3.5 group-open:rotate-90 transition-transform shrink-0 text-gray-500" />
           {summary}
         </summary>
-        <div className="mt-2 pl-4 border-l border-gray-200 text-sm text-gray-600 leading-relaxed space-y-1">
+        <div className="mt-2 pl-4 border-l border-gray-200 text-xs text-gray-500 leading-relaxed space-y-1">
           {typeof children === 'string' ? <span>{children}</span> : children}
           {href && (
             <a

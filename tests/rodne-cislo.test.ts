@@ -175,7 +175,7 @@ describe('validateRodneCislo', () => {
 
   describe('divisibility by 11', () => {
     it('rejects 10-digit number not divisible by 11', () => {
-      // 8501010002 — change last digit from valid 0001 to invalid 0002
+      // 8501010002 - change last digit from valid 0001 to invalid 0002
       const result = validateRodneCislo('8501010002');
       // This should fail mod 11 (unless it happens to be divisible)
       const num = 8501010002;
@@ -196,19 +196,19 @@ describe('validateRodneCislo', () => {
 
   describe('real-world examples from the app', () => {
     it('validates a sample rodné číslo', () => {
-      // 850101/0001 — valid male RC
+      // 850101/0001 - valid male RC
       const result = validateRodneCislo('850101/0001');
       expect(result.valid).toBe(true);
     });
 
     it('validates a sample male rodné číslo', () => {
-      // 6103080005 — fictional male, born 1961-03-08
+      // 6103080005 - fictional male, born 1961-03-08
       const result = validateRodneCislo('6103080005');
       expect(result.valid).toBe(true);
     });
 
     it('validates a sample female rodné číslo', () => {
-      // 6153310009 — fictional female, born 1961-03-31 (month 53=03+50)
+      // 6153310009 - fictional female, born 1961-03-31 (month 53=03+50)
       const result = validateRodneCislo('6153310009');
       expect(result.valid).toBe(true);
     });
