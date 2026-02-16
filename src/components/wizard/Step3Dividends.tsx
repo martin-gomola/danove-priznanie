@@ -1,12 +1,26 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ForeignDividends, DividendEntry } from '@/types/TaxForm';
-import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel } from '@/components/ui/FormField';
+import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel, Disclosure } from '@/components/ui/FormField';
 import { DIVIDEND_COUNTRIES, findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
 import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+
+/** Optional screenshot for broker guide; hides if image fails to load (e.g. file not yet in public). */
+function BrokerGuideImage({ src, alt }: { src: string; alt: string }) {
+  const [hidden, setHidden] = useState(false);
+  if (hidden) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setHidden(true)}
+      className="rounded-lg border border-gray-200 w-full max-w-md shadow-sm"
+    />
+  );
+}
 
 interface Props {
   data: ForeignDividends;
@@ -162,6 +176,11 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
             {noteCzkEur}
           </MarginNotePanel>
         )}
+        {data.enabled && (
+          <MarginNotePanel section="Tip">
+            Väčšina brokerov vydáva výkazy dividend v január–február.
+          </MarginNotePanel>
+        )}
       </div>
 
       <div className="space-y-6">
@@ -240,6 +259,56 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
               </div>
             </SectionCard>
           )}
+
+          <SectionCard
+            title={
+              <>
+                Kde nájdem výkaz dividend?{' '}
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
+                  Rozpracované
+                </span>
+              </>
+            }
+            subtitle="Inštrukcie podľa brokera"
+          >
+            <div className="space-y-2">
+              <Disclosure summary="Revolut">
+                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <li>Otvorte aplikáciu Revolut</li>
+                  <li>Kliknite na profil (ľavo hore) → <strong>Documents &amp; statements</strong></li>
+                  <li>Vyberte <strong>Consolidated statement</strong> pre ročný prehľad</li>
+                  <li>Alternatívne: Stocks Home → tri bodky → <strong>Statements</strong></li>
+                </ul>
+              </Disclosure>
+              <Disclosure summary="Interactive Brokers (IBKR)">
+                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <li>Prihláste sa do Client Portal</li>
+                  <li>Kliknite na <strong>Performance &amp; Reports</strong> → <strong>Tax Documents</strong></li>
+                  <li>Alternatívne: Menu → <strong>Reporting</strong> → <strong>Tax Documents</strong></li>
+                  <li>Stiahnite výkaz za príslušný rok (PDF/Excel)</li>
+                </ul>
+              </Disclosure>
+              <Disclosure summary="Charles Schwab">
+                <ul className="list-disc list-inside space-y-1 text-gray-600">
+                  <li>Prihláste sa na schwab.com</li>
+                  <li>Prejdite do <strong>Tax Center</strong> (alebo <strong>1099 Dashboard</strong>)</li>
+                  <li>1099-DIV je súčasťou formulára <strong>1099 Composite</strong></li>
+                  <li>Dostupné od konca januára do konca februára</li>
+                </ul>
+              </Disclosure>
+              <Disclosure summary="E-Trade">
+                <div className="space-y-3">
+                  <ul className="list-disc list-inside space-y-1 text-gray-600">
+                    <li>Prihláste sa na etrade.com</li>
+                    <li>V hornej navigácii kliknite na <strong>Documents</strong> (alebo Accounts → <strong>Documents</strong>)</li>
+                    <li>Zapnite <strong>Show quick filters</strong> a kliknite na kartu <strong>Tax documents</strong> s rokom (napr. 2025), alebo nastavte <strong>Document type</strong>: Tax Documents, <strong>Tax year</strong> a stlačte <strong>Apply</strong></li>
+                    <li>Stiahnite formulár <strong>1099 Composite</strong> (obsahuje 1099-DIV) v PDF</li>
+                  </ul>
+                  <BrokerGuideImage src="/images/dividend-guide/e-trade-dividend.png" alt="E-Trade Documents – Tax documents filter" />
+                </div>
+              </Disclosure>
+            </div>
+          </SectionCard>
 
           <SectionCard title="Dividendové príjmy" subtitle="Pridajte každý ticker a celkovú sumu dividend za rok 2025">
             <div className="space-y-4">

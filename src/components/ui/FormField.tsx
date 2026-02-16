@@ -140,14 +140,16 @@ export function SectionCard({
   subtitle,
   children,
 }: {
-  title: string;
+  title: React.ReactNode;
   subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6">
       <div className="mb-5">
-        <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+        <h2 className="text-base font-semibold text-gray-900 flex flex-wrap items-center gap-2">
+          {title}
+        </h2>
         {subtitle && (
           <p className="text-xs text-gray-600 mt-1">{subtitle}</p>
         )}
