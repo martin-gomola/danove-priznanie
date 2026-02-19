@@ -5,7 +5,7 @@ import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, Pare
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
-import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
 
 interface Props {
   data: TwoPercentAllocation;
@@ -33,14 +33,14 @@ function ParentForm({
       <h4 className="text-sm font-semibold text-gray-700 border-l-2 border-gray-300 pl-3">
         {label}
       </h4>
-      <FormField label="Meno" required error={showErrors && !parent.meno ? 'Povinné pole' : undefined}>
+      <FormField label="Meno" required error={requiredError(showErrors, parent.meno)}>
         <Input
           value={parent.meno}
           onChange={(e) => onParentChange({ meno: e.target.value })}
           placeholder="Meno"
         />
       </FormField>
-      <FormField label="Priezvisko" required error={showErrors && !parent.priezvisko ? 'Povinné pole' : undefined}>
+      <FormField label="Priezvisko" required error={requiredError(showErrors, parent.priezvisko)}>
         <Input
           value={parent.priezvisko}
           onChange={(e) => onParentChange({ priezvisko: e.target.value })}
@@ -119,7 +119,7 @@ export function Step6TwoPercent({
                 label="Organizácia (príjemca 2 %)"
                 hint="Vyberte z oficiálneho zoznamu FS alebo hľadajte podľa názvu / IČO"
                 required
-                error={showErrors && data.enabled && !data.ico ? 'Povinné pole' : undefined}
+                error={data.enabled ? requiredError(showErrors, data.ico) : undefined}
               >
                 <PrijimatelSelect
                   valueIco={data.ico}

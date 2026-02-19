@@ -142,7 +142,7 @@ function calculateProgressiveTax(taxBase: Decimal): Decimal {
  */
 function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): Decimal {
   const childBonus = form.childBonus;
-  if (!childBonus?.enabled || !childBonus.children?.length) return new Decimal(0);
+  if (!childBonus.enabled || !childBonus.children.length) return new Decimal(0);
   const monthlyBase = employmentTaxBaseR38.div(12);
   const threshold = new Decimal(CHILD_BONUS_PHASE_OUT_THRESHOLD);
   const divisor = CHILD_BONUS_PHASE_OUT_DIVISOR;
@@ -355,14 +355,14 @@ function taxCalculationSection(
   // r.74: NCZD na manžela/manželku (§11 ods.3)
   // Depends on: taxpayer's tax base (r72), spouse's own income, months
   let r74 = new Decimal(0);
-  if (form.spouse?.enabled && form.spouse.pocetMesiacov) {
+  if (form.spouse.enabled && form.spouse.pocetMesiacov) {
     const months = Math.min(12, Math.max(0, parseInt(form.spouse.pocetMesiacov, 10) || 0));
     const spouseIncome = d(form.spouse.vlastnePrijmy);
     r74 = calculateSpouseNCZD(r72, spouseIncome, months);
   }
   // r.75: NCZD na príspevky na DDS (§11 ods.8), max 180 EUR
   let r75 = new Decimal(0);
-  if (form.dds?.enabled) {
+  if (form.dds.enabled) {
     const prispevky = d(form.dds.prispevky);
     r75 = Decimal.min(prispevky, new Decimal(DDS_MAX));
   }
@@ -381,7 +381,7 @@ function taxCalculationSection(
 function bonusesSection(form: TaxFormData, r116: Decimal, r38: Decimal): BonusesSectionResult {
   const r117 = calculateChildBonus(form, r38);
   const r118 = Decimal.max(r116.minus(r117), new Decimal(0));
-  const r119 = d(form.childBonus?.bonusPaidByEmployer ?? '');
+  const r119 = d(form.childBonus.bonusPaidByEmployer);
   const r120 = Decimal.max(r117.minus(r119), new Decimal(0));
   const r121 = Decimal.min(r120, r118);
   const r122 = new Decimal(0);

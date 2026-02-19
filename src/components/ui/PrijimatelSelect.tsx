@@ -1,11 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import type { PrijimatelItem } from '@/types/TaxForm';
 
-export interface PrijimatelItem {
-  ico: string;
-  obchMeno: string;
-}
+export type { PrijimatelItem };
 
 interface Props {
   valueIco: string;

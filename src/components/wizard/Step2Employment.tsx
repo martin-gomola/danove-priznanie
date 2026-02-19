@@ -3,7 +3,7 @@
 import React from 'react';
 import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, MarginNote, Toggle } from '@/components/ui/FormField';
-import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
 
 interface Props {
   data: EmploymentIncome;
@@ -41,7 +41,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 36: Úhrn príjmov"
             hint="Potvrdenie → II. oddiel, riadok 01"
             required
-            error={showErrors && !data.r36 ? 'Povinné pole' : undefined}
+            error={requiredError(showErrors, data.r36)}
           >
             <Input
               type="number"
@@ -57,7 +57,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 37: Úhrn povinného poistného"
             hint="Potvrdenie → II. oddiel, riadok 02 (súčet sociálneho a zdravotného poistenia)"
             required
-            error={showErrors && !data.r37 ? 'Povinné pole' : undefined}
+            error={requiredError(showErrors, data.r37)}
           >
             <Input
               type="number"
@@ -86,7 +86,7 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             label="r. 131: Úhrn preddavkov na daň"
             hint="Potvrdenie → II. oddiel, riadok 04"
             required
-            error={showErrors && !data.r131 ? 'Povinné pole' : undefined}
+            error={requiredError(showErrors, data.r131)}
           >
             <Input
               type="number"

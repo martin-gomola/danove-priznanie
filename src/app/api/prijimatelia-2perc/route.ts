@@ -1,17 +1,21 @@
 import { NextRequest } from 'next/server';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const CSV_PATH = join(process.cwd(), 'data', '2026.01.31_Prijimatel_2perc.csv');
+import type { PrijimatelItem } from '@/types/TaxForm';
+
 const MAX_RESULTS = 80;
 const SKIP_HEADER_LINES = 3;
-
-export type PrijimatelItem = { ico: string; obchMeno: string };
 
 let cachedList: PrijimatelItem[] | null = null;
 
 function loadPrijimatelia(): PrijimatelItem[] {
   if (cachedList) return cachedList;
+  if (!existsSync(CSV_PATH)) {
+    console.warn(`prijimatelia CSV not found at ${CSV_PATH}`);
+    return [];
+  }
   const raw = readFileSync(CSV_PATH);
   const decoder = new TextDecoder('windows-1250');
   const text = decoder.decode(raw);

@@ -287,8 +287,16 @@ export function useTaxForm() {
           setForm({
             ...DEFAULT_TAX_FORM,
             ...parsed,
-            dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
+            employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
+            mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
+            mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
             stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
+            dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
+            spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
+            dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
+            childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
+            twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
+            parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
           });
           markSaving();
           toast.success('XML importované');

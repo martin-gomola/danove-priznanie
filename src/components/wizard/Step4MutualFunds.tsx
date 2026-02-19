@@ -6,7 +6,7 @@ import { STOCK_SHORT_TERM_EXEMPTION } from '@/lib/tax/constants';
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel } from '@/components/ui/FormField';
 import { Plus, Trash2 } from 'lucide-react';
 import Decimal from 'decimal.js';
-import { safeDecimal } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur, sumDecimal } from '@/lib/utils/decimal';
 
 interface Props {
   data: MutualFundSales;
@@ -45,13 +45,8 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
     [data.entries, onChange]
   );
 
-  const totalIncome = data.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.saleAmount || '0')); } catch { return sum; }
-  }, new Decimal(0));
-
-  const totalExpense = data.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.purchaseAmount || '0')); } catch { return sum; }
-  }, new Decimal(0));
+  const totalIncome = sumDecimal(data.entries, (e) => e.saleAmount);
+  const totalExpense = sumDecimal(data.entries, (e) => e.purchaseAmount);
 
   const profit = Decimal.max(totalIncome.minus(totalExpense), new Decimal(0));
 
@@ -83,12 +78,8 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
     [stockData.entries, onStockChange]
   );
 
-  const stockIncome = stockData.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.saleAmount || '0')); } catch { return sum; }
-  }, new Decimal(0));
-  const stockExpense = stockData.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.purchaseAmount || '0')); } catch { return sum; }
-  }, new Decimal(0));
+  const stockIncome = sumDecimal(stockData.entries, (e) => e.saleAmount);
+  const stockExpense = sumDecimal(stockData.entries, (e) => e.purchaseAmount);
   const stockProfit = Decimal.max(stockIncome.minus(stockExpense), new Decimal(0));
   const hasFundSale = data.entries.some((entry) => safeDecimal(entry.saleAmount).gt(0));
   const hasStockTrade = stockData.entries.some(
@@ -245,19 +236,19 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
                 <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500">Celkový príjem (predaj)</span>
-                    <span className="text-gray-600 tabular-nums">{totalIncome.toFixed(2)} EUR</span>
+                    <span className="text-gray-600 tabular-nums">{fmtEur(totalIncome.toFixed(2))} EUR</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500">Celkové výdavky (nákup vrátane poplatkov)</span>
-                    <span className="text-gray-600 tabular-nums">{totalExpense.toFixed(2)} EUR</span>
+                    <span className="text-gray-600 tabular-nums">{fmtEur(totalExpense.toFixed(2))} EUR</span>
                   </div>
                   <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200">
                     <span className="text-gray-600">Základ dane (zisk)</span>
-                    <span className="font-heading text-gray-900 font-semibold tabular-nums">{profit.toFixed(2)} EUR</span>
+                    <span className="font-heading text-gray-900 font-semibold tabular-nums">{fmtEur(profit.toFixed(2))} EUR</span>
                   </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-600">Daň 19 %</span>
-                    <span className="font-heading text-amber-600 tabular-nums">{profit.mul(0.19).toDecimalPlaces(2).toFixed(2)} EUR</span>
+                    <span className="font-heading text-amber-600 tabular-nums">{fmtEur(profit.mul(0.19).toDecimalPlaces(2).toFixed(2))} EUR</span>
                   </div>
                 </div>
               )}
@@ -370,25 +361,25 @@ export function Step4MutualFunds({ data, onChange, stockData, onStockChange, sho
                   <div className="rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 space-y-1">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-500">Celkový príjem (predaj)</span>
-                      <span className="text-gray-600 tabular-nums">{stockIncome.toFixed(2)} EUR</span>
+                      <span className="text-gray-600 tabular-nums">{fmtEur(stockIncome.toFixed(2))} EUR</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-500">Celkové výdavky (nákup)</span>
-                      <span className="text-gray-600 tabular-nums">{stockExpense.toFixed(2)} EUR</span>
+                      <span className="text-gray-600 tabular-nums">{fmtEur(stockExpense.toFixed(2))} EUR</span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-500">Zisk (r.69 − r.70)</span>
-                      <span className="text-gray-600 tabular-nums">{stockProfit.toFixed(2)} EUR</span>
+                      <span className="text-gray-600 tabular-nums">{fmtEur(stockProfit.toFixed(2))} EUR</span>
                     </div>
                     {stockProfit.gt(0) && (
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-gray-500">Oslobodenie (do {STOCK_SHORT_TERM_EXEMPTION} EUR)</span>
-                        <span className="text-emerald-600 tabular-nums">−{exemption.toFixed(2)} EUR</span>
+                        <span className="text-emerald-600 tabular-nums">−{fmtEur(exemption.toFixed(2))} EUR</span>
                       </div>
                     )}
                     <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-200">
                       <span className="text-gray-600">Základ dane (r.71)</span>
-                      <span className="font-heading text-gray-900 font-semibold tabular-nums">{taxableBase.toFixed(2)} EUR</span>
+                      <span className="font-heading text-gray-900 font-semibold tabular-nums">{fmtEur(taxableBase.toFixed(2))} EUR</span>
                     </div>
                     <p className="text-xs text-gray-600 pt-1">
                       Zapríčítava sa do r.80 a zdaňuje sa progresívnou sadzbou 19&nbsp;/&nbsp;25&nbsp;%.

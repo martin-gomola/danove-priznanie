@@ -8,6 +8,12 @@
  * https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.html
  */
 
+// ── Shared types ─────────────────────────────────────────────────────
+export interface PrijimatelItem {
+  ico: string;
+  obchMeno: string;
+}
+
 // ── Personal Info (Oddiel I) ──────────────────────────────────────────
 export interface PersonalInfo {
   dic: string; // DIC (tax identification number)
@@ -38,9 +44,9 @@ export interface DividendEntry {
   country: string; // ISO country code, default "840" (USA)
   countryName: string; // display name, default "USA"
   currency: 'USD' | 'EUR' | 'CZK'; // dividend currency - EUR for Eurozone, CZK for Czechia, USD for rest
-  amountUsd: string; // gross dividends in original currency (USD or EUR input)
-  amountEur: string; // EUR equivalent (auto-converted from USD, or direct input for EUR)
-  withheldTaxUsd: string; // tax withheld in original currency
+  amountOriginal: string; // gross dividends in original currency (USD, EUR, or CZK)
+  amountEur: string; // EUR equivalent (auto-converted, or direct for EUR)
+  withheldTaxOriginal: string; // tax withheld in original currency
   withheldTaxEur: string; // EUR equivalent of withheld tax
 }
 

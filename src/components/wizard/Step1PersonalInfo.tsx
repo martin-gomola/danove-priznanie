@@ -4,6 +4,7 @@ import React, { useRef, useCallback } from 'react';
 import { PersonalInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard } from '@/components/ui/FormField';
 import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
+import { requiredError } from '@/lib/utils/decimal';
 import { Upload } from 'lucide-react';
 
 /**
@@ -44,7 +45,7 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
   );
 
   const dicFormatError = validateDicOrRc(data.dic);
-  const dicError = showErrors && !data.dic ? 'Povinné pole' : dicFormatError ? 'Neplatný formát' : undefined;
+  const dicError = requiredError(showErrors, data.dic) ?? (dicFormatError ? 'Neplatný formát' : undefined);
 
   return (
     <div className="space-y-6">
@@ -112,14 +113,14 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Meno" required error={showErrors && !data.meno ? 'Povinné pole' : undefined}>
+            <FormField label="Meno" required error={requiredError(showErrors, data.meno)}>
               <Input
                 value={data.meno}
                 onChange={(e) => onChange({ meno: e.target.value })}
                 placeholder="Ján"
               />
             </FormField>
-            <FormField label="Priezvisko" required error={showErrors && !data.priezvisko ? 'Povinné pole' : undefined}>
+            <FormField label="Priezvisko" required error={requiredError(showErrors, data.priezvisko)}>
               <Input
                 value={data.priezvisko}
                 onChange={(e) => onChange({ priezvisko: e.target.value })}
@@ -134,7 +135,7 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="col-span-2">
-              <FormField label="Ulica" required error={showErrors && !data.ulica ? 'Povinné pole' : undefined}>
+              <FormField label="Ulica" required error={requiredError(showErrors, data.ulica)}>
                 <Input
                   value={data.ulica}
                   onChange={(e) => onChange({ ulica: e.target.value })}
@@ -142,7 +143,7 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
                 />
               </FormField>
             </div>
-            <FormField label="Číslo" required error={showErrors && !data.cislo ? 'Povinné pole' : undefined}>
+            <FormField label="Číslo" required error={requiredError(showErrors, data.cislo)}>
               <Input
                 value={data.cislo}
                 onChange={(e) => onChange({ cislo: e.target.value })}
@@ -152,7 +153,7 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
           </div>
 
           <div className="grid grid-cols-3 gap-4">
-            <FormField label="PSČ" required error={showErrors && !data.psc ? 'Povinné pole' : undefined}>
+            <FormField label="PSČ" required error={requiredError(showErrors, data.psc)}>
               <Input
                 value={data.psc}
                 onChange={(e) => onChange({ psc: e.target.value })}
@@ -161,7 +162,7 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
               />
             </FormField>
             <div className="col-span-2">
-              <FormField label="Obec" required error={showErrors && !data.obec ? 'Povinné pole' : undefined}>
+              <FormField label="Obec" required error={requiredError(showErrors, data.obec)}>
                 <Input
                   value={data.obec}
                   onChange={(e) => onChange({ obec: e.target.value })}

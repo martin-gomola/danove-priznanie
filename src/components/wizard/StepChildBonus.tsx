@@ -8,7 +8,7 @@ import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants'
 import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
 import { getRodneCisloError } from '@/lib/utils/validateRodneCislo';
 import { Plus, Trash2 } from 'lucide-react';
-import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
 
 const MONTH_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 const MAX_CHILDREN = 4;
@@ -141,7 +141,7 @@ export function StepChildBonus({
               label="Priezvisko a meno"
               hint="r.31"
               required
-              error={showErrors && !spouse.priezviskoMeno ? 'Povinné pole' : undefined}
+              error={requiredError(showErrors, spouse.priezviskoMeno)}
             >
               <Input
                 value={spouse.priezviskoMeno}
@@ -219,7 +219,7 @@ export function StepChildBonus({
                       <FormField
                         label="Priezvisko a meno dieťaťa"
                         required
-                        error={showErrors && !child.priezviskoMeno ? 'Povinné pole' : undefined}
+                        error={requiredError(showErrors, child.priezviskoMeno)}
                       >
                         <Input
                           value={child.priezviskoMeno}

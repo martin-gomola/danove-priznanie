@@ -21,3 +21,19 @@ export function fmtEur(v: string | undefined | null): string {
     return '-';
   }
 }
+
+/** Sum a field across an array of items, returning Decimal. Invalid values are treated as 0. */
+export function sumDecimal<T>(items: T[], accessor: (item: T) => string | undefined): Decimal {
+  return items.reduce((sum, item) => {
+    try {
+      return sum.plus(new Decimal(accessor(item) || '0'));
+    } catch {
+      return sum;
+    }
+  }, new Decimal(0));
+}
+
+/** Returns 'Povinné pole' when showErrors is true and the value is empty/falsy, undefined otherwise. */
+export function requiredError(showErrors: boolean, value: string | undefined | null): string | undefined {
+  return showErrors && !value ? 'Povinné pole' : undefined;
+}

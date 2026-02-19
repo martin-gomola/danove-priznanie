@@ -7,6 +7,7 @@
  */
 
 import xmljs from 'xml-js';
+import Decimal from 'decimal.js';
 import {
   PersonalInfo,
   TaxFormData,
@@ -26,6 +27,7 @@ import {
 } from '@/types/TaxForm';
 import { findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { ECB_RATE_2025, ECB_CZK_RATE_2025, TAX_YEAR } from '@/lib/tax/constants';
+import { safeDecimal } from '@/lib/utils/decimal';
 
 // ── Low-level XML helpers ────────────────────────────────────────────
 
@@ -168,8 +170,8 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
   const pril2 = getChild(telo, 'pril2PodielyNaZisku');
   const pr1 = isObj(pril2) ? extractText(pril2.pr1) : '';
   const pr14 = isObj(pril2) ? extractText(pril2.pr14) : '';
-  const totalPrijmy = parseFloat(pr1) || 0;
-  const totalWithheld = parseFloat(pr14) || 0;
+  const totalPrijmy = safeDecimal(pr1);
+  const totalWithheld = safeDecimal(pr14);
 
   const osobitne = getChild(telo, 'osobitneZaznamy');
   const udajeRaw = isObj(osobitne) ? osobitne.udajeOprijmoch : undefined;
@@ -182,17 +184,15 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
     const prijmy = extractText(udaj.prijmy);
     if (!kodStatu && !prijmy) continue;
 
-    const amountEur = parseFloat(prijmy) || 0;
-    const share = totalPrijmy > 0 ? amountEur / totalPrijmy : (udajeList.length === 1 ? 1 : 0);
-    const withheldTaxEur = totalWithheld * share;
+    const amountEur = safeDecimal(prijmy);
+    const share = totalPrijmy.gt(0) ? amountEur.div(totalPrijmy) : (udajeList.length === 1 ? new Decimal(1) : new Decimal(0));
+    const withheldTaxEur = totalWithheld.mul(share);
     const country = findCountryByCode(kodStatu);
     const currency = getCurrencyForCountry(kodStatu || '840');
 
-    // Back-calculate the original-currency amount from the EUR value stored in XML
-    // EUR: direct, CZK: multiply by CZK rate, USD: multiply by USD rate
-    const backRate = currency === 'EUR' ? 1 : currency === 'CZK' ? ECB_CZK_RATE_2025 : ECB_RATE_2025;
-    const amountUsd = currency === 'EUR' ? (prijmy || '0') : (amountEur * backRate).toFixed(2);
-    const withheldTaxUsd = currency === 'EUR' ? withheldTaxEur.toFixed(2) : (withheldTaxEur * backRate).toFixed(2);
+    const backRate = new Decimal(currency === 'EUR' ? 1 : currency === 'CZK' ? ECB_CZK_RATE_2025 : ECB_RATE_2025);
+    const amountOriginal = currency === 'EUR' ? (prijmy || '0') : amountEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
+    const withheldTaxOriginal = currency === 'EUR' ? withheldTaxEur.toDecimalPlaces(2).toFixed(2) : withheldTaxEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
 
     entries.push({
       id: `imported-d-${entries.length}`,
@@ -201,9 +201,9 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
       countryName: country?.name ?? kodStatu,
       currency,
       amountEur: prijmy || '0',
-      amountUsd,
-      withheldTaxEur: withheldTaxEur.toFixed(2),
-      withheldTaxUsd,
+      amountOriginal,
+      withheldTaxEur: withheldTaxEur.toDecimalPlaces(2).toFixed(2),
+      withheldTaxOriginal,
     });
   }
 
@@ -239,11 +239,11 @@ function parseSpouse(telo: Record<string, unknown>): SpouseNCZD {
 /** Parse DDS contributions (§11 ods.8 - r75) from telo. */
 function parseDds(telo: Record<string, unknown>): DDSContributions {
   const r75 = extractText(getChild(telo, 'r75'));
-  const num = r75 ? parseFloat(r75) : NaN;
-  const hasValue = !Number.isNaN(num) && num > 0;
+  const dds = safeDecimal(r75);
+  const hasVal = dds.gt(0);
   return {
-    enabled: hasValue,
-    prispevky: hasValue ? String(num.toFixed(2)) : '',
+    enabled: hasVal,
+    prispevky: hasVal ? dds.toDecimalPlaces(2).toFixed(2) : '',
   };
 }
 

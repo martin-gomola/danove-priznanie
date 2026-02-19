@@ -32,6 +32,7 @@ export default function Home() {
   const {
     form,
     isLoaded,
+    sessionToken,
     updatePersonalInfo,
     updateEmployment,
     updateDividends,
@@ -86,6 +87,51 @@ export default function Home() {
       toast.success('Údaje vymazané');
     }
   }, [resetForm, toast]);
+
+  const handleImportDividends = useCallback(
+    async (file: File) => {
+      if (!sessionToken) {
+        toast.error('Chýba session token. Obnovte stránku.');
+        return;
+      }
+      try {
+        const formData = new FormData();
+        formData.set('file', file);
+        const res = await fetch('/api/dividends/import', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${sessionToken}` },
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data?.error ?? 'Import zlyhal');
+          return;
+        }
+        const entries = data?.entries ?? [];
+        if (entries.length === 0) {
+          toast.error('V súbore sa nenašli žiadne dividendy.');
+          return;
+        }
+        const ecbRate = form.dividends.ecbRate || '1.13';
+        const usdToEur = (amount: string, rate: string) => {
+          const a = parseFloat(amount) || 0;
+          const r = parseFloat(rate) || 1.13;
+          if (!r) return '';
+          return (a / r).toFixed(2);
+        };
+        const converted = entries.map((e: { currency: string; amountEur: string; amountOriginal: string; withheldTaxEur: string; withheldTaxOriginal: string }) =>
+          e.currency === 'USD' && !e.amountEur && e.amountOriginal
+            ? { ...e, amountEur: usdToEur(e.amountOriginal, ecbRate), withheldTaxEur: usdToEur(e.withheldTaxOriginal, ecbRate) }
+            : e
+        );
+        updateDividends({ entries: [...form.dividends.entries, ...converted], enabled: true });
+        toast.success(`Importované ${converted.length} položiek`);
+      } catch {
+        toast.error('Import zlyhal');
+      }
+    },
+    [sessionToken, form.dividends.entries, form.dividends.ecbRate, updateDividends, toast]
+  );
 
   if (!isLoaded) {
     return (
@@ -154,6 +200,7 @@ export default function Home() {
           <Step3Dividends
             data={form.dividends}
             onChange={updateDividends}
+            onImportFile={handleImportDividends}
             showErrors={showStepErrors}
           />
         );

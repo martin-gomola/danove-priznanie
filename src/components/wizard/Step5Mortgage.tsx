@@ -4,7 +4,7 @@ import React from 'react';
 import { MortgageInterest } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, MarginNote, Disclosure } from '@/components/ui/FormField';
 import { MORTGAGE_MAX_OLD, MORTGAGE_MAX_NEW } from '@/lib/tax/constants';
-import { fmtEur } from '@/lib/utils/decimal';
+import { fmtEur, requiredError } from '@/lib/utils/decimal';
 
 interface Props {
   data: MortgageInterest;
@@ -45,7 +45,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                 label="Zaplatené úroky za rok 2025"
                 hint="Suma úrokov z potvrdenia banky"
                 required
-                error={showErrors && !data.zaplateneUroky ? 'Povinné pole' : undefined}
+                error={requiredError(showErrors, data.zaplateneUroky)}
               >
                 <Input
                   type="number"
@@ -61,7 +61,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                 label="Počet mesiacov"
                 hint="Počet mesiacov v roku 2025, počas ktorých ste splácali"
                 required
-                error={showErrors && !data.pocetMesiacov ? 'Povinné pole' : undefined}
+                error={requiredError(showErrors, data.pocetMesiacov)}
               >
                 <Input
                   type="number"
@@ -78,7 +78,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                   label="Dátum začatia úročenia úveru"
                   hint="Kedy začínate platiť úroky"
                   required
-                  error={showErrors && !data.datumZacatiaUroceniaUveru ? 'Povinné pole' : undefined}
+                  error={requiredError(showErrors, data.datumZacatiaUroceniaUveru)}
                 >
                   <Input
                     type="date"
@@ -90,7 +90,7 @@ export function Step5Mortgage({ data, onChange, calculatedBonus, showErrors = fa
                   label="Dátum uzavretia zmluvy"
                   hint="Kedy bola podpísaná zmluva o úvere"
                   required
-                  error={showErrors && !data.datumUzavretiaZmluvy ? 'Povinné pole' : undefined}
+                  error={requiredError(showErrors, data.datumUzavretiaZmluvy)}
                 >
                   <Input
                     type="date"

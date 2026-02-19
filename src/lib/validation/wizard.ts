@@ -1,5 +1,6 @@
 import { TaxFormData } from '@/types/TaxForm';
 import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
+import { safeDecimal } from '@/lib/utils/decimal';
 
 export interface ValidationWarning {
   step: number;
@@ -13,7 +14,7 @@ function hasValue(value: string | undefined): boolean {
 
 function hasPositiveNumber(value: string | undefined): boolean {
   if (!hasValue(value)) return false;
-  return Number.parseFloat(value as string) > 0;
+  return safeDecimal(value).gt(0);
 }
 
 function isValidDicOrRc(value: string): boolean {
@@ -84,7 +85,7 @@ export function getValidationWarnings(form: TaxFormData): ValidationWarning[] {
   // Step 5: dividends
   if (form.dividends.enabled) {
     const hasDividend = form.dividends.entries.some(
-      (e) => hasValue(e.country) && (hasPositiveNumber(e.amountUsd) || hasPositiveNumber(e.amountEur))
+      (e) => hasValue(e.country) && (hasPositiveNumber(e.amountOriginal) || hasPositiveNumber(e.amountEur))
     );
     if (!hasDividend) warnings.push({ step: 5, section: 'Dividendy', field: 'Aspoň 1 dividendový príjem' });
   }

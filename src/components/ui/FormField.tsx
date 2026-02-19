@@ -294,7 +294,7 @@ export function MarginNote({ section, href, hrefLabel, children, skipDesktopAsid
 }
 
 export interface DisclosureProps {
-  summary: string;
+  summary: React.ReactNode;
   children: React.ReactNode;
 }
 

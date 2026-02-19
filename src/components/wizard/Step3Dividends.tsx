@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ForeignDividends, DividendEntry } from '@/types/TaxForm';
 import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, MarginNotePanel, Disclosure } from '@/components/ui/FormField';
 import { DIVIDEND_COUNTRIES, findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Upload } from 'lucide-react';
 import Decimal from 'decimal.js';
-import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur, sumDecimal } from '@/lib/utils/decimal';
 
 /** Optional screenshot for broker guide; hides if image fails to load (e.g. file not yet in public). */
 function BrokerGuideImage({ src, alt }: { src: string; alt: string }) {
@@ -22,9 +22,11 @@ function BrokerGuideImage({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+/** Props for the dividends step (Príloha Č.2 / XIII). */
 interface Props {
   data: ForeignDividends;
   onChange: (updates: Partial<ForeignDividends>) => void;
+  onImportFile?: (file: File) => void;
   showErrors?: boolean;
 }
 
@@ -32,10 +34,10 @@ interface Props {
 function convertToEur(amount: string, rate: string): string {
   try {
     if (!amount || !rate) return '';
-    const a = new Decimal(amount);
-    const r = new Decimal(rate);
-    if (r.isZero()) return '';
-    return a.div(r).toDecimalPlaces(2).toFixed(2);
+    const amt = new Decimal(amount);
+    const rt = new Decimal(rate);
+    if (rt.isZero()) return '';
+    return amt.div(rt).toDecimalPlaces(2).toFixed(2);
   } catch {
     return '';
   }
@@ -48,7 +50,149 @@ function rateForCurrency(currency: 'USD' | 'EUR' | 'CZK', ecbRate: string, czkRa
   return ecbRate; // USD
 }
 
-export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
+/** Single dividend entry card: ticker, country, amounts, withheld tax. */
+function DividendEntryCard({
+  entry,
+  index,
+  updateEntry,
+  removeEntry,
+}: {
+  entry: DividendEntry;
+  index: number;
+  updateEntry: (id: string, updates: Partial<DividendEntry>) => void;
+  removeEntry: (id: string) => void;
+}) {
+  const cur = entry.currency ?? 'USD';
+  const isEur = cur === 'EUR';
+  const needsConversion = !isEur;
+  const currencySymbol = cur === 'EUR' ? '€' : cur === 'CZK' ? 'Kč' : '$';
+  const currencyLabel = cur;
+  const removeLabel = entry.ticker ? `Odstrániť ${entry.ticker}` : `Odstrániť položku ${index + 1}`;
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 font-medium">#{index + 1}</span>
+          {isEur && (
+            <span className="text-xs font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">EUR</span>
+          )}
+          {cur === 'CZK' && (
+            <span className="text-xs font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">CZK</span>
+          )}
+        </div>
+        <button
+          onClick={() => removeEntry(entry.id)}
+          className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
+          aria-label={removeLabel}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <FormField label="Ticker">
+          <Input
+            value={entry.ticker}
+            onChange={(e) => updateEntry(entry.id, { ticker: e.target.value.toUpperCase() })}
+            placeholder={cur === 'CZK' ? 'CEZ.PR' : isEur ? 'MC.PA' : 'AAPL'}
+          />
+        </FormField>
+        <FormField label="Krajina">
+          <Select
+            value={entry.country}
+            onChange={(e) => {
+              const country = findCountryByCode(e.target.value);
+              if (country) updateEntry(entry.id, { country: country.code, countryName: country.name });
+            }}
+          >
+            {!findCountryByCode(entry.country) && (
+              <option value={entry.country}>{entry.countryName || 'Vyberte krajinu'}</option>
+            )}
+            {DIVIDEND_COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name} ({c.code})
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField label={`Dividendy brutto (${currencyLabel})`}>
+          <Input
+            type="number"
+            step="0.01"
+            value={entry.amountOriginal}
+            onChange={(e) => updateEntry(entry.id, { amountOriginal: e.target.value })}
+            placeholder="0.00"
+            suffix={currencySymbol}
+          />
+        </FormField>
+        {needsConversion ? (
+          <FormField label="Dividendy (EUR)">
+            <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
+              {entry.amountEur ? fmtEur(entry.amountEur) : '-'}
+            </div>
+          </FormField>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+        <FormField
+          label={`Daň zrazená (${currencyLabel})`}
+          hint="Napr. 15% W-8BEN (USA), 12.8% (FR), 25% (IE), 15% (CZ)"
+          hintIcon
+        >
+          <Input
+            type="number"
+            step="0.01"
+            value={entry.withheldTaxOriginal}
+            onChange={(e) => updateEntry(entry.id, { withheldTaxOriginal: e.target.value })}
+            placeholder="0.00"
+            suffix={currencySymbol}
+          />
+        </FormField>
+        {needsConversion ? (
+          <FormField label="Daň zrazená (EUR)">
+            <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
+              {entry.withheldTaxEur ? fmtEur(entry.withheldTaxEur) : '-'}
+            </div>
+          </FormField>
+        ) : (
+          <div className="hidden sm:block" />
+        )}
+        <FormField label="Sadzba">
+          <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
+            {entry.amountOriginal && entry.withheldTaxOriginal && safeDecimal(entry.amountOriginal).gt(0)
+              ? `${safeDecimal(entry.withheldTaxOriginal).div(safeDecimal(entry.amountOriginal)).mul(100).toDecimalPlaces(1).toFixed(1)}%`
+              : '-'}
+          </div>
+        </FormField>
+        <div className="hidden sm:block" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Step 3: Foreign dividends (Príloha Č.2 / XIII).
+ * Toggle, exchange rates, broker guide, and dividend entries with optional IBKR CSV/PDF import.
+ */
+export function Step3Dividends({ data, onChange, onImportFile, showErrors = false }: Props) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onImportFile) return;
+      onImportFile(file);
+      e.target.value = '';
+    },
+    [onImportFile]
+  );
+
   const addEntry = useCallback(() => {
     const newEntry: DividendEntry = {
       id: crypto.randomUUID(),
@@ -56,9 +200,9 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
       country: '840',
       countryName: 'USA',
       currency: 'USD',
-      amountUsd: '',
+      amountOriginal: '',
       amountEur: '',
-      withheldTaxUsd: '',
+      withheldTaxOriginal: '',
       withheldTaxEur: '',
     };
     onChange({ entries: [...data.entries, newEntry] });
@@ -82,18 +226,18 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
           if (updates.country !== undefined) {
             updated.currency = getCurrencyForCountry(updated.country);
             const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.amountEur = convertToEur(updated.amountUsd, rate);
-            updated.withheldTaxEur = convertToEur(updated.withheldTaxUsd, rate);
+            updated.amountEur = convertToEur(updated.amountOriginal, rate);
+            updated.withheldTaxEur = convertToEur(updated.withheldTaxOriginal, rate);
           }
 
           // When amount changes, convert using the entry's rate
-          if (updates.amountUsd !== undefined && !updates.country) {
+          if (updates.amountOriginal !== undefined && !updates.country) {
             const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.amountEur = convertToEur(updated.amountUsd, rate);
+            updated.amountEur = convertToEur(updated.amountOriginal, rate);
           }
-          if (updates.withheldTaxUsd !== undefined && !updates.country) {
+          if (updates.withheldTaxOriginal !== undefined && !updates.country) {
             const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.withheldTaxEur = convertToEur(updated.withheldTaxUsd, rate);
+            updated.withheldTaxEur = convertToEur(updated.withheldTaxOriginal, rate);
           }
 
           return updated;
@@ -110,8 +254,8 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
         const rate = rateForCurrency(e.currency ?? 'USD', newRate, data.czkRate);
         return {
           ...e,
-          amountEur: convertToEur(e.amountUsd, rate),
-          withheldTaxEur: convertToEur(e.withheldTaxUsd, rate),
+          amountEur: convertToEur(e.amountOriginal, rate),
+          withheldTaxEur: convertToEur(e.withheldTaxOriginal, rate),
         };
       });
       onChange({ ecbRate: newRate, ecbRateOverride: true, entries: updatedEntries });
@@ -126,8 +270,8 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
         const rate = rateForCurrency(e.currency ?? 'USD', data.ecbRate, newRate);
         return {
           ...e,
-          amountEur: convertToEur(e.amountUsd, rate),
-          withheldTaxEur: convertToEur(e.withheldTaxUsd, rate),
+          amountEur: convertToEur(e.amountOriginal, rate),
+          withheldTaxEur: convertToEur(e.withheldTaxOriginal, rate),
         };
       });
       onChange({ czkRate: newRate, czkRateOverride: true, entries: updatedEntries });
@@ -138,16 +282,11 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
   const hasUsdEntries = data.entries.some((e) => (e.currency ?? 'USD') === 'USD');
   const hasCzkEntries = data.entries.some((e) => e.currency === 'CZK');
   const hasDividendEntry = data.entries.some(
-    (entry) => Boolean(entry.country) && (safeDecimal(entry.amountUsd).gt(0) || safeDecimal(entry.amountEur).gt(0))
+    (entry) => Boolean(entry.country) && (safeDecimal(entry.amountOriginal).gt(0) || safeDecimal(entry.amountEur).gt(0))
   );
 
-  const totalEur = data.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.amountEur || '0')); } catch { return sum; }
-  }, new Decimal(0));
-
-  const totalWithheldEur = data.entries.reduce((sum, e) => {
-    try { return sum.plus(new Decimal(e.withheldTaxEur || '0')); } catch { return sum; }
-  }, new Decimal(0));
+  const totalEur = sumDecimal(data.entries, (e) => e.amountEur);
+  const totalWithheldEur = sumDecimal(data.entries, (e) => e.withheldTaxEur);
 
   const slovakTax = totalEur.mul(0.07).toDecimalPlaces(2);
   const creditableAmount = Decimal.min(slovakTax, totalWithheldEur);
@@ -184,16 +323,42 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
       </div>
 
       <div className="space-y-6">
-        <div>
-          <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
-            PRÍLOHA Č.2 / XIII. ODDIEL
-          </h2>
-          <p className="text-sm text-gray-600">
-            Podiely na zisku (dividendy)
-          </p>
-          <MarginNote skipDesktopAside section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
-            {note51e}
-          </MarginNote>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
+              PRÍLOHA Č.2 / XIII. ODDIEL
+            </h2>
+            <p className="text-sm text-gray-600">
+              Podiely na zisku (dividendy)
+            </p>
+            <MarginNote skipDesktopAside section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
+              {note51e}
+            </MarginNote>
+          </div>
+          {onImportFile && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,.pdf,text/csv,application/pdf"
+                onChange={handleFileChange}
+                className="hidden"
+                aria-hidden
+              />
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                  aria-label="Import z IBKR (CSV alebo PDF)"
+                >
+                  <Upload className="w-4 h-4" />
+                  Import z IBKR
+                </button>
+                <span className="text-xs text-gray-500">CSV alebo PDF, max. 1 MB</span>
+              </div>
+            </>
+          )}
         </div>
 
         <Toggle
@@ -261,50 +426,52 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
           )}
 
           <SectionCard
-            title={
-              <>
-                Kde nájdem výkaz dividend?{' '}
-                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-amber-100 text-amber-800 border border-amber-200">
-                  Rozpracované
-                </span>
-              </>
-            }
+            title="Kde nájdem výkaz dividend?"
             subtitle="Inštrukcie podľa brokera"
           >
             <div className="space-y-2">
-              <Disclosure summary="Revolut">
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  <li>Otvorte aplikáciu Revolut</li>
-                  <li>Kliknite na profil (ľavo hore) → <strong>Documents &amp; statements</strong></li>
-                  <li>Vyberte <strong>Consolidated statement</strong> pre ročný prehľad</li>
-                  <li>Alternatívne: Stocks Home → tri bodky → <strong>Statements</strong></li>
-                </ul>
-              </Disclosure>
-              <Disclosure summary="Interactive Brokers (IBKR)">
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  <li>Prihláste sa do Client Portal</li>
-                  <li>Kliknite na <strong>Performance &amp; Reports</strong> → <strong>Tax Documents</strong></li>
-                  <li>Alternatívne: Menu → <strong>Reporting</strong> → <strong>Tax Documents</strong></li>
-                  <li>Stiahnite výkaz za príslušný rok (PDF/Excel)</li>
-                </ul>
-              </Disclosure>
-              <Disclosure summary="Charles Schwab">
-                <ul className="list-disc list-inside space-y-1 text-gray-600">
-                  <li>Prihláste sa na schwab.com</li>
-                  <li>Prejdite do <strong>Tax Center</strong> (alebo <strong>1099 Dashboard</strong>)</li>
-                  <li>1099-DIV je súčasťou formulára <strong>1099 Composite</strong></li>
-                  <li>Dostupné od konca januára do konca februára</li>
-                </ul>
-              </Disclosure>
-              <Disclosure summary="E-Trade">
+              <Disclosure summary={<>Interactive Brokers (IBKR) <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">Import CSV</span></>}>
                 <div className="space-y-3">
                   <ul className="list-disc list-inside space-y-1 text-gray-600">
-                    <li>Prihláste sa na etrade.com</li>
-                    <li>V hornej navigácii kliknite na <strong>Documents</strong> (alebo Accounts → <strong>Documents</strong>)</li>
-                    <li>Zapnite <strong>Show quick filters</strong> a kliknite na kartu <strong>Tax documents</strong> s rokom (napr. 2025), alebo nastavte <strong>Document type</strong>: Tax Documents, <strong>Tax year</strong> a stlačte <strong>Apply</strong></li>
-                    <li>Stiahnite formulár <strong>1099 Composite</strong> (obsahuje 1099-DIV) v PDF</li>
+                    <li>Prihláste sa do Client Portal</li>
+                    <li>Prejdite na <strong>Tax Reports</strong> (alebo Performance &amp; Reports → Tax Documents)</li>
+                    <li>Vyberte <strong>Select a Tax Year</strong> (napr. 2024)</li>
+                    <li><strong>Form 1042-S</strong>: stiahnite PDF (iba ak potrebujete oficiálny výpis pre US)</li>
+                    <li><strong>Dividend Report</strong>: stiahnite CSV – súhrn dividend podľa tickerov vrátane US; na priznanie stačí tento CSV</li>
                   </ul>
-                  <BrokerGuideImage src="/images/dividend-guide/e-trade-dividend.png" alt="E-Trade Documents – Tax documents filter" />
+                  <BrokerGuideImage src="/images/dividend-guide/ibkr.png" alt="IBKR Tax Reports – Tax year, 1042-S a Dividend Report" />
+                </div>
+              </Disclosure>
+              <Disclosure summary={<span className="text-gray-500">Revolut, Schwab, E-Trade (manuálne zadávanie)</span>}>
+                <p className="text-sm text-gray-500 mb-3">Pre týchto brokerov zatiaľ len textové inštrukcie – údaje zadajte ručne do tabuľky nižšie.</p>
+                <div className="space-y-2 pl-0">
+                  <Disclosure summary="Revolut">
+                    <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
+                      <li>Otvorte aplikáciu Revolut</li>
+                      <li>Kliknite na profil (ľavo hore) → <strong>Documents &amp; statements</strong></li>
+                      <li>Vyberte <strong>Consolidated statement</strong> pre ročný prehľad</li>
+                      <li>Alternatívne: Stocks Home → tri bodky → <strong>Statements</strong></li>
+                    </ul>
+                  </Disclosure>
+                  <Disclosure summary="Charles Schwab">
+                    <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
+                      <li>Prihláste sa na schwab.com</li>
+                      <li>Prejdite do <strong>Tax Center</strong> (alebo <strong>1099 Dashboard</strong>)</li>
+                      <li>1099-DIV je súčasťou formulára <strong>1099 Composite</strong></li>
+                      <li>Dostupné od konca januára do konca februára</li>
+                    </ul>
+                  </Disclosure>
+                  <Disclosure summary="E-Trade">
+                    <div className="space-y-3">
+                      <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
+                        <li>Prihláste sa na etrade.com</li>
+                        <li>V hornej navigácii kliknite na <strong>Documents</strong> (alebo Accounts → <strong>Documents</strong>)</li>
+                        <li>Zapnite <strong>Show quick filters</strong> a kliknite na kartu <strong>Tax documents</strong> s rokom (napr. 2025), alebo nastavte <strong>Document type</strong>: Tax Documents, <strong>Tax year</strong> a stlačte <strong>Apply</strong></li>
+                        <li>Stiahnite formulár <strong>1099 Composite</strong> (obsahuje 1099-DIV) v PDF</li>
+                      </ul>
+                      <BrokerGuideImage src="/images/dividend-guide/e-trade-dividend.png" alt="E-Trade Documents – Tax documents filter" />
+                    </div>
+                  </Disclosure>
                 </div>
               </Disclosure>
             </div>
@@ -315,136 +482,15 @@ export function Step3Dividends({ data, onChange, showErrors = false }: Props) {
               {showErrors && !hasDividendEntry && (
                 <InfoBox variant="warning">Pridajte aspoň 1 položku.</InfoBox>
               )}
-              {data.entries.map((entry, index) => {
-                const cur = entry.currency ?? 'USD';
-                const isEur = cur === 'EUR';
-                const needsConversion = !isEur; // both USD and CZK need EUR column
-                const currencySymbol = cur === 'EUR' ? '€' : cur === 'CZK' ? 'Kč' : '$';
-                const currencyLabel = cur;
-
-                return (
-                  <div
-                    key={entry.id}
-                    className="rounded-xl border border-gray-200 bg-white p-4"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500 font-medium">
-                          #{index + 1}
-                        </span>
-                        {isEur && (
-                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                            EUR
-                          </span>
-                        )}
-                        {cur === 'CZK' && (
-                          <span className="text-xs font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
-                            CZK
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => removeEntry(entry.id)}
-                        className="p-1 rounded text-gray-400 hover:text-red-500 transition-colors"
-                        aria-label={`Odstrániť ticker ${index + 1}`}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                    {/* Row 1: Ticker, Country, amount, EUR */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <FormField label="Ticker">
-                        <Input
-                          value={entry.ticker}
-                          onChange={(e) =>
-                            updateEntry(entry.id, { ticker: e.target.value.toUpperCase() })
-                          }
-                          placeholder={cur === 'CZK' ? 'CEZ.PR' : isEur ? 'MC.PA' : 'AAPL'}
-                        />
-                      </FormField>
-                      <FormField label="Krajina">
-                        <Select
-                          value={entry.country}
-                          onChange={(e) => {
-                            const c = findCountryByCode(e.target.value);
-                            if (c) {
-                              updateEntry(entry.id, { country: c.code, countryName: c.name });
-                            }
-                          }}
-                        >
-                          {!findCountryByCode(entry.country) && (
-                            <option value={entry.country}>
-                              {entry.countryName || 'Vyberte krajinu'}
-                            </option>
-                          )}
-                          {DIVIDEND_COUNTRIES.map((c) => (
-                            <option key={c.code} value={c.code}>
-                              {c.name} ({c.code})
-                            </option>
-                          ))}
-                        </Select>
-                      </FormField>
-                      <FormField label={`Dividendy brutto (${currencyLabel})`}>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={entry.amountUsd}
-                          onChange={(e) =>
-                            updateEntry(entry.id, { amountUsd: e.target.value })
-                          }
-                          placeholder="0.00"
-                          suffix={currencySymbol}
-                        />
-                      </FormField>
-                      {needsConversion ? (
-                        <FormField label="Dividendy (EUR)">
-                          <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                            {entry.amountEur ? fmtEur(entry.amountEur) : '-'}
-                          </div>
-                        </FormField>
-                      ) : (
-                        <div className="hidden sm:block" />
-                      )}
-                    </div>
-                    {/* Row 2: Withheld tax, EUR equivalent, Rate */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-                      <FormField
-                        label={`Daň zrazená (${currencyLabel})`}
-                        hint="Napr. 15% W-8BEN (USA), 12.8% (FR), 25% (IE), 15% (CZ)"
-                        hintIcon
-                      >
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={entry.withheldTaxUsd}
-                          onChange={(e) =>
-                            updateEntry(entry.id, { withheldTaxUsd: e.target.value })
-                          }
-                          placeholder="0.00"
-                          suffix={currencySymbol}
-                        />
-                      </FormField>
-                      {needsConversion ? (
-                        <FormField label="Daň zrazená (EUR)">
-                          <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                            {entry.withheldTaxEur ? fmtEur(entry.withheldTaxEur) : '-'}
-                          </div>
-                        </FormField>
-                      ) : (
-                        <div className="hidden sm:block" />
-                      )}
-                      <FormField label="Sadzba">
-                        <div className="px-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-600 tabular-nums h-[38px] flex items-center">
-                          {entry.amountUsd && entry.withheldTaxUsd && safeDecimal(entry.amountUsd).gt(0)
-                            ? `${safeDecimal(entry.withheldTaxUsd).div(safeDecimal(entry.amountUsd)).mul(100).toDecimalPlaces(1).toFixed(1)}%`
-                            : '-'}
-                        </div>
-                      </FormField>
-                      <div className="hidden sm:block" />
-                    </div>
-                  </div>
-                );
-              })}
+              {data.entries.map((entry, index) => (
+                <DividendEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  index={index}
+                  updateEntry={updateEntry}
+                  removeEntry={removeEntry}
+                />
+              ))}
 
               <button
                 onClick={addEntry}
