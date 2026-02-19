@@ -439,7 +439,7 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
                     <li><strong>Form 1042-S</strong>: stiahnite PDF (iba ak potrebujete oficiálny výpis pre US)</li>
                     <li><strong>Dividend Report</strong>: stiahnite CSV – súhrn dividend podľa tickerov vrátane US; na priznanie stačí tento CSV</li>
                   </ul>
-                  <BrokerGuideImage src="/images/dividend-guide/ibkr.png" alt="IBKR Tax Reports – Tax year, 1042-S a Dividend Report" />
+                  <BrokerGuideImage src="/images/dividend-guide/ibkr.jpg" alt="IBKR Tax Reports - Tax year, 1042-S a Dividend Report" />
                 </div>
               </Disclosure>
               <Disclosure summary={<span className="text-gray-500">Revolut, Schwab, E-Trade (manuálne zadávanie)</span>}>
