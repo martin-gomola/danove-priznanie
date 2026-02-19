@@ -3,9 +3,12 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (progress + longer timeout so slow networks don't appear stuck)
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm config set progress true && \
+    npm config set fetch-timeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm ci
 
 # Build app (produces .next/standalone + .next/static + public)
 COPY . .
