@@ -360,15 +360,64 @@ export function convertToXML(
   return xml;
 }
 
+const DEFAULT_XML_BASE = 'dpfo_b_2025';
+
+/** Sanitize a string for use in a filename (remove path/control chars, limit length). */
+function sanitizeForFilename(s: string, maxLen = 80): string {
+  const safe = s.replace(/[/\\:*?"<>|\x00-\x1f]/g, '').trim();
+  return safe.length > maxLen ? safe.slice(0, maxLen) : safe;
+}
+
 /**
- * Trigger browser download of XML file
+ * Default XML download filename. Use when calling downloadXML(xml, defaultXmlFilename(surname)).
  */
-export function downloadXML(xml: string, filename?: string): void {
+export function defaultXmlFilename(surname?: string | null): string {
+  const s = surname?.trim();
+  const base = s ? `${DEFAULT_XML_BASE}_${sanitizeForFilename(s)}` : DEFAULT_XML_BASE;
+  return base.toLowerCase().endsWith('.xml') ? base : `${base.replace(/\.xml$/i, '')}.xml`;
+}
+
+function suggestedXmlName(filename?: string): string {
+  const base = filename?.trim() || DEFAULT_XML_BASE;
+  return base.toLowerCase().endsWith('.xml') ? base : `${base.replace(/\.xml$/i, '')}.xml`;
+}
+
+/**
+ * Trigger browser download of XML file.
+ * If the browser supports it, shows a "Save as" dialog so the user can choose filename and destination.
+ * Otherwise falls back to a programmatic download with a .xml filename.
+ */
+export async function downloadXML(xml: string, filename?: string): Promise<void> {
+  const name = suggestedXmlName(filename);
   const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
+
+  if (typeof window !== 'undefined' && 'showSaveFilePicker' in window) {
+    try {
+      const handle = await (window as Window & {
+        showSaveFilePicker: (options: { suggestedName: string; types: { description: string; accept: Record<string, string[]> }[] }) => Promise<FileSystemFileHandle>;
+      }).showSaveFilePicker({
+        suggestedName: name,
+        types: [{ description: 'XML súbor', accept: { 'application/xml': ['.xml'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('showSaveFilePicker failed, falling back to download link', err);
+      }
+    }
+  }
+
+  // Use File so browsers that ignore the download attribute may still use the file name
+  const file = new File([blob], name, { type: 'application/xml;charset=utf-8' });
+  const url = URL.createObjectURL(file);
   const link = document.createElement('a');
+  link.download = name;
   link.href = url;
-  link.download = filename || `dpfo_b_2025.xml`;
+  link.setAttribute('download', name);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

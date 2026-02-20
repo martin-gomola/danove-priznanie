@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { useTaxForm } from '@/hooks/useTaxForm';
 import { calculateTax } from '@/lib/tax/calculator';
-import { convertToXML, downloadXML } from '@/lib/xml/xmlGenerator';
+import { convertToXML, defaultXmlFilename, downloadXML } from '@/lib/xml/xmlGenerator';
 import { WizardLayout } from '@/components/wizard/WizardLayout';
 import { Step1PersonalInfo } from '@/components/wizard/Step1PersonalInfo';
 import { Step2Employment } from '@/components/wizard/Step2Employment';
@@ -56,7 +56,7 @@ export default function Home() {
   // Calculate tax whenever form changes
   const calc = useMemo(() => calculateTax(form), [form]);
 
-  const handleDownloadXml = useCallback(() => {
+  const handleDownloadXml = useCallback(async () => {
     const hasDic = !!form.personalInfo?.dic?.trim();
     const hasDividendEntries = form.dividends.enabled && form.dividends.entries.length > 0;
     if (!hasDic) {
@@ -69,7 +69,8 @@ export default function Home() {
       toast.info('Zapnuté dividendy, ale žiadne položky - importujte CSV/PDF alebo pridajte riadky v kroku 3.');
     }
     const xml = convertToXML(form, calc);
-    downloadXML(xml);
+    const suggestedName = defaultXmlFilename(form.personalInfo?.priezvisko);
+    await downloadXML(xml, suggestedName);
     toast.success('XML stiahnutý');
   }, [form, calc, toast]);
 
