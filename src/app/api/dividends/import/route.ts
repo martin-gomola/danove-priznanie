@@ -19,6 +19,16 @@ function isCsv(file: File): boolean {
   return name.endsWith('.csv') || type.includes('csv') || type === 'text/csv';
 }
 
+/** Detect IBKR dividend CSV by content (so uploads with wrong extension still work) */
+function looksLikeIbkrDividendCsv(text: string): boolean {
+  const trimmed = text.trimStart();
+  return (
+    trimmed.startsWith('Account,Header,') ||
+    trimmed.startsWith('DividendDetail,Header,') ||
+    (trimmed.includes('DividendDetail,Data,Summary,') && trimmed.includes('Gross,GrossInBase,GrossInUSD'))
+  );
+}
+
 function isPdf(file: File): boolean {
   const name = (file.name || '').toLowerCase();
   const type = (file.type || '').toLowerCase();
@@ -53,23 +63,27 @@ export async function POST(req: NextRequest) {
 
     let entries: DividendEntry[];
 
-    if (isCsv(file)) {
-      const text = await file.text();
-      entries = parseIbkrDividendCsv(text);
-    } else if (isPdf(file)) {
+    if (isPdf(file)) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const entry = await parse1042sPdf(buffer);
       entries = entry ? [entry] : [];
     } else {
-      return Response.json(
-        { error: 'Unsupported file type. Use .csv (IBKR dividend) or .pdf (1042-S).' },
-        { status: 400 },
-      );
+      const text = await file.text();
+      if (isCsv(file) || looksLikeIbkrDividendCsv(text)) {
+        entries = parseIbkrDividendCsv(text);
+      } else {
+        return Response.json(
+          { error: 'Unsupported file type. Use .csv (IBKR dividend) or .pdf (1042-S).' },
+          { status: 400 },
+        );
+      }
     }
 
     return Response.json({ entries });
   } catch (err) {
-    console.error('Dividend import failed:', err);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Dividend import failed:', err);
+    }
     return Response.json(
       { error: 'Failed to parse file. Check format (IBKR dividend CSV or 1042-S PDF).' },
       { status: 422 },

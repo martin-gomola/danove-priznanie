@@ -62,7 +62,9 @@ export function useTaxForm() {
         });
       }
     } catch (e) {
-      console.warn('Failed to load saved form data:', e);
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Failed to load saved form data:', e);
+      }
     }
     setSessionToken(getSessionToken());
     setIsLoaded(true);
@@ -86,14 +88,16 @@ export function useTaxForm() {
   }, []);
 
   // Poll for pending form updates from external tools (MCP / Cursor skill / Claude Code).
-  // GET /api/form?session=<token> returns { data: null } when idle, or { data: {...} } with a queued update.
+  // GET /api/form with X-Session-Token header (avoids token in URL/logs).
   useEffect(() => {
     if (!isLoaded || !sessionToken) return;
     const POLL_INTERVAL = 3_000;
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/form?session=${encodeURIComponent(sessionToken)}`);
+        const res = await fetch('/api/form', {
+          headers: { 'X-Session-Token': sessionToken },
+        });
         if (!res.ok) return;
         const { data } = await res.json();
         if (!data || typeof data !== 'object') return;
@@ -134,7 +138,9 @@ export function useTaxForm() {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch (e) {
-      console.warn('Failed to save form data:', e);
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Failed to save form data:', e);
+      }
     }
   }, [form, isLoaded]);
 
@@ -301,7 +307,9 @@ export function useTaxForm() {
           markSaving();
           toast.success('XML importované');
         } catch (err) {
-          console.error('Failed to import XML:', err);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Failed to import XML:', err);
+          }
           toast.error('Neplatný súbor. Nahrajte XML súbor (DPFO priznanie).');
         }
       };

@@ -13,7 +13,9 @@ let cachedList: PrijimatelItem[] | null = null;
 function loadPrijimatelia(): PrijimatelItem[] {
   if (cachedList) return cachedList;
   if (!existsSync(CSV_PATH)) {
-    console.warn(`prijimatelia CSV not found at ${CSV_PATH}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn(`prijimatelia CSV not found at ${CSV_PATH}`);
+    }
     return [];
   }
   const raw = readFileSync(CSV_PATH);
@@ -46,11 +48,13 @@ function filterList(list: PrijimatelItem[], q: string): PrijimatelItem[] {
 export async function GET(request: NextRequest) {
   try {
     const list = loadPrijimatelia();
-    const q = request.nextUrl.searchParams.get('q') ?? '';
+    const q = (request.nextUrl.searchParams.get('q') ?? '').slice(0, 200);
     const results = filterList(list, q);
     return Response.json(results);
   } catch (e) {
-    console.error('prijimatelia-2perc API error:', e);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('prijimatelia-2perc API error:', e);
+    }
     return Response.json([], { status: 500 });
   }
 }

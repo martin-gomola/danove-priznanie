@@ -396,4 +396,75 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
     }
     expect(result.valid).toBe(true);
   });
+
+  // ─── Scenario 7: Dividends with empty amountEur (e.g. 1042-S import) ─────
+  it('validates and fills Oddiel XIII when amountEur is empty', () => {
+    const form = buildForm({
+      personalInfo: {
+        dic: '1234567890',
+        priezvisko: 'Testovič',
+        meno: 'Ján',
+        titul: '',
+        titulZa: '',
+        ulica: 'Hlavná',
+        cislo: '1',
+        psc: '81101',
+        obec: 'Bratislava',
+        stat: 'Slovenská republika',
+      },
+      employment: { enabled: false },
+      dividends: {
+        enabled: true,
+        ecbRate: '1.13',
+        ecbRateOverride: false,
+        czkRate: '25.21',
+        czkRateOverride: false,
+        entries: [
+          {
+            id: '1',
+            ticker: 'US',
+            country: '840',
+            countryName: 'USA',
+            currency: 'USD',
+            amountOriginal: '113.00',
+            amountEur: '', // empty as after 1042-S import
+            withheldTaxOriginal: '16.95',
+            withheldTaxEur: '',
+          },
+        ],
+      },
+    });
+    const calc = calculateTax(form);
+    expect(calc.pril2_pr1).toBe('100.00'); // 113 / 1.13
+    const xml = convertToXML(form, calc);
+    const result = validateXml(xml, 'dividends-empty-eur');
+    expect(result.valid).toBe(true);
+    expect(xml).toContain('<uvadza>1</uvadza>');
+    expect(xml).toContain('<kodStatu>840</kodStatu>');
+    expect(xml).toContain('<prijmy>100.00</prijmy>');
+  });
+
+  it('escapes XML special characters in user-supplied fields', () => {
+    const form = buildForm({
+      personalInfo: {
+        dic: '1234567890',
+        priezvisko: 'Test & Co. <script>',
+        meno: 'Ján">',
+        titul: '',
+        titulZa: '',
+        ulica: 'Hlavná',
+        cislo: '1',
+        psc: '81101',
+        obec: 'Bratislava',
+        stat: 'Slovenská republika',
+      },
+      employment: { enabled: false },
+    });
+    const calc = calculateTax(form);
+    const xml = convertToXML(form, calc);
+    expect(xml).not.toContain('<script>');
+    expect(xml).toContain('&lt;');
+    expect(xml).toContain('&gt;');
+    expect(xml).toContain('&amp;');
+  });
 });

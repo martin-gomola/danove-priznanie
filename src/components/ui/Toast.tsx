@@ -22,7 +22,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const DEFAULT_DURATION = 4000;
+const DEFAULT_DURATION = 5000;
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -74,7 +74,7 @@ function ToastContainer({
 
   return (
     <div
-      className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none w-full max-w-sm sm:max-w-md"
+      className="fixed bottom-4 right-4 z-[9999] flex flex-col-reverse gap-2 pointer-events-none w-full max-w-sm sm:max-w-md"
       aria-live="polite"
     >
       <div className="flex flex-col gap-2 pointer-events-auto">

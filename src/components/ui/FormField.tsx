@@ -10,13 +10,24 @@ interface FormFieldProps {
   hintIcon?: boolean;
   required?: boolean;
   error?: string;
+  /** Optional id for the control; used for label htmlFor and passed to a single child for a11y. */
+  id?: string;
   children: React.ReactNode;
 }
 
-export function FormField({ label, hint, hintIcon, required, error, children }: FormFieldProps) {
+export function FormField({ label, hint, hintIcon, required, error, id: idProp, children }: FormFieldProps) {
+  const generatedId = React.useId();
+  const fieldId = idProp ?? generatedId;
+  const count = React.Children.count(children);
+  const singleChild = count === 1 ? React.Children.toArray(children)[0] : null;
+  const labeledChild =
+    count === 1 && React.isValidElement(singleChild)
+      ? React.cloneElement(singleChild as React.ReactElement<{ id?: string }>, { id: fieldId })
+      : children;
+
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1 text-sm font-medium text-gray-700">
+      <label htmlFor={fieldId} className="flex items-center gap-1 text-sm font-medium text-gray-700">
         <span>
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
@@ -36,7 +47,7 @@ export function FormField({ label, hint, hintIcon, required, error, children }: 
         )}
       </label>
       {hint && !hintIcon && <p className="text-xs text-gray-600">{hint}</p>}
-      {children}
+      {labeledChild}
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );

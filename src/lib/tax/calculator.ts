@@ -10,6 +10,7 @@
 
 import Decimal from 'decimal.js';
 import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
+import { dividendToEur } from '@/lib/utils/dividendEur';
 import {
   NCZD_ZAKLAD,
   NCZD_THRESHOLD,
@@ -307,9 +308,18 @@ function dividendsSection(form: TaxFormData): DividendsSectionResult {
   let totalDividendsEur = new Decimal(0);
   let totalWithheldTaxEur = new Decimal(0);
   if (form.dividends.enabled) {
+    const { ecbRate, czkRate } = form.dividends;
     for (const entry of form.dividends.entries) {
-      totalDividendsEur = totalDividendsEur.plus(d(entry.amountEur));
-      totalWithheldTaxEur = totalWithheldTaxEur.plus(d(entry.withheldTaxEur));
+      const amountEur =
+        entry.amountEur && d(entry.amountEur).gt(0)
+          ? entry.amountEur
+          : dividendToEur(entry.amountOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
+      const withheldEur =
+        entry.withheldTaxEur && d(entry.withheldTaxEur).gte(0)
+          ? entry.withheldTaxEur
+          : dividendToEur(entry.withheldTaxOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
+      totalDividendsEur = totalDividendsEur.plus(d(amountEur));
+      totalWithheldTaxEur = totalWithheldTaxEur.plus(d(withheldEur));
     }
   }
   const pril2_pr1 = totalDividendsEur;

@@ -5,12 +5,14 @@ import { NextRequest } from 'next/server';
  * to push form data into the running app.
  *
  * POST /api/form - queue a partial form update (requires Bearer <session-token>)
- * GET  /api/form?session=<token> - poll & consume the pending update for this session
+ * GET  /api/form - poll & consume the pending update. Pass session via header:
+ *      X-Session-Token: <token> or Authorization: Bearer <token>.
+ *      Query ?session=<token> is supported for backward compatibility but prefer header to avoid token in logs.
  *
  * Security:
  * - Each browser session generates a random UUID token (stored in localStorage).
  * - POST requires Authorization: Bearer <session-token>.
- * - GET requires ?session=<token> query param to scope data retrieval.
+ * - GET accepts X-Session-Token or Authorization: Bearer (preferred) or ?session= for backward compatibility.
  * - Tokens are random UUIDs (128-bit entropy) - practically unguessable.
  * - Pending data expires after 60 seconds and sessions are cleaned up automatically.
  *
@@ -58,14 +60,20 @@ function cleanExpired() {
 const MIN_TOKEN_LENGTH = 8;
 
 /**
- * Extract the Bearer token from the Authorization header.
+ * Extract session token from request: X-Session-Token header, or Authorization: Bearer, or ?session= query.
  * Must be at least MIN_TOKEN_LENGTH characters to prevent weak tokens.
  */
 function extractToken(req: NextRequest): string | null {
+  const header = req.headers.get('x-session-token')?.trim();
+  if (header && header.length >= MIN_TOKEN_LENGTH) return header;
   const auth = req.headers.get('authorization') ?? '';
-  if (!auth.startsWith('Bearer ')) return null;
-  const token = auth.slice(7).trim();
-  return token.length >= MIN_TOKEN_LENGTH ? token : null;
+  if (auth.startsWith('Bearer ')) {
+    const token = auth.slice(7).trim();
+    if (token.length >= MIN_TOKEN_LENGTH) return token;
+  }
+  const query = req.nextUrl.searchParams.get('session')?.trim();
+  if (query && query.length >= MIN_TOKEN_LENGTH) return query;
+  return null;
 }
 
 /**
@@ -146,8 +154,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const session = req.nextUrl.searchParams.get('session');
-  if (!session || session.length < MIN_TOKEN_LENGTH) {
+  const session = extractToken(req);
+  if (!session) {
     return Response.json({ data: null });
   }
 

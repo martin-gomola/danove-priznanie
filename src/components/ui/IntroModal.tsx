@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { HardDrive, ShieldCheck, FileDown, Check, CalendarClock } from 'lucide-react';
 
 export const INTRO_DISMISSED_KEY = 'dane-priznanie-notice-dismissed';
@@ -13,14 +13,49 @@ const SUPPORTED_ITEMS = [
   'Zamestnanie',
   'Dividendy',
   'Podielové fondy a akcie',
-  'Hypoteka – daňový bonus na zaplatené úroky',
-  'Deti – daňový bonus na dieťa',
+  'Hypoteka - daňový bonus na zaplatené úroky',
+  'Deti - daňový bonus na dieťa',
   '2% dane',
 ];
 
 function IntroModalContent({ onDismiss }: IntroModalProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    buttonRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onDismiss();
+        return;
+      }
+      if (e.key !== 'Tab' || !cardRef.current) return;
+      const focusable = cardRef.current.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey) {
+        if (document.activeElement === first && last) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last && first) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onDismiss]);
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" aria-hidden="false">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm animate-[fadeIn_300ms_ease-out]"
@@ -28,7 +63,13 @@ function IntroModalContent({ onDismiss }: IntroModalProps) {
       />
 
       {/* Card */}
-      <div className="relative w-full max-w-lg bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden animate-[slideUp_350ms_ease-out]">
+      <div
+        ref={cardRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="intro-modal-title"
+        className="relative w-full max-w-lg bg-white rounded-2xl border border-stone-200 shadow-xl overflow-hidden animate-[slideUp_350ms_ease-out]"
+      >
         {/* Top accent */}
         <div className="h-1 bg-gradient-to-r from-stone-300 via-stone-400 to-stone-300" />
 
@@ -65,7 +106,7 @@ function IntroModalContent({ onDismiss }: IntroModalProps) {
               />
             </svg>
             <div>
-              <h2 className="font-heading text-xl font-semibold text-gray-900 leading-tight">
+              <h2 id="intro-modal-title" className="font-heading text-xl font-semibold text-gray-900 leading-tight">
                 Daňové priznanie
               </h2>
               <p className="text-xs text-stone-500 mt-0.5">
@@ -115,6 +156,8 @@ function IntroModalContent({ onDismiss }: IntroModalProps) {
 
           {/* CTA */}
           <button
+            ref={buttonRef}
+            type="button"
             onClick={onDismiss}
             className="w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium
               hover:bg-gray-800 active:bg-gray-950 transition-colors duration-150 cursor-pointer"

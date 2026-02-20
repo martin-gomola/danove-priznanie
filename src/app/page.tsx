@@ -16,6 +16,7 @@ import { Step7Review } from '@/components/wizard/Step7Review';
 import { useToast } from '@/components/ui/Toast';
 import { IntroModal } from '@/components/ui/IntroModal';
 import { getStepBlockingIssues } from '@/lib/validation/wizard';
+import { dividendToEur } from '@/lib/utils/dividendEur';
 
 const STEP_LABELS = [
   'Osobné údaje',
@@ -56,6 +57,17 @@ export default function Home() {
   const calc = useMemo(() => calculateTax(form), [form]);
 
   const handleDownloadXml = useCallback(() => {
+    const hasDic = !!form.personalInfo?.dic?.trim();
+    const hasDividendEntries = form.dividends.enabled && form.dividends.entries.length > 0;
+    if (!hasDic) {
+      toast.error('Chýba IČO/DIČ. XML bude prázdne - vyplňte krok 1 (Osobné údaje).');
+      const proceed = window.confirm(
+        'Nemáte vyplnené IČO/DIČ. Stiahnutý XML súbor bude prázdny a nebude ho možné odoslať. Naozaj stiahnuť?'
+      );
+      if (!proceed) return;
+    } else if (form.dividends.enabled && !hasDividendEntries) {
+      toast.info('Zapnuté dividendy, ale žiadne položky - importujte CSV/PDF alebo pridajte riadky v kroku 3.');
+    }
     const xml = convertToXML(form, calc);
     downloadXML(xml);
     toast.success('XML stiahnutý');
@@ -112,25 +124,24 @@ export default function Home() {
           toast.error('V súbore sa nenašli žiadne dividendy.');
           return;
         }
-        const ecbRate = form.dividends.ecbRate || '1.13';
-        const usdToEur = (amount: string, rate: string) => {
-          const a = parseFloat(amount) || 0;
-          const r = parseFloat(rate) || 1.13;
-          if (!r) return '';
-          return (a / r).toFixed(2);
-        };
-        const converted = entries.map((e: { currency: string; amountEur: string; amountOriginal: string; withheldTaxEur: string; withheldTaxOriginal: string }) =>
-          e.currency === 'USD' && !e.amountEur && e.amountOriginal
-            ? { ...e, amountEur: usdToEur(e.amountOriginal, ecbRate), withheldTaxEur: usdToEur(e.withheldTaxOriginal, ecbRate) }
-            : e
-        );
+        const { ecbRate, czkRate } = form.dividends;
+        const converted = entries.map((e: { currency: 'USD' | 'EUR' | 'CZK'; amountEur: string; amountOriginal: string; withheldTaxEur: string; withheldTaxOriginal: string }) => {
+          const currency = e.currency ?? 'USD';
+          const amountEur = e.amountEur && parseFloat(e.amountEur) > 0
+            ? e.amountEur
+            : dividendToEur(e.amountOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
+          const withheldTaxEur = e.withheldTaxEur !== undefined && e.withheldTaxEur !== ''
+            ? e.withheldTaxEur
+            : dividendToEur(e.withheldTaxOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
+          return { ...e, amountEur, withheldTaxEur };
+        });
         updateDividends({ entries: [...form.dividends.entries, ...converted], enabled: true });
         toast.success(`Importované ${converted.length} položiek`);
       } catch {
         toast.error('Import zlyhal');
       }
     },
-    [sessionToken, form.dividends.entries, form.dividends.ecbRate, updateDividends, toast]
+    [sessionToken, form.dividends.entries, form.dividends.ecbRate, form.dividends.czkRate, updateDividends, toast]
   );
 
   if (!isLoaded) {
