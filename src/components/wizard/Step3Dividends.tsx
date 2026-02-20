@@ -323,42 +323,16 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
       </div>
 
       <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
-              PRÍLOHA Č.2 / XIII. ODDIEL
-            </h2>
-            <p className="text-sm text-gray-600">
-              Podiely na zisku (dividendy)
-            </p>
-            <MarginNote skipDesktopAside section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
-              {note51e}
-            </MarginNote>
-          </div>
-          {onImportFile && (
-            <>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".csv,.pdf,text/csv,application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                aria-hidden
-              />
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleImportClick}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                  aria-label="Import z IBKR (CSV alebo PDF)"
-                >
-                  <Upload className="w-4 h-4" />
-                  Import z IBKR
-                </button>
-                <span className="text-xs text-gray-500">CSV alebo PDF, max. 1 MB</span>
-              </div>
-            </>
-          )}
+        <div>
+          <h2 className="font-heading text-2xl font-semibold text-gray-900 mb-1">
+            PRÍLOHA Č.2 / XIII. ODDIEL
+          </h2>
+          <p className="text-sm text-gray-600">
+            Podiely na zisku (dividendy)
+          </p>
+          <MarginNote skipDesktopAside section="§51e" href="https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/#paragraf-51e">
+            {note51e}
+          </MarginNote>
         </div>
 
         <Toggle
@@ -475,6 +449,33 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
                 </div>
               </Disclosure>
             </div>
+            {onImportFile && (
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,.pdf,text/csv,application/pdf"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  aria-hidden
+                />
+                <div className="mt-4 pt-4 border-t border-gray-200 flex flex-col items-start gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleImportClick}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                    aria-label="Import výkazu dividend (CSV alebo PDF)"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Import CSV/PDF
+                  </button>
+                  <span className="text-xs text-gray-500">CSV alebo PDF, max. 1 MB</span>
+                  <span className="text-xs text-amber-700 max-w-[20rem]">
+                    Po importe vždy skontrolujte, či sú sumy vyplnené správne.
+                  </span>
+                </div>
+              </>
+            )}
           </SectionCard>
 
           <SectionCard title="Dividendové príjmy" subtitle="Pridajte každý ticker a celkovú sumu dividend za rok 2025">
