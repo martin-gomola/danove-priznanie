@@ -135,6 +135,52 @@ export interface TwoPercentAllocation {
   suhlasSoZaslanim: boolean; // consent to share data with org
 }
 
+// ── AI Copilot ────────────────────────────────────────────────────────
+export type AIMode = 'managed' | 'byok';
+
+export interface AIProviderConfig {
+  mode: AIMode;
+  provider: 'openai' | 'custom';
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  lastConnectionCheck: string;
+  connectionOk: boolean;
+}
+
+export interface DocumentInboxItem {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  documentType: 'employment' | 'dividends' | '1042s' | 'broker_report' | 'other' | 'unknown';
+  parseStatus: 'queued' | 'parsed' | 'failed';
+}
+
+export interface EvidenceItem {
+  fieldPath: string;
+  docId: string;
+  snippet: string;
+  confidence: number;
+  extractedAt: string;
+}
+
+export interface RiskWarning {
+  severity: 'error' | 'warning' | 'info';
+  code: string;
+  message: string;
+  fieldPath: string;
+  suggestion: string;
+}
+
+export interface AICopilotState {
+  provider: AIProviderConfig;
+  documentInbox: DocumentInboxItem[];
+  evidence: EvidenceItem[];
+  warnings: RiskWarning[];
+  readinessScore: number;
+}
+
 // ── 2% Tax Allocation to Parents (Oddiel XII, §50aa) ─────────────────
 export type ParentAllocationChoice = 'both' | 'one' | 'none';
 
@@ -172,6 +218,8 @@ export interface TaxFormData {
   twoPercent: TwoPercentAllocation;
   // Step 8 (before review)
   parentAllocation: ParentTaxAllocation;
+  // AI Copilot
+  aiCopilot: AICopilotState;
   // Meta
   currentStep: number;
   lastSaved: string; // ISO date string
@@ -371,6 +419,24 @@ export const DEFAULT_PARENT_ALLOCATION: ParentTaxAllocation = {
   osvojeny: false,
 };
 
+export const DEFAULT_AI_PROVIDER: AIProviderConfig = {
+  mode: 'managed',
+  provider: 'openai',
+  apiKey: '',
+  baseUrl: '',
+  model: '',
+  lastConnectionCheck: '',
+  connectionOk: false,
+};
+
+export const DEFAULT_AI_COPILOT: AICopilotState = {
+  provider: DEFAULT_AI_PROVIDER,
+  documentInbox: [],
+  evidence: [],
+  warnings: [],
+  readinessScore: 0,
+};
+
 export const DEFAULT_TAX_FORM: TaxFormData = {
   personalInfo: DEFAULT_PERSONAL_INFO,
   employment: DEFAULT_EMPLOYMENT,
@@ -383,6 +449,7 @@ export const DEFAULT_TAX_FORM: TaxFormData = {
   childBonus: DEFAULT_CHILD_BONUS,
   twoPercent: DEFAULT_TWO_PERCENT,
   parentAllocation: DEFAULT_PARENT_ALLOCATION,
+  aiCopilot: DEFAULT_AI_COPILOT,
   currentStep: 0,
   lastSaved: '',
 };
