@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Info, ChevronRight } from 'lucide-react';
+import { EvidenceBadge } from '@/components/ui/EvidenceBadge';
+import type { EvidenceItem } from '@/types/TaxForm';
 
 interface FormFieldProps {
   label: string;
@@ -12,10 +14,14 @@ interface FormFieldProps {
   error?: string;
   /** Optional id for the control; used for label htmlFor and passed to a single child for a11y. */
   id?: string;
+  /** Optional AI-extraction evidence to show a badge and popover. */
+  evidence?: EvidenceItem[];
+  /** Display name for the source document in evidence popover. */
+  evidenceDocName?: string;
   children: React.ReactNode;
 }
 
-export function FormField({ label, hint, hintIcon, required, error, id: idProp, children }: FormFieldProps) {
+export function FormField({ label, hint, hintIcon, required, error, id: idProp, evidence, evidenceDocName, children }: FormFieldProps) {
   const generatedId = React.useId();
   const fieldId = idProp ?? generatedId;
   const count = React.Children.count(children);
@@ -27,11 +33,14 @@ export function FormField({ label, hint, hintIcon, required, error, id: idProp, 
 
   return (
     <div className="space-y-1.5">
-      <label htmlFor={fieldId} className="flex items-center gap-1 text-sm font-medium text-gray-700">
+      <label htmlFor={fieldId} className="flex items-center gap-1.5 text-sm font-medium text-gray-700 flex-wrap">
         <span>
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
         </span>
+        {evidence && evidence.length > 0 && (
+          <EvidenceBadge items={evidence} docName={evidenceDocName} />
+        )}
         {hint && hintIcon && (
           <span className="relative group">
             <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />

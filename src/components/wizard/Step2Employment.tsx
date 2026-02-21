@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
+import { DDSContributions, EmploymentIncome, EvidenceItem } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, MarginNote, Toggle } from '@/components/ui/FormField';
 import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
 
@@ -14,9 +14,25 @@ interface Props {
   onDdsChange: (updates: Partial<DDSContributions>) => void;
   calculatedR75?: string;
   showErrors?: boolean;
+  /** AI extraction evidence for employment fields (employment.r36, r37, r131, r36a) */
+  evidence?: EvidenceItem[];
+  /** Display name for the source document in evidence badges */
+  evidenceDocName?: string;
 }
 
-export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75, showErrors = false }: Props) {
+const EMPLOYMENT_FIELD_PATHS = {
+  r36: 'employment.r36',
+  r36a: 'employment.r36a',
+  r37: 'employment.r37',
+  r131: 'employment.r131',
+} as const;
+
+function evidenceForField(evidence: EvidenceItem[] | undefined, fieldPath: string): EvidenceItem[] {
+  if (!evidence?.length) return [];
+  return evidence.filter((e) => e.fieldPath === fieldPath);
+}
+
+export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75, showErrors = false, evidence, evidenceDocName }: Props) {
   return (
     <div className="space-y-6">
       <div className="relative">
@@ -42,6 +58,8 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             hint="Potvrdenie → II. oddiel, riadok 01"
             required
             error={requiredError(showErrors, data.r36)}
+            evidence={evidenceForField(evidence, EMPLOYMENT_FIELD_PATHS.r36)}
+            evidenceDocName={evidenceDocName}
           >
             <Input
               type="number"
@@ -58,6 +76,8 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             hint="Potvrdenie → II. oddiel, riadok 02 (súčet sociálneho a zdravotného poistenia)"
             required
             error={requiredError(showErrors, data.r37)}
+            evidence={evidenceForField(evidence, EMPLOYMENT_FIELD_PATHS.r37)}
+            evidenceDocName={evidenceDocName}
           >
             <Input
               type="number"
@@ -87,6 +107,8 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
             hint="Potvrdenie → II. oddiel, riadok 04"
             required
             error={requiredError(showErrors, data.r131)}
+            evidence={evidenceForField(evidence, EMPLOYMENT_FIELD_PATHS.r131)}
+            evidenceDocName={evidenceDocName}
           >
             <Input
               type="number"
@@ -101,6 +123,8 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
           <FormField
             label="r. 36a: Príjmy z dohôd"
             hint="Potvrdenie → II. oddiel, riadok 01a (len ak ste mali príjmy z dohôd)"
+            evidence={evidenceForField(evidence, EMPLOYMENT_FIELD_PATHS.r36a)}
+            evidenceDocName={evidenceDocName}
           >
             <Input
               type="number"

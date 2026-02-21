@@ -7,7 +7,6 @@ import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle
 import { getValidationWarnings } from '@/lib/validation/wizard';
 import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 import { evaluateRiskRules } from '@/lib/ai/riskRules';
-import { buildHandoffSummary } from '@/lib/ai/handoffSummary';
 
 interface Props {
   form: TaxFormData;
@@ -64,25 +63,13 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const warnings = useMemo(() => getValidationWarnings(form), [form]);
   const riskWarnings = useMemo(() => evaluateRiskRules(form), [form]);
-  const handoffSummary = useMemo(
-    () => buildHandoffSummary(form, calc, riskWarnings),
-    [form, calc, riskWarnings]
+  const readinessScore = Math.max(
+    0,
+    100 -
+      riskWarnings.filter((w) => w.severity === 'error').length * 20 -
+      riskWarnings.filter((w) => w.severity === 'warning').length * 10 -
+      riskWarnings.filter((w) => w.severity === 'info').length * 5
   );
-  const readinessScore = handoffSummary.readinessScore;
-
-  const handleExportHandoff = () => {
-    const summary = buildHandoffSummary(form, calc, riskWarnings);
-    const json = JSON.stringify(summary, null, 2);
-    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'danove-priznanie-balik.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
   const readinessColor =
     readinessScore >= 80 ? 'green' : readinessScore >= 50 ? 'amber' : 'red';
   const documents: { label: string; needed: boolean }[] = [
@@ -482,14 +469,6 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
                 >
                   <Download className="w-4 h-4" />
                   Stiahnuť XML
-                </button>
-                <button
-                  type="button"
-                  onClick={handleExportHandoff}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-200 bg-white border border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900"
-                >
-                  <Download className="w-4 h-4" />
-                  Exportovať balík pre účtovníka
                 </button>
               </div>
             </div>
