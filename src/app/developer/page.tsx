@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AIProviderSettings } from '@/components/developer/AIProviderSettings';
 
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
 
@@ -107,6 +108,8 @@ export default function DeveloperPage() {
             </p>
           </div>
         </section>
+
+        <AIProviderSettings />
 
         {/* How it works */}
         <section className="space-y-3">
