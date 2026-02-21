@@ -26,4 +26,19 @@ describe('AI Copilot state in DEFAULT_TAX_FORM', () => {
   it('warnings default is empty array', () => {
     expect(DEFAULT_TAX_FORM.aiCopilot.warnings).toEqual([]);
   });
+
+  it('evidence default is empty array', () => {
+    expect(DEFAULT_TAX_FORM.aiCopilot.evidence).toEqual([]);
+  });
+
+  it('readinessScore default is 0', () => {
+    expect(DEFAULT_TAX_FORM.aiCopilot.readinessScore).toBe(0);
+  });
+
+  it('provider has empty credentials by default', () => {
+    const p = DEFAULT_TAX_FORM.aiCopilot.provider;
+    expect(p.apiKey).toBe('');
+    expect(p.baseUrl).toBe('');
+    expect(p.connectionOk).toBe(false);
+  });
 });

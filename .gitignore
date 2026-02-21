@@ -46,3 +46,4 @@ tests/.tmp/
 .claude/settings.local.json
 .cursor/plans/*
 .cursor/rules/*
+docs/*

@@ -144,7 +144,7 @@ export interface AIProviderConfig {
   apiKey: string;
   baseUrl: string;
   model: string;
-  lastConnectionCheck: string;
+  lastConnectionCheck: string; // ISO date string, empty when never checked
   connectionOk: boolean;
 }
 
@@ -152,17 +152,17 @@ export interface DocumentInboxItem {
   id: string;
   fileName: string;
   fileSize: number;
-  uploadedAt: string;
+  uploadedAt: string; // ISO date string
   documentType: 'employment' | 'dividends' | '1042s' | 'broker_report' | 'other' | 'unknown';
   parseStatus: 'queued' | 'parsed' | 'failed';
 }
 
 export interface EvidenceItem {
-  fieldPath: string;
+  fieldPath: string; // e.g. 'employment.r36'
   docId: string;
   snippet: string;
-  confidence: number;
-  extractedAt: string;
+  confidence: number; // 0–1 extraction confidence
+  extractedAt: string; // ISO date string
 }
 
 export interface RiskWarning {

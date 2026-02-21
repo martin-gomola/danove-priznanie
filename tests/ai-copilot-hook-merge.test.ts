@@ -12,13 +12,14 @@ import { mergeLoadedFormData } from '@/hooks/useTaxForm';
 
 describe('aiCopilot deep-merge in form load', () => {
   it('preserves aiCopilot defaults when old payload has no aiCopilot', () => {
-    // Simulate old saved payload from before aiCopilot was added
-    const oldPayload: Partial<TaxFormData> = {
+    // Simulate old saved payload from before aiCopilot was added.
+    // Cast needed because real localStorage payloads can have partial nested objects.
+    const oldPayload = {
       personalInfo: { dic: '1234567890' },
       employment: { r36: '20000' },
       currentStep: 1,
       lastSaved: '2025-01-15T10:00:00.000Z',
-    };
+    } as Partial<TaxFormData>;
     // Explicitly omit aiCopilot - as would an old localStorage entry
 
     const merged = mergeLoadedFormData(oldPayload);

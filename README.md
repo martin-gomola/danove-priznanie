@@ -47,7 +47,36 @@ Open [http://localhost:3015](http://localhost:3015).
 - **Exact arithmetic** : `decimal.js` for tax-safe calculations
 - **Multi-currency dividends** : USD, EUR, CZK; auto-conversion to EUR using reference rates
 - **Legal basis** : Calculations follow [DPFO typ B 2025](https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb) and [Zákon č. 595/2003 Z.z.](https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/)
-- **Tests** : `npm test` runs vitest for the tax calculator and XML parser
+- **AI Co-Pilot** : Hybrid AI assistant (managed or BYOK) with document checklist, readiness warnings, and accountant handoff export
+- **Tests** : `npm test` runs vitest for the tax calculator, XML parser, and AI copilot
+
+---
+
+## AI Co-Pilot (Hybrid)
+
+The app includes a built-in AI assistant that helps you gather and verify tax documents.
+
+### Modes
+
+| Mode | Description |
+|------|-------------|
+| **Managed** | Default. Uses the app's built-in AI provider. Nothing to configure. |
+| **BYOK** | Bring Your Own Key. Enter your OpenAI API key, custom endpoint URL, and model. Data is sent only to your configured endpoint. |
+
+Configure at [localhost:3015/developer](http://localhost:3015/developer) → "AI poskytovateľ" section.
+
+### What it does
+
+- **Document checklist** : Based on your enabled sections, shows which documents you need and which are missing.
+- **Readiness warnings** : Flags missing data, conflicting values, and missing exchange rates before you export.
+- **Readiness score** : 0–100 score visible on the review step. Green (80+), amber (50–79), red (<50).
+- **Accountant handoff export** : Download a JSON summary with all section totals, unresolved warnings, and evidence references — ready to hand to your tax advisor.
+
+### Privacy
+
+- API keys are stored in your browser's localStorage only — never sent to our servers.
+- In BYOK mode, the UI shows which endpoint will receive your data before any call is made.
+- In managed mode, no documents leave your machine unless you explicitly trigger AI processing.
 
 ---
 
