@@ -7,6 +7,29 @@ import { useToast } from '@/components/ui/Toast';
 import { INTRO_DISMISSED_KEY } from '@/components/ui/IntroModal';
 
 const STORAGE_KEY = 'dane-priznanie-2025';
+
+/** Deep-merge parsed form data with defaults. Exported for tests. */
+export function mergeLoadedFormData(parsed: Partial<TaxFormData>): TaxFormData {
+  return {
+    ...DEFAULT_TAX_FORM,
+    ...parsed,
+    personalInfo: { ...DEFAULT_TAX_FORM.personalInfo, ...parsed.personalInfo },
+    employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
+    dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
+    mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
+    stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
+    mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
+    spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
+    dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
+    childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
+    twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
+    parentAllocation: {
+      ...DEFAULT_TAX_FORM.parentAllocation,
+      ...parsed.parentAllocation,
+    },
+    aiCopilot: { ...DEFAULT_TAX_FORM.aiCopilot, ...parsed.aiCopilot },
+  };
+}
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
 
 /** Get or create a per-browser session token (random UUID stored in localStorage). */
@@ -45,21 +68,7 @@ export function useTaxForm() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<TaxFormData>;
-        setForm({
-          ...DEFAULT_TAX_FORM,
-          ...parsed,
-          personalInfo: { ...DEFAULT_TAX_FORM.personalInfo, ...parsed.personalInfo },
-          employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
-          dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
-          mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
-          stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
-          mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
-          spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
-          dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
-          childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
-          twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
-          parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
-        });
+        setForm(mergeLoadedFormData(parsed));
       }
     } catch (e) {
       if (process.env.NODE_ENV !== 'production') {
@@ -116,6 +125,7 @@ export function useTaxForm() {
           if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
           if (data.twoPercent) next.twoPercent = { ...prev.twoPercent, ...data.twoPercent };
           if (data.parentAllocation) next.parentAllocation = { ...prev.parentAllocation, ...data.parentAllocation };
+          if (data.aiCopilot) next.aiCopilot = { ...prev.aiCopilot, ...data.aiCopilot };
           return next;
         });
         toast.success('Údaje boli doplnené z externého nástroja');
@@ -270,6 +280,17 @@ export function useTaxForm() {
     [markSaving]
   );
 
+  const updateAICopilot = useCallback(
+    (updates: Partial<TaxFormData['aiCopilot']>) => {
+      markSaving();
+      setForm((prev) => ({
+        ...prev,
+        aiCopilot: { ...prev.aiCopilot, ...updates },
+      }));
+    },
+    [markSaving]
+  );
+
   const setStep = useCallback((step: number) => {
     markSaving();
     setForm((prev) => ({ ...prev, currentStep: step }));
@@ -335,6 +356,7 @@ export function useTaxForm() {
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
+    updateAICopilot,
     setStep,
     resetForm,
     importXml,
