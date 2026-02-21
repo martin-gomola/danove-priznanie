@@ -153,7 +153,7 @@ export interface DocumentInboxItem {
   fileName: string;
   fileSize: number;
   uploadedAt: string; // ISO date string
-  documentType: 'employment' | 'dividends' | '1042s' | 'broker_report' | 'other' | 'unknown';
+  documentType: 'employment' | 'dividends' | '1042s' | 'broker_report' | 'mortgage' | 'childBonus' | 'other' | 'unknown';
   parseStatus: 'queued' | 'parsed' | 'failed';
 }
 
@@ -420,11 +420,11 @@ export const DEFAULT_PARENT_ALLOCATION: ParentTaxAllocation = {
 };
 
 export const DEFAULT_AI_PROVIDER: AIProviderConfig = {
-  mode: 'managed',
+  mode: 'byok',
   provider: 'openai',
   apiKey: '',
   baseUrl: '',
-  model: '',
+  model: 'gpt-4o',
   lastConnectionCheck: '',
   connectionOk: false,
 };

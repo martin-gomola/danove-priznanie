@@ -26,7 +26,7 @@ describe('aiCopilot deep-merge in form load', () => {
 
     expect(merged.aiCopilot).toBeDefined();
     expect(merged.aiCopilot).toEqual(DEFAULT_AI_COPILOT);
-    expect(merged.aiCopilot.provider.mode).toBe('managed');
+    expect(merged.aiCopilot.provider.mode).toBe('byok');
     expect(merged.aiCopilot.documentInbox).toEqual([]);
     expect(merged.aiCopilot.warnings).toEqual([]);
     expect(merged.aiCopilot.evidence).toEqual([]);
@@ -44,7 +44,7 @@ describe('aiCopilot deep-merge in form load', () => {
     const merged = mergeLoadedFormData(payloadWithPartialAiCopilot);
 
     expect(merged.aiCopilot.readinessScore).toBe(75);
-    expect(merged.aiCopilot.provider.mode).toBe('managed');
+    expect(merged.aiCopilot.provider.mode).toBe('byok');
     expect(merged.aiCopilot.documentInbox).toEqual([]);
   });
 });

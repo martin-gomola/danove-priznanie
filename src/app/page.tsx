@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useRef } from 'react';
 import { useTaxForm } from '@/hooks/useTaxForm';
 import { calculateTax } from '@/lib/tax/calculator';
 import { convertToXML, defaultXmlFilename, downloadXML } from '@/lib/xml/xmlGenerator';
@@ -15,8 +15,11 @@ import { Step6TwoPercent } from '@/components/wizard/Step6TwoPercent';
 import { Step7Review } from '@/components/wizard/Step7Review';
 import { useToast } from '@/components/ui/Toast';
 import { IntroModal } from '@/components/ui/IntroModal';
+import { DocumentInbox } from '@/components/wizard/DocumentInbox';
+import { StepDocumentUpload } from '@/components/wizard/StepDocumentUpload';
 import { getStepBlockingIssues } from '@/lib/validation/wizard';
 import { dividendToEur } from '@/lib/utils/dividendEur';
+import type { DocumentInboxItem, EmploymentIncome, EvidenceItem } from '@/types/TaxForm';
 
 const STEP_LABELS = [
   'Osobné údaje',
@@ -45,6 +48,7 @@ export default function Home() {
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
+    updateAICopilot,
     setStep,
     resetForm,
     importXml,
@@ -52,6 +56,10 @@ export default function Home() {
   } = useTaxForm();
   const toast = useToast();
   const [showStepErrors, setShowStepErrors] = useState(false);
+  const [showAIConsentModal, setShowAIConsentModal] = useState(false);
+  const [aiConsentModalBaseUrl, setAIConsentModalBaseUrl] = useState('');
+  const aiConsentGivenThisSession = useRef(false);
+  const pendingConsentResolve = useRef<((value: boolean) => void) | null>(null);
 
   // Calculate tax whenever form changes
   const calc = useMemo(() => calculateTax(form), [form]);
@@ -101,6 +109,50 @@ export default function Home() {
     }
   }, [resetForm, toast]);
 
+  const handleInboxUpdate = useCallback(
+    (items: DocumentInboxItem[]) => {
+      updateAICopilot({ documentInbox: items });
+    },
+    [updateAICopilot]
+  );
+
+  const handleExtractionComplete = useCallback(
+    (fields: Partial<EmploymentIncome>, evidence: EvidenceItem[]) => {
+      updateEmployment(fields);
+      updateAICopilot({ evidence: [...(form.aiCopilot?.evidence ?? []), ...evidence] });
+      toast.success('Údaje zo zamestnania vyplnené z dokumentu');
+    },
+    [form.aiCopilot?.evidence, updateEmployment, updateAICopilot, toast]
+  );
+
+  const handleConsentRequired = useCallback((): Promise<boolean> => {
+    if (aiConsentGivenThisSession.current) return Promise.resolve(true);
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('dane-priznanie-ai-settings') : null;
+      const parsed = raw ? (JSON.parse(raw) as { baseUrl?: string }) : null;
+      setAIConsentModalBaseUrl(parsed?.baseUrl?.trim() ?? '');
+    } catch {
+      setAIConsentModalBaseUrl('');
+    }
+    setShowAIConsentModal(true);
+    return new Promise<boolean>((resolve) => {
+      pendingConsentResolve.current = resolve;
+    });
+  }, []);
+
+  const handleAIConsentConfirm = useCallback(() => {
+    aiConsentGivenThisSession.current = true;
+    pendingConsentResolve.current?.(true);
+    pendingConsentResolve.current = null;
+    setShowAIConsentModal(false);
+  }, []);
+
+  const handleAIConsentCancel = useCallback(() => {
+    pendingConsentResolve.current?.(false);
+    pendingConsentResolve.current = null;
+    setShowAIConsentModal(false);
+  }, []);
+
   const handleImportDividends = useCallback(
     async (file: File) => {
       if (!sessionToken) {
@@ -137,12 +189,24 @@ export default function Home() {
           return { ...e, amountEur, withheldTaxEur };
         });
         updateDividends({ entries: [...form.dividends.entries, ...converted], enabled: true });
+        const inbox = form.aiCopilot?.documentInbox ?? [];
+        handleInboxUpdate([
+          ...inbox,
+          {
+            id: crypto.randomUUID(),
+            fileName: file.name,
+            fileSize: file.size,
+            uploadedAt: new Date().toISOString(),
+            documentType: '1042s',
+            parseStatus: 'parsed',
+          },
+        ]);
         toast.success(`Importované ${converted.length} položiek`);
       } catch {
         toast.error('Import zlyhal');
       }
     },
-    [sessionToken, form.dividends.entries, form.dividends.ecbRate, form.dividends.czkRate, updateDividends, toast]
+    [sessionToken, form.dividends.entries, form.dividends.ecbRate, form.dividends.czkRate, form.aiCopilot?.documentInbox, updateDividends, handleInboxUpdate, toast]
   );
 
   if (!isLoaded) {
@@ -195,6 +259,12 @@ export default function Home() {
             onDdsChange={updateDds}
             calculatedR75={calc.r75}
             showErrors={showStepErrors}
+            evidence={form.aiCopilot?.evidence}
+            evidenceDocName={
+              form.aiCopilot?.evidence?.[0] && form.aiCopilot?.documentInbox?.length
+                ? form.aiCopilot.documentInbox.find((d) => d.id === form.aiCopilot?.evidence?.[0]?.docId)?.fileName
+                : undefined
+            }
           />
         );
       case 4:
@@ -248,6 +318,36 @@ export default function Home() {
   return (
     <>
     <IntroModal />
+    {showAIConsentModal && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="ai-consent-title">
+        <div className="absolute inset-0 bg-black/50" aria-hidden="true" />
+        <div className="relative rounded-2xl border border-gray-200 bg-white p-6 shadow-xl max-w-md w-full">
+          <h2 id="ai-consent-title" className="text-lg font-semibold text-gray-900 mb-2">
+            Odoslať dokument na spracovanie?
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Váš dokument bude odoslaný na <strong>{aiConsentModalBaseUrl || '(nakonfigurovaná URL)'}</strong> na extrakciu údajov.
+            API kľúč sa používa priamo z vášho prehliadača, náš server ho nevidí. Chcete pokračovať?
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleAIConsentCancel}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200"
+            >
+              Zrušiť
+            </button>
+            <button
+              type="button"
+              onClick={handleAIConsentConfirm}
+              className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700"
+            >
+              Pokračovať
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     <WizardLayout
       currentStep={form.currentStep}
       totalSteps={STEP_LABELS.length}
@@ -262,7 +362,44 @@ export default function Home() {
       saveStatus={saveStatus}
       hasAsideNotes={hasAsideNotes}
     >
-      {renderStep()}
+      <div className="space-y-6">
+        {form.currentStep === STEP_LABELS.indexOf('Deti') && (
+          <StepDocumentUpload
+            documentType="childBonus"
+            label="rodné listy (voliteľné)"
+            hint="Priložte kópiu rodného listu dieťaťa pre prehľad. Údaje sa neextrahujú automaticky."
+            documentInbox={form.aiCopilot?.documentInbox ?? []}
+            onUpdateInbox={handleInboxUpdate}
+          />
+        )}
+        {form.currentStep === STEP_LABELS.indexOf('Hypoteka') && (
+          <StepDocumentUpload
+            documentType="mortgage"
+            label="potvrdenie o úrokoch"
+            hint="Priložte potvrdenie banky o zaplatených úrokoch z hypotéky."
+            documentInbox={form.aiCopilot?.documentInbox ?? []}
+            onUpdateInbox={handleInboxUpdate}
+          />
+        )}
+        {form.currentStep === STEP_LABELS.indexOf('Zamestnanie') && (
+          <DocumentInbox
+            documentInbox={form.aiCopilot?.documentInbox ?? []}
+            onUpdateInbox={handleInboxUpdate}
+            onExtractionComplete={handleExtractionComplete}
+            onConsentRequired={handleConsentRequired}
+          />
+        )}
+        {form.currentStep === STEP_LABELS.indexOf('Fondy a akcie') && (
+          <StepDocumentUpload
+            documentType="broker_report"
+            label="výpis z fondov / obchodov"
+            hint="Priložte výpis od brokera (podielové fondy alebo predaj akcií) pre prehľad."
+            documentInbox={form.aiCopilot?.documentInbox ?? []}
+            onUpdateInbox={handleInboxUpdate}
+          />
+        )}
+        {renderStep()}
+      </div>
     </WizardLayout>
     </>
   );

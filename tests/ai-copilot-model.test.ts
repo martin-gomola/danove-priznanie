@@ -15,8 +15,8 @@ describe('AI Copilot state in DEFAULT_TAX_FORM', () => {
     expect(typeof DEFAULT_TAX_FORM.aiCopilot).toBe('object');
   });
 
-  it('default mode is managed', () => {
-    expect(DEFAULT_TAX_FORM.aiCopilot.provider.mode).toBe('managed');
+  it('default mode is byok', () => {
+    expect(DEFAULT_TAX_FORM.aiCopilot.provider.mode).toBe('byok');
   });
 
   it('documentInbox default is empty array', () => {

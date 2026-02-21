@@ -44,6 +44,8 @@ function matchesSection(
     return documentType === 'dividends' || documentType === '1042s';
   if (section === 'mutualFunds' || section === 'stockSales')
     return documentType === 'broker_report';
+  if (section === 'mortgage') return documentType === 'mortgage';
+  if (section === 'childBonus') return documentType === 'childBonus';
   return false;
 }
 

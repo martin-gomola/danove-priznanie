@@ -6,10 +6,8 @@ const MAX_PAYLOAD_BYTES = 10_000;
 /** Timeout for BYOK probe: 10 seconds */
 const PROBE_TIMEOUT_MS = 10_000;
 
-type Mode = 'managed' | 'byok';
-
 interface TestConnectionPayload {
-  mode?: Mode;
+  mode?: 'byok';
   provider?: string;
   apiKey?: string;
   baseUrl?: string;
@@ -21,26 +19,17 @@ function isValidUrl(url: string): boolean {
 }
 
 function validatePayload(body: TestConnectionPayload): { error?: string } {
-  if (!body.mode || (body.mode !== 'managed' && body.mode !== 'byok')) {
-    return { error: 'mode must be "managed" or "byok"' };
-  }
-
-  if (body.mode === 'managed') {
-    return {};
-  }
-
-  // BYOK mode
   const apiKey = typeof body.apiKey === 'string' ? body.apiKey.trim() : '';
   const model = typeof body.model === 'string' ? body.model.trim() : '';
   if (!apiKey) {
-    return { error: 'apiKey is required for BYOK mode' };
+    return { error: 'apiKey is required' };
   }
   if (!model) {
-    return { error: 'model is required for BYOK mode' };
+    return { error: 'model is required' };
   }
   const baseUrl = typeof body.baseUrl === 'string' ? body.baseUrl.trim() : '';
   if (!baseUrl) {
-    return { error: 'baseUrl is required for BYOK mode' };
+    return { error: 'baseUrl is required' };
   }
   if (!isValidUrl(baseUrl)) {
     return { error: 'baseUrl must start with https:// or http:// (for localhost)' };
@@ -73,14 +62,7 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: validation.error }, { status: 400 });
     }
 
-    if (body.mode === 'managed') {
-      return Response.json({
-        ok: true,
-        message: 'Managed mode – no external configuration needed.',
-      });
-    }
-
-    // BYOK mode: probe the endpoint
+    // Probe the endpoint
     const baseUrl = (body.baseUrl ?? '').replace(/\/$/, '');
     const url = `${baseUrl}/chat/completions`;
     const controller = new AbortController();

@@ -28,21 +28,6 @@ describe('POST /api/ai/test-connection', () => {
   });
 
   describe('payload validation - 400', () => {
-    it('rejects missing mode', async () => {
-      const req = createRequest({});
-      const res = await POST(req);
-      expect(res.status).toBe(400);
-      const data = await res.json();
-      expect(data.error).toContain('mode');
-    });
-
-    it('rejects invalid mode', async () => {
-      const req = createRequest({ mode: 'invalid' });
-      const res = await POST(req);
-      expect(res.status).toBe(400);
-      const data = await res.json();
-      expect(data.error).toContain('mode');
-    });
 
     it('rejects non-object payload', async () => {
       const req = new NextRequest('http://localhost/api/ai/test-connection', {
@@ -109,7 +94,7 @@ describe('POST /api/ai/test-connection', () => {
 
     it('rejects payload > 10KB with 413', async () => {
       const req = createRequest(
-        { mode: 'managed' },
+        { mode: 'byok', apiKey: 'sk-test', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o' },
         { contentLength: 11_000 },
       );
       const res = await POST(req);
@@ -119,18 +104,7 @@ describe('POST /api/ai/test-connection', () => {
     });
   });
 
-  describe('managed mode', () => {
-    it('returns ok immediately with message', async () => {
-      const req = createRequest({ mode: 'managed' });
-      const res = await POST(req);
-      expect(res.status).toBe(200);
-      const data = await res.json();
-      expect(data.ok).toBe(true);
-      expect(data.message).toBe('Managed mode – no external configuration needed.');
-    });
-  });
-
-  describe('BYOK mode with mocked fetch', () => {
+  describe('test-connection with mocked fetch', () => {
     it('returns ok when upstream returns 2xx', async () => {
       vi.stubGlobal(
         'fetch',

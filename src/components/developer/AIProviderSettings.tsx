@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import type { AIProviderConfig, AIMode } from '@/types/TaxForm';
+import type { AIProviderConfig } from '@/types/TaxForm';
 
 const AI_SETTINGS_KEY = 'dane-priznanie-ai-settings';
 
 const DEFAULT_SETTINGS: AIProviderConfig = {
-  mode: 'managed',
+  mode: 'byok',
   provider: 'openai',
   apiKey: '',
   baseUrl: '',
@@ -57,22 +57,15 @@ export function AIProviderSettings() {
     });
   }, []);
 
-  const handleModeChange = useCallback(
-    (mode: AIMode) => {
-      update({ mode });
-    },
-    [update]
-  );
-
   const handleTestConnection = useCallback(async () => {
     setTestError(null);
     setTesting(true);
     const payload = {
-      mode: settings.mode,
+      mode: 'byok' as const,
       provider: settings.provider,
-      apiKey: settings.mode === 'byok' ? settings.apiKey : '',
-      baseUrl: settings.mode === 'byok' ? settings.baseUrl : '',
-      model: settings.mode === 'byok' ? settings.model || 'gpt-4o' : '',
+      apiKey: settings.apiKey,
+      baseUrl: settings.baseUrl,
+      model: settings.model || 'gpt-4o',
     };
     try {
       const res = await fetch('/api/ai/test-connection', {
@@ -102,7 +95,7 @@ export function AIProviderSettings() {
     } finally {
       setTesting(false);
     }
-  }, [settings.mode, settings.provider, settings.apiKey, settings.baseUrl, settings.model, update]);
+  }, [settings.provider, settings.apiKey, settings.baseUrl, settings.model, update]);
 
   const handleApiKeyChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => update({ apiKey: e.target.value }),
@@ -123,85 +116,48 @@ export function AIProviderSettings() {
     <section className="space-y-3">
       <h2 className="text-lg font-medium">AI poskytovateľ</h2>
       <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3">
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">Režim:</span>
-          <div className="flex rounded-lg border border-gray-200 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => handleModeChange('managed')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                settings.mode === 'managed'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Managed
-            </button>
-            <button
-              type="button"
-              onClick={() => handleModeChange('byok')}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                settings.mode === 'byok'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              BYOK
-            </button>
-          </div>
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <strong>Vlastný kľúč (BYOK):</strong> Dáta sa odosielajú na vášmi zadaný endpoint. Overte dôveryhodnú URL a API kľúč.
+        </p>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">API kľúč</label>
+          <input
+            type="password"
+            value={settings.apiKey}
+            onChange={handleApiKeyChange}
+            placeholder="sk-..."
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            spellCheck={false}
+          />
         </div>
-
-        {settings.mode === 'managed' ? (
-          <p className="text-sm text-gray-600">
-            Aplikácia používa vstavaného AI poskytovateľa. Nič netreba konfigurovať.
-          </p>
-        ) : (
-          <>
-            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              <strong>Upozornenie:</strong> V režime BYOK sa dáta odosielajú na vášmi zadaný endpoint.
-              Overte, že používate dôveryhodnú URL a API kľúč.
-            </p>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">API kľúč</label>
-              <input
-                type="password"
-                value={settings.apiKey}
-                onChange={handleApiKeyChange}
-                placeholder="sk-..."
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                spellCheck={false}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Base URL</label>
-              <input
-                type="text"
-                value={settings.baseUrl}
-                onChange={handleBaseUrlChange}
-                placeholder="https://api.openai.com/v1"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                spellCheck={false}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Model</label>
-              <input
-                type="text"
-                value={settings.model}
-                onChange={handleModelChange}
-                placeholder="gpt-4o"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
-                spellCheck={false}
-              />
-            </div>
-          </>
-        )}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Base URL</label>
+          <input
+            type="text"
+            value={settings.baseUrl}
+            onChange={handleBaseUrlChange}
+            placeholder="https://api.openai.com/v1"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            spellCheck={false}
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">Model</label>
+          <input
+            type="text"
+            value={settings.model}
+            onChange={handleModelChange}
+            placeholder="gpt-4o"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            spellCheck={false}
+          />
+        </div>
 
         <div className="flex items-center gap-2 pt-1">
           <button
             type="button"
             onClick={handleTestConnection}
-            disabled={testing || (settings.mode === 'byok' && !settings.apiKey)}
+            disabled={testing || !settings.apiKey?.trim()}
             className="px-3 py-2 rounded-lg text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {testing ? 'Testujem…' : 'Test pripojenia'}
