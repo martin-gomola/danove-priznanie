@@ -6,6 +6,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { validateRodneCislo } from '@/lib/utils/validateRodneCislo';
+import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
+import { TAX_YEAR } from '@/lib/tax/constants';
 
 describe('validateRodneCislo', () => {
   // ── Valid formats ──────────────────────────────────────────────────
@@ -212,5 +214,24 @@ describe('validateRodneCislo', () => {
       const result = validateRodneCislo('6153310009');
       expect(result.valid).toBe(true);
     });
+  });
+});
+
+describe('parseRodneCislo (century / tax year)', () => {
+  it('maps YY=25 to 2025 for child born April 2025 (not 1925)', () => {
+    const birth = parseRodneCislo('2504209235', { referenceYear: TAX_YEAR });
+    expect(birth).toEqual({ year: 2025, month: 4, day: 20 });
+    const rates = getMonthlyRates2025(birth!);
+    expect(rates.every((r) => r === 100)).toBe(true);
+  });
+
+  it('still maps YY=85 to 1985', () => {
+    const birth = parseRodneCislo('8501010001', { referenceYear: TAX_YEAR });
+    expect(birth).toEqual({ year: 1985, month: 1, day: 1 });
+  });
+
+  it('uses referenceYear so YY=24 resolves to 1924 when filing for 1990', () => {
+    const birth = parseRodneCislo('2404200001', { referenceYear: 1990 });
+    expect(birth).toEqual({ year: 1924, month: 4, day: 20 });
   });
 });
