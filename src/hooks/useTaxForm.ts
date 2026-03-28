@@ -1,13 +1,33 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { TaxFormData, DEFAULT_TAX_FORM } from '@/types/TaxForm';
+import { TaxFormData, ForeignDividends, DEFAULT_TAX_FORM } from '@/types/TaxForm';
 import { parseDpfoXmlToFormData } from '@/lib/utils/parseDpfoXml';
+import { dividendToEur } from '@/lib/utils/dividendEur';
 import { useToast } from '@/components/ui/Toast';
 import { INTRO_DISMISSED_KEY } from '@/components/ui/IntroModal';
 
 const STORAGE_KEY = 'dane-priznanie-2025';
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
+
+/** Recompute EUR amounts for non-EUR dividend entries using the current exchange rates. */
+function reconcileDividendEur(dividends: ForeignDividends): ForeignDividends {
+  const { ecbRate, czkRate, entries } = dividends;
+  if (!entries.length) return dividends;
+  const rate = ecbRate || '1.13';
+  const czk = czkRate || '25.21';
+  let changed = false;
+  const fixed = entries.map((e) => {
+    const cur = e.currency ?? 'USD';
+    if (cur === 'EUR') return e;
+    const correctAmount = dividendToEur(e.amountOriginal, cur, rate, czk);
+    const correctWithheld = dividendToEur(e.withheldTaxOriginal, cur, rate, czk);
+    if (e.amountEur === correctAmount && e.withheldTaxEur === correctWithheld) return e;
+    changed = true;
+    return { ...e, amountEur: correctAmount, withheldTaxEur: correctWithheld };
+  });
+  return changed ? { ...dividends, entries: fixed } : dividends;
+}
 
 /** Get or create a per-browser session token (random UUID stored in localStorage). */
 function getSessionToken(): string {
@@ -45,12 +65,13 @@ export function useTaxForm() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<TaxFormData>;
+        const mergedDividends = reconcileDividendEur({ ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends });
         setForm({
           ...DEFAULT_TAX_FORM,
           ...parsed,
           personalInfo: { ...DEFAULT_TAX_FORM.personalInfo, ...parsed.personalInfo },
           employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
-          dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
+          dividends: mergedDividends,
           mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
           stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
           mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
@@ -107,7 +128,7 @@ export function useTaxForm() {
           const next = { ...prev, ...data } as TaxFormData;
           if (data.personalInfo) next.personalInfo = { ...prev.personalInfo, ...data.personalInfo };
           if (data.employment) next.employment = { ...prev.employment, ...data.employment };
-          if (data.dividends) next.dividends = { ...prev.dividends, ...data.dividends };
+          if (data.dividends) next.dividends = reconcileDividendEur({ ...prev.dividends, ...data.dividends });
           if (data.mutualFunds) next.mutualFunds = { ...prev.mutualFunds, ...data.mutualFunds };
           if (data.stockSales) next.stockSales = { ...prev.stockSales, ...data.stockSales };
           if (data.mortgage) next.mortgage = { ...prev.mortgage, ...data.mortgage };

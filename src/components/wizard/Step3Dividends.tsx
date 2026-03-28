@@ -435,13 +435,14 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
                       <li>Dostupné od konca januára do konca februára</li>
                     </ul>
                   </Disclosure>
-                  <Disclosure summary="E-Trade">
+                  <Disclosure summary={<>E-Trade <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">Import PDF</span></>}>
                     <div className="space-y-3">
                       <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
                         <li>Prihláste sa na etrade.com</li>
                         <li>V hornej navigácii kliknite na <strong>Documents</strong> (alebo Accounts → <strong>Documents</strong>)</li>
                         <li>Zapnite <strong>Show quick filters</strong> a kliknite na kartu <strong>Tax documents</strong> s rokom (napr. 2025), alebo nastavte <strong>Document type</strong>: Tax Documents, <strong>Tax year</strong> a stlačte <strong>Apply</strong></li>
-                        <li>Stiahnite formulár <strong>1099 Composite</strong> (obsahuje 1099-DIV) v PDF</li>
+                        <li>Stiahnite formulár <strong>1042-S</strong> (Foreign Person&apos;s U.S. Source Income) v PDF</li>
+                        <li>Kliknite na <strong>Import CSV/PDF</strong> nižšie a nahrajte stiahnutý PDF</li>
                       </ul>
                       <BrokerGuideImage src="/images/dividend-guide/e-trade-dividend.png" alt="E-Trade Documents – Tax documents filter" />
                     </div>

@@ -47,33 +47,63 @@ function extractSchwabDataBlock(text: string): { gross: number; withheld: number
   return { gross, withheld };
 }
 
-/** Extract gross income (box 2) and total withholding credit (box 10) from 1042-S text */
+/** Amount pattern: digits with optional comma thousand-separator and decimal point */
+const AMT = /[\d,]+\.?\d*/;
+
+/** Try multiple regex patterns in order; return first match's capture group 1 as float, or 0. */
+function firstMatch(text: string, patterns: RegExp[]): number {
+  for (const pat of patterns) {
+    const m = text.match(pat);
+    if (m) {
+      const val = parseFloat(m[1].replace(/,/g, ''));
+      if (Number.isFinite(val) && val > 0) return val;
+    }
+  }
+  return 0;
+}
+
+/** Extract gross income (box 2) and total withholding credit (box 7a/10) from 1042-S text */
 function extract1042sValues(text: string): { gross: number; withheld: number; isDividends: boolean } {
   const normalized = text.replace(/\r\n/g, '\n');
   let gross = 0;
   let withheld = 0;
   let isDividends = false;
 
-  // Box 1: Income code (06 = dividends)
-  if (/\b06\b/.test(normalized) || /Income\s*code\s*06/.test(normalized)) {
+  // Box 1: Income code (06 = dividends) — match near "Income code" label or standalone
+  if (/Income\s*code[\s.:]*0?6\b/i.test(normalized) || /\b0?6\b[\s\S]{0,30}Income\s*code/i.test(normalized)) {
+    isDividends = true;
+  }
+  if (!isDividends && /\b06\b/.test(normalized)) {
     isDividends = true;
   }
 
-  // Box 2: Gross income (standard: value on next line after label; require 2+ digits or decimal so "3" from "Chapter indicator" doesn't match)
-  const grossMatch = normalized.match(/2\s+Gross\s+income\s*\n\s*(\d{2,}\.?\d*|\d+\.\d+)/i)
-    ?? normalized.match(/Gross\s+income\s*\n\s*(\d{2,}\.?\d*|\d+\.\d+)/i);
-  if (grossMatch) {
-    gross = parseFloat(grossMatch[1]) || 0;
-  }
+  // Box 2: Gross income — try multiple layout patterns
+  gross = firstMatch(normalized, [
+    new RegExp(`2\\.?\\s+Gross\\s+income\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Gross\\s+income\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`2\\.?\\s+Gross\\s+income\\s*\\n\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Gross\\s+income\\s*\\n\\s*(${AMT.source})`, 'i'),
+  ]);
+
+  // Box 7a: Federal tax withheld (E-Trade uses this instead of Box 10)
+  const box7a = firstMatch(normalized, [
+    new RegExp(`7a?\\.?\\s+Federal\\s+tax\\s+withheld\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Federal\\s+tax\\s+withheld\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`7a?\\.?\\s+Federal\\s+tax\\s+withheld\\s*\\n\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Federal\\s+tax\\s+withheld\\s*\\n\\s*(${AMT.source})`, 'i'),
+  ]);
 
   // Box 10: Total withholding credit
-  const withholdMatch = normalized.match(/10\s+Total\s+withholding\s+credit[\s\S]*?\n\s*(\d+\.?\d*)/i)
-    ?? normalized.match(/Total\s+withholding\s+credit[\s\S]*?\n\s*(\d+\.?\d*)/i);
-  if (withholdMatch) {
-    withheld = parseFloat(withholdMatch[1]) || 0;
-  }
+  const box10 = firstMatch(normalized, [
+    new RegExp(`10\\.?\\s+Total\\s+withholding\\s+credit\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Total\\s+withholding\\s+credit\\s*:?\\s*(${AMT.source})`, 'i'),
+    new RegExp(`10\\.?\\s+Total\\s+withholding\\s+credit[\\s\\S]*?\\n\\s*(${AMT.source})`, 'i'),
+    new RegExp(`Total\\s+withholding\\s+credit[\\s\\S]*?\\n\\s*(${AMT.source})`, 'i'),
+  ]);
 
-  // Schwab (and similar): values in a separate data block after "Copy B"; prefer block when present so we don't mix with template labels (e.g. "11  Tax paid")
+  withheld = box10 || box7a;
+
+  // Schwab (and similar): values in a separate data block after "Copy B"
   const schwab = extractSchwabDataBlock(normalized);
   const hasCopyB = /Copy\s+B[\s\S]*?for\s+Recipient/i.test(normalized) || normalized.includes('Copy B for Recipient');
   if (schwab && schwab.gross > 0 && hasCopyB) {

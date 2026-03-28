@@ -128,11 +128,11 @@ export default function Home() {
         const { ecbRate, czkRate } = form.dividends;
         const converted = entries.map((e: { currency: 'USD' | 'EUR' | 'CZK'; amountEur: string; amountOriginal: string; withheldTaxEur: string; withheldTaxOriginal: string }) => {
           const currency = e.currency ?? 'USD';
-          const amountEur = e.amountEur && parseFloat(e.amountEur) > 0
-            ? e.amountEur
+          const amountEur = currency === 'EUR'
+            ? e.amountOriginal
             : dividendToEur(e.amountOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
-          const withheldTaxEur = e.withheldTaxEur !== undefined && e.withheldTaxEur !== ''
-            ? e.withheldTaxEur
+          const withheldTaxEur = currency === 'EUR'
+            ? e.withheldTaxOriginal
             : dividendToEur(e.withheldTaxOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
           return { ...e, amountEur, withheldTaxEur };
         });

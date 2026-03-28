@@ -386,7 +386,7 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
         dividends: {
           enabled: true,
-          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '100', amountEur: '1000', withheldTaxOriginal: '0', withheldTaxEur: '0' }],
+          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '0', withheldTaxEur: '' }],
           ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
         },
       })
@@ -400,7 +400,7 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
         dividends: {
           enabled: true,
-          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '100', amountEur: '1000', withheldTaxOriginal: '150', withheldTaxEur: '150' }],
+          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '150', withheldTaxEur: '' }],
           ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
         },
       })
@@ -415,7 +415,7 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
         dividends: {
           enabled: true,
-          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '100', amountEur: '1000', withheldTaxOriginal: '30', withheldTaxEur: '30' }],
+          entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '30', withheldTaxEur: '' }],
           ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
         },
       })

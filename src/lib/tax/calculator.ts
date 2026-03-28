@@ -83,7 +83,7 @@ function calculateNCZD(taxBase: Decimal): Decimal {
   // NCZD = 44.2 × ŽM - (základ dane / 4)
   const nczd = new Decimal(NCZD_MULTIPLIER_HIGH).minus(taxBase.div(4));
   if (nczd.lt(0)) return new Decimal(0);
-  return nczd;
+  return nczd.toDecimalPlaces(2);
 }
 
 /**
@@ -310,14 +310,13 @@ function dividendsSection(form: TaxFormData): DividendsSectionResult {
   if (form.dividends.enabled) {
     const { ecbRate, czkRate } = form.dividends;
     for (const entry of form.dividends.entries) {
-      const amountEur =
-        entry.amountEur && d(entry.amountEur).gt(0)
-          ? entry.amountEur
-          : dividendToEur(entry.amountOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
-      const withheldEur =
-        entry.withheldTaxEur && d(entry.withheldTaxEur).gte(0)
-          ? entry.withheldTaxEur
-          : dividendToEur(entry.withheldTaxOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
+      const currency = entry.currency ?? 'USD';
+      const amountEur = currency === 'EUR'
+        ? entry.amountOriginal
+        : dividendToEur(entry.amountOriginal, currency, ecbRate, czkRate);
+      const withheldEur = currency === 'EUR'
+        ? entry.withheldTaxOriginal
+        : dividendToEur(entry.withheldTaxOriginal, currency, ecbRate, czkRate);
       totalDividendsEur = totalDividendsEur.plus(d(amountEur));
       totalWithheldTaxEur = totalWithheldTaxEur.plus(d(withheldEur));
     }
@@ -376,14 +375,14 @@ function taxCalculationSection(
     const prispevky = d(form.dds.prispevky);
     r75 = Decimal.min(prispevky, new Decimal(DDS_MAX));
   }
-  const r77 = Decimal.min(r73.plus(r74).plus(r75), r72);
-  const r78 = Decimal.max(r38.minus(r77), new Decimal(0));
-  const r80 = r78.plus(r71);
-  const r81 = calculateProgressiveTax(r80);
+  const r77 = Decimal.min(r73.plus(r74).plus(r75), r72).toDecimalPlaces(2);
+  const r78 = Decimal.max(r38.minus(r77), new Decimal(0)).toDecimalPlaces(2);
+  const r80 = r78.plus(r71).toDecimalPlaces(2);
+  const r81 = calculateProgressiveTax(r80).toDecimalPlaces(2);
   const r90 = r81;
-  const r106 = r68.mul(CAPITAL_TAX_RATE);
+  const r106 = r68.mul(CAPITAL_TAX_RATE).toDecimalPlaces(2);
   const r115 = r106;
-  const r116 = r90.plus(r115).plus(pril2_pr28);
+  const r116 = r90.plus(r115).plus(pril2_pr28).toDecimalPlaces(2);
   return { r72, r73, r74, r75, r77, r78, r80, r81, r90, r106, r115, r116 };
 }
 
