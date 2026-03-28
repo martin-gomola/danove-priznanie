@@ -427,11 +427,12 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
                       <li>Alternatívne: Stocks Home → tri bodky → <strong>Statements</strong></li>
                     </ul>
                   </Disclosure>
-                  <Disclosure summary="Charles Schwab">
+                  <Disclosure summary={<>Charles Schwab <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">Import PDF</span></>}>
                     <ul className="list-disc list-inside space-y-1 text-gray-600 text-sm">
                       <li>Prihláste sa na schwab.com</li>
                       <li>Prejdite do <strong>Tax Center</strong> (alebo <strong>1099 Dashboard</strong>)</li>
-                      <li>1099-DIV je súčasťou formulára <strong>1099 Composite</strong></li>
+                      <li>Stiahnite formulár <strong>1042-S</strong> (Foreign Person&apos;s U.S. Source Income) v PDF</li>
+                      <li>Kliknite na <strong>Import CSV/PDF</strong> nižšie a nahrajte stiahnutý PDF</li>
                       <li>Dostupné od konca januára do konca februára</li>
                     </ul>
                   </Disclosure>
