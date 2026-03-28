@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
-import { SectionCard, InfoBox } from '@/components/ui/FormField';
-import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight } from 'lucide-react';
+import { TaxFormData, TaxCalculationResult, RefundRequest } from '@/types/TaxForm';
+import { SectionCard, FormField, Input, InfoBox } from '@/components/ui/FormField';
+import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight, Banknote } from 'lucide-react';
 import { getValidationWarnings } from '@/lib/validation/wizard';
 import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
 
@@ -12,6 +12,7 @@ interface Props {
   calc: TaxCalculationResult;
   onDownloadXml: () => void;
   onGoToStep: (step: number) => void;
+  onUpdateRefund: (updates: Partial<RefundRequest>) => void;
 }
 
 function Row({
@@ -58,7 +59,19 @@ function Divider() {
   return <div className="border-t border-gray-200 my-1" />;
 }
 
-export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
+/** Format IBAN with spaces every 4 characters for display */
+function formatIban(raw: string): string {
+  return raw.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
+}
+
+/** Validate IBAN: basic check for SK IBAN (SK + 2 digits + 20 digits = 24 chars) */
+function isValidIban(iban: string): boolean {
+  const clean = iban.replace(/\s/g, '').toUpperCase();
+  if (!clean) return false;
+  return /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(clean) && clean.length >= 15 && clean.length <= 34;
+}
+
+export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRefund }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const warnings = useMemo(() => getValidationWarnings(form), [form]);
   const documents: { label: string; needed: boolean }[] = [
@@ -156,6 +169,80 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
           </p>
         </div>
       </div>
+
+      {/* XIV. Oddiel: Refund / bonus payout request */}
+      {(() => {
+        const hasRefund = parseFloat(calc.r136) > 0;
+        const hasChildBonusPayout = parseFloat(calc.r121) > 0;
+        const hasMortgageBonusPayout = parseFloat(calc.r127) > 0;
+        const needsPayment = hasRefund || hasChildBonusPayout || hasMortgageBonusPayout;
+        if (!needsPayment) return null;
+        const { refundRequest } = form;
+        const ibanClean = refundRequest.iban.replace(/\s/g, '');
+        const ibanValid = !ibanClean || isValidIban(ibanClean);
+        return (
+          <SectionCard
+            title="XIV. ODDIEL — Žiadosť o vrátenie preplatku"
+            subtitle="Zadajte IBAN pre vrátenie preplatku alebo vyplatenie bonusu"
+          >
+            <div className="space-y-3">
+              {hasRefund && (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                  <Banknote className="w-4 h-4 flex-shrink-0" />
+                  Žiadam o vrátenie daňového preplatku: <strong>{fmtEur(calc.r136)} EUR</strong>
+                </div>
+              )}
+              {hasChildBonusPayout && (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                  <Banknote className="w-4 h-4 flex-shrink-0" />
+                  Žiadam o vyplatenie daňového bonusu na deti: <strong>{fmtEur(calc.r121)} EUR</strong>
+                </div>
+              )}
+              {hasMortgageBonusPayout && (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                  <Banknote className="w-4 h-4 flex-shrink-0" />
+                  Žiadam o vyplatenie daňového bonusu na úroky: <strong>{fmtEur(calc.r127)} EUR</strong>
+                </div>
+              )}
+              <div className="flex gap-4 mt-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={refundRequest.paymentMethod === 'ucet'}
+                    onChange={() => onUpdateRefund({ paymentMethod: 'ucet' })}
+                    className="accent-emerald-600"
+                  />
+                  Na účet (IBAN)
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    checked={refundRequest.paymentMethod === 'poukazka'}
+                    onChange={() => onUpdateRefund({ paymentMethod: 'poukazka' })}
+                    className="accent-emerald-600"
+                  />
+                  Poštová poukážka
+                </label>
+              </div>
+              {refundRequest.paymentMethod === 'ucet' && (
+                <FormField label="IBAN" hint="Napr. SK31 1200 0000 1987 4263 7541">
+                  <Input
+                    value={formatIban(refundRequest.iban)}
+                    onChange={(e) => onUpdateRefund({ iban: e.target.value.replace(/\s/g, '') })}
+                    placeholder="SK31 1200 0000 1987 4263 7541"
+                    maxLength={42}
+                  />
+                  {!ibanValid && ibanClean.length > 0 && (
+                    <p className="text-xs text-red-500 mt-1">Neplatný formát IBAN</p>
+                  )}
+                </FormField>
+              )}
+            </div>
+          </SectionCard>
+        );
+      })()}
 
       {/* Employment Section */}
       {form.employment.enabled && (

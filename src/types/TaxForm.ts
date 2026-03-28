@@ -151,6 +151,14 @@ export interface ParentTaxAllocation {
   osvojeny: boolean; // bol/a som zverený/á do starostlivosti
 }
 
+// ── XIV. Oddiel - Refund / bonus payout request ─────────────────────
+export type PaymentMethod = 'ucet' | 'poukazka';
+
+export interface RefundRequest {
+  paymentMethod: PaymentMethod;
+  iban: string;
+}
+
 // ── Complete Tax Form ────────────────────────────────────────────────
 export interface TaxFormData {
   // Step 1
@@ -172,6 +180,8 @@ export interface TaxFormData {
   twoPercent: TwoPercentAllocation;
   // Step 8 (before review)
   parentAllocation: ParentTaxAllocation;
+  // XIV. Oddiel
+  refundRequest: RefundRequest;
   // Meta
   currentStep: number;
   lastSaved: string; // ISO date string
@@ -371,6 +381,11 @@ export const DEFAULT_PARENT_ALLOCATION: ParentTaxAllocation = {
   osvojeny: false,
 };
 
+export const DEFAULT_REFUND_REQUEST: RefundRequest = {
+  paymentMethod: 'ucet',
+  iban: '',
+};
+
 export const DEFAULT_TAX_FORM: TaxFormData = {
   personalInfo: DEFAULT_PERSONAL_INFO,
   employment: DEFAULT_EMPLOYMENT,
@@ -383,6 +398,7 @@ export const DEFAULT_TAX_FORM: TaxFormData = {
   childBonus: DEFAULT_CHILD_BONUS,
   twoPercent: DEFAULT_TWO_PERCENT,
   parentAllocation: DEFAULT_PARENT_ALLOCATION,
+  refundRequest: DEFAULT_REFUND_REQUEST,
   currentStep: 0,
   lastSaved: '',
 };

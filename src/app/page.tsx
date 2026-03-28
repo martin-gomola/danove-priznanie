@@ -45,6 +45,7 @@ export default function Home() {
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
+    updateRefundRequest,
     setStep,
     resetForm,
     importXml,
@@ -235,6 +236,7 @@ export default function Home() {
             calc={calc}
             onDownloadXml={handleDownloadXml}
             onGoToStep={handleGoToStep}
+            onUpdateRefund={updateRefundRequest}
           />
         );
       default:

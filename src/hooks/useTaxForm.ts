@@ -80,6 +80,7 @@ export function useTaxForm() {
           childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
           twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
           parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
+          refundRequest: { ...DEFAULT_TAX_FORM.refundRequest, ...parsed.refundRequest },
         });
       }
     } catch (e) {
@@ -137,6 +138,7 @@ export function useTaxForm() {
           if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
           if (data.twoPercent) next.twoPercent = { ...prev.twoPercent, ...data.twoPercent };
           if (data.parentAllocation) next.parentAllocation = { ...prev.parentAllocation, ...data.parentAllocation };
+          if (data.refundRequest) next.refundRequest = { ...prev.refundRequest, ...data.refundRequest };
           return next;
         });
         toast.success('Údaje boli doplnené z externého nástroja');
@@ -291,6 +293,17 @@ export function useTaxForm() {
     [markSaving]
   );
 
+  const updateRefundRequest = useCallback(
+    (updates: Partial<TaxFormData['refundRequest']>) => {
+      markSaving();
+      setForm((prev) => ({
+        ...prev,
+        refundRequest: { ...prev.refundRequest, ...updates },
+      }));
+    },
+    [markSaving]
+  );
+
   const setStep = useCallback((step: number) => {
     markSaving();
     setForm((prev) => ({ ...prev, currentStep: step }));
@@ -324,6 +337,7 @@ export function useTaxForm() {
             childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
             twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
             parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
+            refundRequest: { ...DEFAULT_TAX_FORM.refundRequest, ...parsed.refundRequest },
           });
           markSaving();
           toast.success('XML importované');
@@ -356,6 +370,7 @@ export function useTaxForm() {
     updateChildBonus,
     updateTwoPercent,
     updateParentAllocation,
+    updateRefundRequest,
     setStep,
     resetForm,
     importXml,

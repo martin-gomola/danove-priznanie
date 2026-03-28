@@ -333,10 +333,25 @@ export function convertToJson(
   const todayStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`;
   telo.datumVyhlasenia = todayStr;
 
-  // Refund request (XIV. oddiel)
-  telo.danovyPreplatokBonus.datum = todayStr;
-  if (calc.isRefund) {
-    telo.danovyPreplatokBonus.vratitDanPreplatok = '1';
+  // XIV. oddiel: Refund / bonus payout request
+  const hasRefund = parseFloat(calc.r136) > 0;
+  const hasChildBonusPayout = parseFloat(calc.r121) > 0;
+  const hasMortgageBonusPayout = parseFloat(calc.r127) > 0;
+  const needsPayment = hasRefund || hasChildBonusPayout || hasMortgageBonusPayout;
+
+  if (needsPayment) {
+    telo.danovyPreplatokBonus.datum = todayStr;
+    if (hasRefund) telo.danovyPreplatokBonus.vratitDanPreplatok = '1';
+    if (hasChildBonusPayout) telo.danovyPreplatokBonus.vyplatitDanovyBonus = '1';
+    if (hasMortgageBonusPayout) telo.danovyPreplatokBonus.vyplatitDanovyBonusUroky = '1';
+
+    const iban = form.refundRequest.iban.replace(/\s/g, '').toUpperCase();
+    if (form.refundRequest.paymentMethod === 'ucet' && iban) {
+      telo.danovyPreplatokBonus.sposobPlatby.ucet = '1';
+      telo.danovyPreplatokBonus.bankovyUcet.IBAN = iban;
+    } else if (form.refundRequest.paymentMethod === 'poukazka') {
+      telo.danovyPreplatokBonus.sposobPlatby.poukazka = '1';
+    }
   }
 
   return output;
