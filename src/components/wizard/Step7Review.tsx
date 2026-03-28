@@ -493,18 +493,32 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep }: Props) {
             </div>
             <div className="pt-1">
               <h3 className="text-sm font-semibold text-gray-900">Podajte cez portál FS</h3>
-              <p className="text-xs text-gray-600 mt-0.5 mb-3">
-                Prihláste sa cez eID alebo KEP a nahrajte overený XML súbor.
+              <p className="text-xs text-gray-600 mt-0.5 mb-1">
+                Prihláste sa cez eID alebo KEP do osobnej internetovej zóny:
               </p>
+              <ol className="text-xs text-gray-600 mb-3 space-y-0.5 list-none">
+                <li className="flex items-start gap-1.5">
+                  <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span>Otvorte <strong className="text-gray-700">Katalóg formulárov</strong></span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span>Vyhľadajte <strong className="text-gray-700">DPFO typ B</strong> (alebo &quot;621&quot;)</span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <ArrowRight className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <span>Kliknite <strong className="text-gray-700">&quot;Načítaj&quot;</strong> a nahrajte XML súbor</span>
+                </li>
+              </ol>
               <a
-                href="https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb"
+                href="https://www.financnasprava.sk/sk/osobna-internetova-zona/katalogy/katalog-formularov"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium
                   bg-white border border-gray-200 text-gray-700
                   hover:border-gray-400 hover:text-gray-900 transition-all duration-200"
               >
-                financnasprava.sk
+                Katalóg formulárov
                 <ExternalLink className="w-3 h-3 text-gray-400" />
               </a>
             </div>
