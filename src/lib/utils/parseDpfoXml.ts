@@ -248,7 +248,7 @@ function parseDds(telo: Record<string, unknown>): DDSContributions {
   };
 }
 
-/** Parse child bonus (r33.dieta, r119) from telo. */
+/** Parse child bonus (r33.dieta, r119, partnerSharing, r146/146a) from telo. */
 function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
   const r33 = getChild(telo, 'r33');
   const dietaList = isObj(r33) ? toArray(r33.dieta) : [];
@@ -258,13 +258,11 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
     if (!isObj(childNode)) continue;
     const name = extractText(childNode.priezviskoMeno);
     const rc = extractText(childNode.rodneCislo);
-    // Skip empty placeholder entries (XSD requires 4 dieta slots)
     if (!name && !rc) continue;
     const m00 = extractText(childNode.m00) === '1';
     const months: boolean[] = [];
     for (let m = 1; m <= 12; m++) {
       const key = `m${String(m).padStart(2, '0')}`;
-      // If m00 (whole year) is checked, all months are true
       months.push(m00 || extractText(childNode[key]) === '1');
     }
     children.push({
@@ -279,13 +277,27 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
   const r119 = extractText(getChild(telo, 'r119'));
   if (!children.length && !r119) return DEFAULT_TAX_FORM.childBonus;
 
+  const partnerSharingEnabled = extractText(getChild(telo, 'uplatnujemPar33Ods8')) === '1';
+  const r116a = extractText(getChild(telo, 'r116a'));
+
+  const r146 = extractText(getChild(telo, 'r146'));
+  const r117 = extractText(getChild(telo, 'r117'));
+  const hasR146ButNoR117 = safeDecimal(r146).gt(0) && safeDecimal(r117).isZero();
+  const childrenChoice = children.length > 0
+    ? 'yes' as const
+    : hasR146ButNoR117 ? 'income-used-by-someone-else' as const : 'yes' as const;
+
   return {
-    enabled: children.length > 0,
-    childrenChoice: 'yes' as const,
+    enabled: children.length > 0 || hasR146ButNoR117,
+    childrenChoice,
     children,
     bonusPaidByEmployer: r119,
     bonusPaidByEmployerDohody: '',
-    partnerSharing: { enabled: false, partnerTaxBase: '', pocetMesiacov: '' },
+    partnerSharing: {
+      enabled: partnerSharingEnabled,
+      partnerTaxBase: partnerSharingEnabled ? r116a : '',
+      pocetMesiacov: '',
+    },
   };
 }
 

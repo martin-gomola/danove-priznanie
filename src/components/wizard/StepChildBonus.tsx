@@ -11,7 +11,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
 
 const MONTH_LABELS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-const MAX_CHILDREN = 4;
+const MAX_CHILDREN = 10;
 
 interface Props {
   data: ChildBonus;

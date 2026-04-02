@@ -13,6 +13,7 @@ description: Extract employment data from Slovak "Potvrdenie o zdaniteľných pr
 | II. oddiel, r. 01a | `r36a` | Príjmy z dohôd (use `"0.00"` if absent) |
 | II. oddiel, r. 02 | `r37` | Povinné poistné (social + health) |
 | II. oddiel, r. 04 | `r131` | Preddavky na daň (tax advances) |
+| II. oddiel, r. 04a | `r131Dohody` | Preddavky na daň z dohôd (use `""` if absent or if r.01a is 0) |
 
 ## Workflow
 
@@ -36,7 +37,8 @@ curl -X POST <BASE_URL>/api/form \
       "r36": "<value>",
       "r36a": "<value>",
       "r37": "<value>",
-      "r131": "<value>"
+      "r131": "<value>",
+      "r131Dohody": "<value or empty string>"
     }
   }'
 ```
@@ -58,8 +60,8 @@ The app polls every 3s and auto-merges the data (toast notification on success).
 User: Fill employment from ~/Documents/potvrdenie-2025.pdf
 
 1. Ask user for session token → "abc12345-def6-7890-..."
-2. Read PDF → r01=32400.00, r01a=0.00, r02=4341.60, r04=3648.00
+2. Read PDF → r01=32400.00, r01a=0.00, r02=4341.60, r04=3648.00, r04a=""
 3. Cross-check: 32400.00 - 4341.60 = 28058.40 ✓ (matches r03)
-4. POST with Bearer token → { employment: { enabled: true, r36: "32400.00", ... } }
-5. "Extracted 4 values. Tax base r.38 = 28 058,40 EUR."
+4. POST with Bearer token → { employment: { enabled: true, r36: "32400.00", r131Dohody: "", ... } }
+5. "Extracted 5 values. Tax base r.38 = 28 058,40 EUR."
 ```

@@ -255,6 +255,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
             {form.employment.r36a && (
               <Row row="r.36a" label="Príjmy z dohôd" value={form.employment.r36a} />
             )}
+            {form.employment.r131Dohody && safeDecimal(form.employment.r131Dohody).gt(0) && (
+              <Row row="r.131" label="Preddavky z dohôd" value={form.employment.r131Dohody} indent />
+            )}
           </div>
         </SectionCard>
       )}
@@ -368,13 +371,20 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
           </InfoBox>
 
           {/* Bonuses */}
+          {form.childBonus?.enabled && form.childBonus.childrenChoice === 'yes' &&
+            form.childBonus.partnerSharing?.enabled && safeDecimal(calc.r116a).gt(0) && (
+            <Row row="r.116a" label="ZD druhého rodiča (§33 ods.8)" value={calc.r116a} />
+          )}
           <Row row="r.117" label="Daňový bonus na deti" value={calc.r117} />
           <Row row="r.118" label="Daň po bonuse na deti" value={calc.r118} />
-          {form.childBonus?.enabled && (
+          {form.childBonus?.enabled && form.childBonus.childrenChoice === 'yes' && (
             <>
               <Row row="r.119" label="Bonus na deti (vyplatený zamestnávateľom)" value={calc.r119} />
               <Row row="r.120" label="Zostávajúci bonus na deti (r.117 − r.119)" value={calc.r120} />
               <Row row="r.121" label="Bonus na deti na poukázanie správcom dane" value={calc.r121} highlight="green" />
+              {safeDecimal(calc.r122).gt(0) && (
+                <Row row="r.122" label="Nesprávne vyplatený bonus" value={calc.r122} highlight="red" />
+              )}
             </>
           )}
 

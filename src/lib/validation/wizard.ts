@@ -47,11 +47,23 @@ export function getValidationWarnings(form: TaxFormData): ValidationWarning[] {
     }
   }
   if (form.childBonus.enabled) {
-    const hasCompleteChild = form.childBonus.children.some(
-      (c) => hasValue(c.priezviskoMeno) && hasValue(c.rodneCislo)
-    );
-    if (!hasCompleteChild) {
-      warnings.push({ step: 1, section: 'Deti', field: 'Aspoň 1 dieťa (meno + rodné číslo)' });
+    if (form.childBonus.childrenChoice === 'yes') {
+      const hasCompleteChild = form.childBonus.children.some(
+        (c) => hasValue(c.priezviskoMeno) && hasValue(c.rodneCislo)
+      );
+      if (!hasCompleteChild) {
+        warnings.push({ step: 1, section: 'Deti', field: 'Aspoň 1 dieťa (meno + rodné číslo)' });
+      }
+    }
+    if (form.childBonus.childrenChoice === 'yes' && form.childBonus.partnerSharing.enabled) {
+      if (!hasValue(form.childBonus.partnerSharing.partnerTaxBase)) {
+        warnings.push({ step: 1, section: 'Bonus §33 ods.8', field: 'Základ dane druhého rodiča' });
+      }
+    }
+    for (const child of form.childBonus.children) {
+      if (hasValue(child.rodneCislo) && !validateRodneCislo(child.rodneCislo).valid) {
+        warnings.push({ step: 1, section: 'Deti', field: `Rodné číslo dieťaťa (${child.priezviskoMeno || 'neplatný formát'})` });
+      }
     }
   }
 
