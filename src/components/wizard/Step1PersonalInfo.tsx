@@ -181,6 +181,28 @@ export function Step1PersonalInfo({ data, onChange, onImport, showErrors = false
           </FormField>
         </div>
       </SectionCard>
+
+      {/* TODO: Enable when živnosť (§6) support is added
+      <Toggle
+        enabled={showNace}
+        onToggle={(on) => { setShowNace(on); if (!on) onChange({ nace: '' }); }}
+        label="SK NACE — kód ekonomickej činnosti (ak podnikáte)"
+      />
+      {showNace && (
+        <SectionCard title="SK NACE" subtitle="Vyplňte len ak máte príjmy z podnikania (§6)">
+          <FormField
+            label="SK NACE"
+            hint='Formát: "62010 - Počítačové programovanie"'
+          >
+            <Input
+              value={data.nace}
+              onChange={(e) => onChange({ nace: e.target.value })}
+              placeholder="62010 - Počítačové programovanie"
+            />
+          </FormField>
+        </SectionCard>
+      )}
+      */}
     </div>
   );
 }

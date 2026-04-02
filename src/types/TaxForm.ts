@@ -26,6 +26,7 @@ export interface PersonalInfo {
   psc: string;
   obec: string;
   stat: string; // default "Slovenská republika"
+  nace: string; // SK NACE code + label, e.g. "62010 - Počítačové programovanie"
 }
 
 // ── Employment Income (Oddiel V) ─────────────────────────────────────
@@ -36,6 +37,7 @@ export interface EmploymentIncome {
   r37: string; // Úhrn povinného poistného (insurance premiums)
   r131: string; // Úhrn preddavkov na daň (tax advances withheld)
   r131Dohody: string; // Preddavky z dohôd (tax advances from agreements, optional)
+  r133: string; // Zaplatené preddavky na daň (§34) — paid directly, not withheld
 }
 
 // ── Foreign Dividends (Príloha č.2 + Oddiel XIII) ────────────────────
@@ -126,8 +128,14 @@ export interface ChildEntry {
 // Partner bonus sharing (§33 ods. 8) — second eligible person's tax base
 export interface PartnerBonusSharing {
   enabled: boolean;
+  priezviskoMeno: string; // r.34 — partner's full name
+  rodneCislo: string; // r.34 — partner's birth number
   partnerTaxBase: string; // r.34a — partner's tax base from active income
   pocetMesiacov: string; // number of months partner was eligible (1-12)
+  wholeYear: boolean; // m00 — whole year flag
+  months: boolean[]; // m01-m12
+  dokladRocZuct: boolean; // partner has annual tax settlement from employer
+  dokladVyskaDane: boolean; // partner has confirmed tax amount
 }
 
 export interface ChildBonus {
@@ -170,6 +178,9 @@ export type PaymentMethod = 'ucet' | 'poukazka';
 export interface RefundRequest {
   paymentMethod: PaymentMethod;
   iban: string;
+  vratitPreplatok: boolean; // request tax overpayment refund
+  vyplatitDanovyBonus: boolean; // request child bonus payout
+  vyplatitDanovyBonusUroky: boolean; // request mortgage bonus payout
 }
 
 // ── Complete Tax Form ────────────────────────────────────────────────
@@ -277,6 +288,7 @@ export interface TaxCalculationResult {
 
   // Advances and final
   r131: string; // preddavky na daň zrazené z §5 (from employment)
+  r133: string; // zaplatené preddavky na daň (§34)
 
   // Final result
   // r135 = r116 - r117 - r123 - r131 (simplified, if positive)
@@ -307,15 +319,18 @@ export const DEFAULT_PERSONAL_INFO: PersonalInfo = {
   psc: '',
   obec: '',
   stat: 'Slovenská republika',
+  nace: '',
 };
 
 export const DEFAULT_EMPLOYMENT: EmploymentIncome = {
   enabled: true,
   r36: '',
+
   r36a: '',
   r37: '',
   r131: '',
   r131Dohody: '',
+  r133: '',
 };
 
 export const DEFAULT_DIVIDENDS: ForeignDividends = {
@@ -371,8 +386,14 @@ export const DEFAULT_DDS: DDSContributions = {
 
 export const DEFAULT_PARTNER_BONUS_SHARING: PartnerBonusSharing = {
   enabled: false,
+  priezviskoMeno: '',
+  rodneCislo: '',
   partnerTaxBase: '',
   pocetMesiacov: '',
+  wholeYear: true,
+  months: Array(12).fill(true),
+  dokladRocZuct: false,
+  dokladVyskaDane: false,
 };
 
 export const DEFAULT_CHILD_BONUS: ChildBonus = {
@@ -408,6 +429,9 @@ export const DEFAULT_PARENT_ALLOCATION: ParentTaxAllocation = {
 export const DEFAULT_REFUND_REQUEST: RefundRequest = {
   paymentMethod: 'ucet',
   iban: '',
+  vratitPreplatok: true,
+  vyplatitDanovyBonus: true,
+  vyplatitDanovyBonusUroky: true,
 };
 
 export const DEFAULT_TAX_FORM: TaxFormData = {

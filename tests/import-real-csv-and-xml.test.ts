@@ -87,6 +87,7 @@ describe('Real CSV import and XML export', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
       dividends: {
@@ -141,6 +142,7 @@ describe('Real CSV import and XML export', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
       dividends: {

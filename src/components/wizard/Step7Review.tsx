@@ -74,25 +74,26 @@ function isValidIban(iban: string): boolean {
 export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRefund }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const warnings = useMemo(() => getValidationWarnings(form), [form]);
-  const documents: { label: string; needed: boolean }[] = [
+  const documents: { label: string; needed: boolean; mandatory?: boolean }[] = [
     {
       label: 'Potvrdenie o zdaniteľných príjmoch (od zamestnávateľa)',
       needed: form.employment.enabled,
+      mandatory: true,
     },
     {
-      label: 'Výkazy dividend od brokera (povinné pri dividendách)',
+      label: 'Výkazy dividend od brokera (1042-S alebo ekvivalent)',
       needed: form.dividends.enabled,
     },
     {
-      label: 'Doklady k príjmom a výdavkom z podielových fondov (§7)',
+      label: 'Výkazy/potvrdenia k podielovým fondom (§7)',
       needed: form.mutualFunds.enabled,
     },
     {
-      label: 'Doklady k predaju akcií (§8)',
+      label: 'Výkazy z obchodovania s akciami (§8)',
       needed: form.stockSales.enabled,
     },
     {
-      label: 'Potvrdenie o zaplatených úrokoch (od banky)',
+      label: 'Potvrdenie o zaplatených úrokoch z hypotéky (od banky) + zmluva o úvere',
       needed: form.mortgage.enabled,
     },
     {
@@ -182,27 +183,45 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
         const ibanValid = !ibanClean || isValidIban(ibanClean);
         return (
           <SectionCard
-            title="XIV. ODDIEL — Žiadosť o vrátenie preplatku"
+            title="XIV. ODDIEL - Žiadosť o vrátenie preplatku"
             subtitle="Zadajte IBAN pre vrátenie preplatku alebo vyplatenie bonusu"
           >
             <div className="space-y-3">
               {hasRefund && (
-                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                <label className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={refundRequest.vratitPreplatok}
+                    onChange={(e) => onUpdateRefund({ vratitPreplatok: e.target.checked })}
+                    className="rounded border-gray-300 accent-emerald-600"
+                  />
                   <Banknote className="w-4 h-4 flex-shrink-0" />
                   Žiadam o vrátenie daňového preplatku: <strong>{fmtEur(calc.r136)} EUR</strong>
-                </div>
+                </label>
               )}
               {hasChildBonusPayout && (
-                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                <label className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={refundRequest.vyplatitDanovyBonus}
+                    onChange={(e) => onUpdateRefund({ vyplatitDanovyBonus: e.target.checked })}
+                    className="rounded border-gray-300 accent-emerald-600"
+                  />
                   <Banknote className="w-4 h-4 flex-shrink-0" />
                   Žiadam o vyplatenie daňového bonusu na deti: <strong>{fmtEur(calc.r121)} EUR</strong>
-                </div>
+                </label>
               )}
               {hasMortgageBonusPayout && (
-                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                <label className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={refundRequest.vyplatitDanovyBonusUroky}
+                    onChange={(e) => onUpdateRefund({ vyplatitDanovyBonusUroky: e.target.checked })}
+                    className="rounded border-gray-300 accent-emerald-600"
+                  />
                   <Banknote className="w-4 h-4 flex-shrink-0" />
                   Žiadam o vyplatenie daňového bonusu na úroky: <strong>{fmtEur(calc.r127)} EUR</strong>
-                </div>
+                </label>
               )}
               <div className="flex gap-4 mt-2">
                 <label className="flex items-center gap-2 text-sm cursor-pointer">
@@ -246,7 +265,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
 
       {/* Employment Section */}
       {form.employment.enabled && (
-        <SectionCard title="Oddiel V -- Príjem zo závislej činnosti (§5)">
+        <SectionCard title="Oddiel V - Príjem zo závislej činnosti (§5)">
           <div className="space-y-0.5">
             <Row row="r.36" label="Úhrn príjmov (brutto)" value={form.employment.r36} />
             <Row row="r.37" label="Povinné poistné" value={form.employment.r37} />
@@ -299,7 +318,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
 
       {/* Dividends Section */}
       {form.dividends.enabled && (
-        <SectionCard title="Príloha č.2 -- Podiely na zisku (§51e)">
+        <SectionCard title="Príloha č.2 - Podiely na zisku (§51e)">
           <div className="space-y-0.5">
             <Row row="pr.01" label="Podiel na zisku (dividendy EUR)" value={calc.pril2_pr1} />
             <Row row="pr.07" label="Osobitný základ dane" value={calc.pril2_pr7} />
@@ -329,7 +348,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
       )}
 
       {/* Tax Calculation */}
-      <SectionCard title="Oddiel IX -- Výpočet dane">
+      <SectionCard title="Oddiel IX - Výpočet dane">
         <div className="space-y-0.5">
           {/* NCZD */}
           <Row row="r.72" label="ZD z §5 pred znížením o NCZD" value={calc.r72} />
@@ -398,6 +417,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
 
           {/* Advances and final */}
           <Row row="r.131" label="Preddavky na daň (zrazené)" value={calc.r131} />
+          {safeDecimal(calc.r133).gt(0) && (
+            <Row row="r.133" label="Zaplatené preddavky (§34)" value={calc.r133} />
+          )}
           <Divider />
 
           <Row
@@ -417,7 +439,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
 
       {/* 2% Allocation */}
       {form.twoPercent.enabled && (
-        <SectionCard title="Oddiel XII -- Podiel zaplatenej dane (§50)">
+        <SectionCard title="Oddiel XII - Podiel zaplatenej dane (§50)">
           <div className="space-y-0.5">
             <Row label="IČO organizácie" value={form.twoPercent.ico} numeric={false} />
             <Row label="Názov" value={form.twoPercent.obchMeno} numeric={false} />
@@ -433,7 +455,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
 
       {/* 2% Parents Allocation */}
       {form.parentAllocation.choice !== 'none' && (
-        <SectionCard title="Oddiel XII -- Podiel zaplatenej dane rodičom (§50aa)">
+        <SectionCard title="Oddiel XII - Podiel zaplatenej dane rodičom (§50aa)">
           <div className="space-y-0.5">
             <Row
               label={`Rodič 1: ${[form.parentAllocation.parent1.priezvisko, form.parentAllocation.parent1.meno].filter(Boolean).join(' ') || '-'}`}
@@ -473,7 +495,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
         >
           <div>
             <h2 className="text-base font-semibold text-gray-900">Prílohy k daňovému priznaniu</h2>
-            <p className="text-xs text-gray-600 mt-0.5">Dokumenty, ktoré môžete priložiť (voliteľné prehľad)</p>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Doklady k podaniu, počet príloh v XML: {neededDocs.length}
+            </p>
           </div>
           {attachmentsOpen ? (
             <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
@@ -483,20 +507,40 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
         </button>
         {attachmentsOpen && (
           <div className="px-6 pb-5 pt-0 border-t border-gray-100">
-            <div className="space-y-2 pt-4">
-              {neededDocs.length === 0 ? (
-                <p className="text-xs text-gray-600">Žiadne prílohy nie sú potrebné.</p>
-              ) : (
-                neededDocs.map((doc, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-gray-700">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    {doc.label}
+            {neededDocs.length === 0 ? (
+              <p className="text-xs text-gray-600 pt-4">Žiadne prílohy nie sú potrebné.</p>
+            ) : (
+              <>
+                {neededDocs.some((d) => d.mandatory) && (
+                  <div className="pt-4">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Povinné prílohy</h3>
+                    <div className="space-y-2">
+                      {neededDocs.filter((d) => d.mandatory).map((doc, i) => (
+                        <div key={`m-${i}`} className="flex items-center gap-2 text-sm text-gray-700">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                          {doc.label}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
-            <p className="mt-3 text-xs text-gray-600">
-              FS vyžaduje doklady o príjmoch zo všetkých zdrojov; pri dividendách sú povinne výkazy od brokera. Pre príjmy z §7 (podielové fondy) sa konkrétny názov dokladu v znení FS neuvádza - postačujú výkazy alebo potvrdenia, z ktorých vyplývajú príjmy a výdavky (r.66, r.67).
+                )}
+                {neededDocs.some((d) => !d.mandatory) && (
+                  <div className="pt-4">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Uchovajte pre prípad kontroly (5 rokov)</h3>
+                    <div className="space-y-2">
+                      {neededDocs.filter((d) => !d.mandatory).map((doc, i) => (
+                        <div key={`o-${i}`} className="flex items-center gap-2 text-sm text-gray-700">
+                          <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          {doc.label}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+            <p className="mt-4 text-xs text-gray-500 leading-relaxed">
+              K elektronickému podaniu sa prílohy neprikladajú. FS si ich môže vyžiadať pri kontrole, uchovajte ich minimálne 5 rokov.
             </p>
           </div>
         )}

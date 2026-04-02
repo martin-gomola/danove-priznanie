@@ -56,7 +56,17 @@ export function getValidationWarnings(form: TaxFormData): ValidationWarning[] {
       }
     }
     if (form.childBonus.childrenChoice === 'yes' && form.childBonus.partnerSharing.enabled) {
-      if (!hasValue(form.childBonus.partnerSharing.partnerTaxBase)) {
+      const ps = form.childBonus.partnerSharing;
+      if (!hasValue(ps.priezviskoMeno)) {
+        warnings.push({ step: 1, section: 'Bonus §33 ods.8', field: 'Priezvisko a meno druhého rodiča (r.34)' });
+      }
+      if (!hasValue(ps.rodneCislo)) {
+        warnings.push({ step: 1, section: 'Bonus §33 ods.8', field: 'Rodné číslo druhého rodiča (r.34)' });
+      }
+      if (hasValue(ps.rodneCislo) && !validateRodneCislo(ps.rodneCislo).valid) {
+        warnings.push({ step: 1, section: 'Bonus §33 ods.8', field: 'Rodné číslo druhého rodiča (neplatný formát)' });
+      }
+      if (!hasValue(ps.partnerTaxBase)) {
         warnings.push({ step: 1, section: 'Bonus §33 ods.8', field: 'Základ dane druhého rodiča' });
       }
     }
@@ -67,12 +77,38 @@ export function getValidationWarnings(form: TaxFormData): ValidationWarning[] {
     }
   }
 
+  // Step 1: partner NCZD income limit
+  if (form.spouse.enabled && hasValue(form.spouse.vlastnePrijmy)) {
+    const spouseIncome = safeDecimal(form.spouse.vlastnePrijmy);
+    if (spouseIncome.gte(5260.38)) {
+      warnings.push({ step: 1, section: 'Manžel/manželka', field: 'Vlastné príjmy presahujú limit NCZD (5 260,38 EUR)' });
+    }
+  }
+
   // Step 2: mortgage
   if (form.mortgage.enabled) {
     if (!hasValue(form.mortgage.zaplateneUroky)) warnings.push({ step: 2, section: 'Hypotéka', field: 'Zaplatené úroky' });
     if (!hasValue(form.mortgage.pocetMesiacov)) warnings.push({ step: 2, section: 'Hypotéka', field: 'Počet mesiacov' });
     if (!hasValue(form.mortgage.datumZacatiaUroceniaUveru)) warnings.push({ step: 2, section: 'Hypotéka', field: 'Dátum začatia úročenia' });
     if (!hasValue(form.mortgage.datumUzavretiaZmluvy)) warnings.push({ step: 2, section: 'Hypotéka', field: 'Dátum uzavretia zmluvy' });
+
+    // Eligibility: bonus is only for 5 consecutive years from the interest start date
+    if (hasValue(form.mortgage.datumZacatiaUroceniaUveru)) {
+      const start = new Date(form.mortgage.datumZacatiaUroceniaUveru);
+      if (!Number.isNaN(start.getTime())) {
+        const yearsElapsed = 2025 - start.getFullYear();
+        if (yearsElapsed > 5) {
+          warnings.push({ step: 2, section: 'Hypotéka', field: 'Úročenie začalo pred viac ako 5 rokmi, nárok na bonus mohol uplynúť' });
+        }
+      }
+    }
+    // Eligibility: contract must be from 2018+ for §33a
+    if (hasValue(form.mortgage.datumUzavretiaZmluvy)) {
+      const contract = new Date(form.mortgage.datumUzavretiaZmluvy);
+      if (!Number.isNaN(contract.getTime()) && contract.getFullYear() < 2018) {
+        warnings.push({ step: 2, section: 'Hypotéka', field: 'Zmluva uzavretá pred 1.1.2018, §33a sa neuplatňuje' });
+      }
+    }
   }
 
   // Step 3: employment

@@ -77,6 +77,20 @@ function parseHlavicka(hlavicka: unknown): PersonalInfo | null {
   const adresa = getChild(hlavicka, 'adresaTrvPobytu');
   const dic = extractText(getChild(hlavicka, 'dic'));
   if (!dic) return null;
+
+  // Reconstruct NACE from k1+k2+k3 + cinnost
+  const skNace = getChild(hlavicka, 'skNace');
+  let nace = '';
+  if (isObj(skNace)) {
+    const k1 = extractText(skNace.k1);
+    const k2 = extractText(skNace.k2);
+    const k3 = extractText(skNace.k3);
+    const cinnost = extractText(skNace.cinnost);
+    const code = `${k1}${k2}${k3}`;
+    if (code && cinnost) nace = `${code} - ${cinnost}`;
+    else if (code) nace = code;
+  }
+
   return {
     dic,
     priezvisko: extractText(getChild(hlavicka, 'priezvisko')),
@@ -88,6 +102,7 @@ function parseHlavicka(hlavicka: unknown): PersonalInfo | null {
     psc: isObj(adresa) ? extractText(getChild(adresa, 'psc')) : '',
     obec: isObj(adresa) ? extractText(getChild(adresa, 'obec')) : '',
     stat: isObj(adresa) ? extractText(getChild(adresa, 'stat')) || 'Slovenská republika' : 'Slovenská republika',
+    nace,
   };
 }
 
@@ -97,6 +112,7 @@ function parseEmployment(telo: Record<string, unknown>): EmploymentIncome {
   const r36a = extractText(getChild(telo, 'r36a'));
   const r37 = extractText(getChild(telo, 'r37'));
   const r131 = extractText(getChild(telo, 'r131'));
+  const r133 = extractText(getChild(telo, 'r133'));
   return {
     enabled: Boolean(r36 || r36a || r37 || r131),
     r36,
@@ -104,6 +120,7 @@ function parseEmployment(telo: Record<string, unknown>): EmploymentIncome {
     r37,
     r131,
     r131Dohody: '',
+    r133,
   };
 }
 
@@ -287,6 +304,23 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
     ? 'yes' as const
     : hasR146ButNoR117 ? 'income-used-by-someone-else' as const : 'yes' as const;
 
+  // Parse r.34 partner identity for §33 ods.8
+  const r34 = getChild(telo, 'r34');
+  const partnerName = isObj(r34) ? extractText(r34.priezviskoMeno) : '';
+  const partnerRc = isObj(r34) ? extractText(r34.rodneCislo) : '';
+  const partnerM00 = isObj(r34) && extractText(r34.m00) === '1';
+  const partnerMonths: boolean[] = [];
+  if (isObj(r34)) {
+    for (let m = 1; m <= 12; m++) {
+      const key = `m${String(m).padStart(2, '0')}`;
+      partnerMonths.push(partnerM00 || extractText(r34[key]) === '1');
+    }
+  } else {
+    partnerMonths.push(...Array(12).fill(true) as boolean[]);
+  }
+  const dokladRocZuct = isObj(r34) && extractText(r34.dokladRocZuct) === '1';
+  const dokladVyskaDane = isObj(r34) && extractText(r34.dokladVyskaDane) === '1';
+
   return {
     enabled: children.length > 0 || hasR146ButNoR117,
     childrenChoice,
@@ -295,8 +329,14 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
     bonusPaidByEmployerDohody: '',
     partnerSharing: {
       enabled: partnerSharingEnabled,
+      priezviskoMeno: partnerName,
+      rodneCislo: partnerRc,
       partnerTaxBase: partnerSharingEnabled ? r116a : '',
       pocetMesiacov: '',
+      wholeYear: partnerMonths.every(Boolean),
+      months: partnerMonths,
+      dokladRocZuct,
+      dokladVyskaDane,
     },
   };
 }

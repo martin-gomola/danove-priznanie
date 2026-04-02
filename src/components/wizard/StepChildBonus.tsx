@@ -382,36 +382,84 @@ export function StepChildBonus({
                 label="Uplatňujem bonus na základe príjmu oboch rodičov (§33 ods.8)"
               />
               {data.partnerSharing.enabled && (
-                <SectionCard title="Príjem druhého rodiča" subtitle="§33 ods.8 — základ dane z aktívnych príjmov druhého oprávneného">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField
-                      label="Základ dane druhého rodiča (r.34a/r.116a)"
-                      hint="ZD z aktívnych príjmov partnera"
-                      required
-                      error={requiredError(showErrors, data.partnerSharing.partnerTaxBase)}
-                    >
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={data.partnerSharing.partnerTaxBase}
-                        onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, partnerTaxBase: e.target.value } })}
-                        placeholder="0.00"
-                        suffix="EUR"
-                      />
-                    </FormField>
-                    <FormField
-                      label="Počet mesiacov nároku"
-                      hint="Mesiace, kedy boli obe osoby oprávnené (1-12)"
-                    >
-                      <Input
-                        type="number"
-                        min={1}
-                        max={12}
-                        value={data.partnerSharing.pocetMesiacov}
-                        onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, pocetMesiacov: e.target.value } })}
-                        placeholder="12"
-                      />
-                    </FormField>
+                <SectionCard title="Údaje o druhom rodičovi" subtitle="§33 ods.8, r.34, r.34a">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        label="Priezvisko a meno (r.34)"
+                        required
+                        error={requiredError(showErrors, data.partnerSharing.priezviskoMeno)}
+                      >
+                        <Input
+                          value={data.partnerSharing.priezviskoMeno}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, priezviskoMeno: e.target.value } })}
+                          placeholder="Nováková Mária"
+                        />
+                      </FormField>
+                      <FormField
+                        label="Rodné číslo (r.34)"
+                        hint=""
+                        required
+                        error={getRodneCisloError(data.partnerSharing.rodneCislo, showErrors)}
+                      >
+                        <Input
+                          value={data.partnerSharing.rodneCislo}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, rodneCislo: e.target.value.replace(/\D/g, '') } })}
+                          placeholder="8501011234"
+                          maxLength={10}
+                        />
+                      </FormField>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        label="Základ dane druhého rodiča (r.34a/r.116a)"
+                        hint="ZD z aktívnych príjmov partnera"
+                        required
+                        error={requiredError(showErrors, data.partnerSharing.partnerTaxBase)}
+                      >
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={data.partnerSharing.partnerTaxBase}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, partnerTaxBase: e.target.value } })}
+                          placeholder="0.00"
+                          suffix="EUR"
+                        />
+                      </FormField>
+                      <FormField
+                        label="Počet mesiacov nároku"
+                        hint="Mesiace, kedy boli obe osoby oprávnené (1-12)"
+                      >
+                        <Input
+                          type="number"
+                          min={1}
+                          max={12}
+                          value={data.partnerSharing.pocetMesiacov}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, pocetMesiacov: e.target.value } })}
+                          placeholder="12"
+                        />
+                      </FormField>
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      <label className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={data.partnerSharing.dokladRocZuct}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, dokladRocZuct: e.target.checked } })}
+                          className="rounded border-gray-300"
+                        />
+                        Doklad o ročnom zúčtovaní
+                      </label>
+                      <label className="flex items-center gap-1.5 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={data.partnerSharing.dokladVyskaDane}
+                          onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, dokladVyskaDane: e.target.checked } })}
+                          className="rounded border-gray-300"
+                        />
+                        Doklad o výške dane
+                      </label>
+                    </div>
                   </div>
                 </SectionCard>
               )}

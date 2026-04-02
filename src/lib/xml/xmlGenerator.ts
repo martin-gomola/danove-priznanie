@@ -60,6 +60,17 @@ export function convertToJson(
   hlavicka.adresaTrvPobytu.obec = form.personalInfo.obec;
   hlavicka.adresaTrvPobytu.stat = form.personalInfo.stat;
 
+  // SK NACE — business classification code (e.g., "62010 - Počítačové programovanie")
+  if (form.personalInfo.nace) {
+    const [naceCode, naceLabel] = form.personalInfo.nace.split(' - ');
+    if (naceCode) {
+      hlavicka.skNace.k1 = naceCode.slice(0, 2);
+      hlavicka.skNace.k2 = naceCode.slice(2, 4);
+      hlavicka.skNace.k3 = naceCode.slice(4, 5);
+      hlavicka.skNace.cinnost = (naceLabel || '').trim();
+    }
+  }
+
   const telo = output.dokument.telo;
 
   // ════════════════════════════════════════════════════════
@@ -124,9 +135,22 @@ export function convertToJson(
       telo.r33a = '1';
     }
 
-    // §33 ods. 8: partner bonus sharing
+    // §33 ods. 8: partner bonus sharing — r.34, r.34a
     if (childBonus.partnerSharing.enabled) {
       telo.uplatnujemPar33Ods8 = '1';
+      telo.r34a = decStr(calc.r116a);
+      const ps = childBonus.partnerSharing;
+      if (ps.priezviskoMeno || ps.rodneCislo) {
+        telo.r34.priezviskoMeno = ps.priezviskoMeno;
+        telo.r34.rodneCislo = ps.rodneCislo;
+        const allM = ps.wholeYear || ps.months.every(Boolean);
+        telo.r34.m00 = allM ? '1' : '0';
+        for (let i = 0; i < 12; i++) {
+          telo.r34[`m${(i + 1).toString().padStart(2, '0')}`] = allM ? '0' : (ps.months[i] ? '1' : '0');
+        }
+        telo.r34.dokladRocZuct = boolStr(ps.dokladRocZuct);
+        telo.r34.dokladVyskaDane = boolStr(ps.dokladVyskaDane);
+      }
     }
   }
 
@@ -236,7 +260,7 @@ export function convertToJson(
   telo.r130 = '0.00';  // §43 ods.10 preddavok
   telo.r131 = decStr(calc.r131);  // §35 preddavky (employment)
   telo.r132 = '0.00';  // §44 zabezpečenie dane
-  telo.r133 = '0.00';  // §34 preddavky
+  telo.r133 = decStr(calc.r133);  // §34 zaplatené preddavky
   telo.r134 = '0.00';  // §35 ods.10,11 preddavky
 
   // ── Final result ──────────────────────────────────────
@@ -357,31 +381,43 @@ export function convertToJson(
   // Metadata
   // ════════════════════════════════════════════════════════
 
-  // r.154: attachment count
-  telo.r154 = form.employment.enabled ? '7' : '6';
+  // r.154: attachment count — count documents the taxpayer should keep on file
+  let attachmentCount = 0;
+  if (form.employment.enabled) attachmentCount++;
+  if (form.dividends.enabled) attachmentCount++;
+  if (form.mutualFunds.enabled) attachmentCount++;
+  if (form.stockSales.enabled) attachmentCount++;
+  if (form.mortgage.enabled) attachmentCount++;
+  if (form.twoPercent.enabled && form.twoPercent.splnam3per) attachmentCount++;
+  if (form.parentAllocation.choice !== 'none' && form.parentAllocation.osvojeny) attachmentCount++;
+  telo.r154 = String(attachmentCount);
 
   // Date
   const today = new Date();
   const todayStr = `${today.getDate().toString().padStart(2, '0')}.${(today.getMonth() + 1).toString().padStart(2, '0')}.${today.getFullYear()}`;
   telo.datumVyhlasenia = todayStr;
 
-  // XIV. oddiel: Refund / bonus payout request
+  // XIV. oddiel: Refund / bonus payout request — gated by user consent flags
   const hasRefund = parseFloat(calc.r136) > 0;
   const hasChildBonusPayout = parseFloat(calc.r121) > 0;
   const hasMortgageBonusPayout = parseFloat(calc.r127) > 0;
-  const needsPayment = hasRefund || hasChildBonusPayout || hasMortgageBonusPayout;
+  const rq = form.refundRequest;
+  const wantRefund = hasRefund && rq.vratitPreplatok;
+  const wantChildBonus = hasChildBonusPayout && rq.vyplatitDanovyBonus;
+  const wantMortgageBonus = hasMortgageBonusPayout && rq.vyplatitDanovyBonusUroky;
+  const needsPayment = wantRefund || wantChildBonus || wantMortgageBonus;
 
   if (needsPayment) {
     telo.danovyPreplatokBonus.datum = todayStr;
-    if (hasRefund) telo.danovyPreplatokBonus.vratitDanPreplatok = '1';
-    if (hasChildBonusPayout) telo.danovyPreplatokBonus.vyplatitDanovyBonus = '1';
-    if (hasMortgageBonusPayout) telo.danovyPreplatokBonus.vyplatitDanovyBonusUroky = '1';
+    if (wantRefund) telo.danovyPreplatokBonus.vratitDanPreplatok = '1';
+    if (wantChildBonus) telo.danovyPreplatokBonus.vyplatitDanovyBonus = '1';
+    if (wantMortgageBonus) telo.danovyPreplatokBonus.vyplatitDanovyBonusUroky = '1';
 
-    const iban = form.refundRequest.iban.replace(/\s/g, '').toUpperCase();
-    if (form.refundRequest.paymentMethod === 'ucet' && iban) {
+    const iban = rq.iban.replace(/\s/g, '').toUpperCase();
+    if (rq.paymentMethod === 'ucet' && iban) {
       telo.danovyPreplatokBonus.sposobPlatby.ucet = '1';
       telo.danovyPreplatokBonus.bankovyUcet.IBAN = iban;
-    } else if (form.refundRequest.paymentMethod === 'poukazka') {
+    } else if (rq.paymentMethod === 'poukazka') {
       telo.danovyPreplatokBonus.sposobPlatby.poukazka = '1';
     }
   }

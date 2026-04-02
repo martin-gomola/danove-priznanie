@@ -140,13 +140,12 @@ function calculateProgressiveTax(taxBase: Decimal): Decimal {
   const bracket = new Decimal(TAX_BRACKET_THRESHOLD);
 
   if (taxBase.lte(bracket)) {
-    return taxBase.mul(TAX_RATE_LOWER);
+    return round(taxBase.mul(TAX_RATE_LOWER));
   }
 
-  // 19% on first bracket + 25% on the rest
-  const taxLower = bracket.mul(TAX_RATE_LOWER);
-  const taxUpper = taxBase.minus(bracket).mul(TAX_RATE_UPPER);
-  return taxLower.plus(taxUpper);
+  const taxLower = round(bracket.mul(TAX_RATE_LOWER));
+  const taxUpper = round(taxBase.minus(bracket).mul(TAX_RATE_UPPER));
+  return round(taxLower.plus(taxUpper));
 }
 
 /**
@@ -503,9 +502,12 @@ function taxCalculationSection(
   const rawR116 = round(r90.plus(r115).plus(pril2_pr28));
 
   // Low-income zeroing (§46a ods. 2): if no bonuses claimed and total income ≤ threshold, tax = 0
+  // totalIncome = §5 (r36) + §8 stocks (r71 pre-exemption, via r69) + dividends
+  // When §6 income is added in the future, include it here
+  const totalIncome = r36;
   const noBonuses = r117Pre.eq(0) && r123Pre.eq(0);
   const condition1 = noBonuses && rawR116.lte(17);
-  const condition2 = noBonuses && r36.lte(LOW_INCOME_THRESHOLD);
+  const condition2 = noBonuses && totalIncome.lte(LOW_INCOME_THRESHOLD);
   const r116 = (condition1 || condition2) ? new Decimal(0) : Decimal.max(rawR116, new Decimal(0));
 
   // r.116a: partner bonus sharing (§33 ods. 8)
@@ -593,7 +595,8 @@ function finalSection(
   r121: Decimal,
   r123: Decimal,
   r127: Decimal,
-  r131: Decimal
+  r131: Decimal,
+  r133: Decimal
 ): FinalSectionResult {
   const useTax = r116.gt(17) || (r116.lte(17) && (r117.gt(0) || r123.gt(0)));
   const base = useTax ? r116 : new Decimal(0);
@@ -603,8 +606,9 @@ function finalSection(
     .plus(r119)
     .plus(r121)
     .minus(r123)
-    .plus(r127)  // r.125 (mortgage paid by employer) = 0, so r.126=r.123, r.127=max(r.126-r.118,0)
-    .minus(r131);
+    .plus(r127)
+    .minus(r131)
+    .minus(r133);
 
   let r135 = round(Decimal.max(finalResult, new Decimal(0)));
   if (r135.gt(0) && r135.lte(5)) r135 = new Decimal(0);
@@ -637,6 +641,7 @@ function buildResult(
   bon: BonusesSectionResult,
   fin: FinalSectionResult,
   r131Total: Decimal,
+  r133: Decimal,
   r152: Decimal,
   parentAllocPerParent: Decimal
 ): TaxCalculationResult {
@@ -688,6 +693,7 @@ function buildResult(
     r126: fmt(bon.r126),
     r127: fmt(bon.r127),
     r131: fmt(r131Total),
+    r133: fmt(r133),
     r135: fmt(fin.r135),
     r136: fmt(fin.r136),
     r152: fmt(r152),
@@ -721,8 +727,9 @@ export function calculateTax(form: TaxFormData): TaxCalculationResult {
   const bon = bonusesSection(form, tax.r116, emp.r38, tax.r116a, r36);
   // r.131: sum of employment + dohody advances
   const r131Total = round(emp.r131.plus(d(form.employment.r131Dohody)));
-  const fin = finalSection(tax.r116, bon.r117, bon.r119, bon.r121, bon.r123, bon.r127, r131Total);
+  const r133 = round(d(form.employment.r133));
+  const fin = finalSection(tax.r116, bon.r117, bon.r119, bon.r121, bon.r123, bon.r127, r131Total, r133);
   const r152 = allocationSection(form, bon.r124);
   const parentAllocPerParent = parentAllocationSection(form, bon.r124);
-  return buildResult(emp, mf, stocks, div, tax, bon, fin, r131Total, r152, parentAllocPerParent);
+  return buildResult(emp, mf, stocks, div, tax, bon, fin, r131Total, r133, r152, parentAllocPerParent);
 }

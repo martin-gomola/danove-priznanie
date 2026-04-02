@@ -88,6 +88,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: { ...DEFAULT_TAX_FORM.employment, enabled: false, r36: '', r36a: '', r37: '', r131: '' },
     });
@@ -115,6 +116,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: {
         ...DEFAULT_TAX_FORM.employment,
@@ -149,6 +151,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: {
         ...DEFAULT_TAX_FORM.employment,
@@ -190,6 +193,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: {
         ...DEFAULT_TAX_FORM.employment,
@@ -255,6 +259,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: {
         ...DEFAULT_TAX_FORM.employment,
@@ -356,6 +361,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: {
         ...DEFAULT_TAX_FORM.employment,
@@ -417,6 +423,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
       dividends: {
@@ -463,6 +470,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         psc: '81101',
         obec: 'Bratislava',
         stat: 'Slovenská republika',
+        nace: '',
       },
       employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
     });

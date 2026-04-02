@@ -127,6 +127,22 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
               />
             </FormField>
           )}
+
+          {/* TODO: Enable when živnosť (§6) support is added — r.133 is for self-employed quarterly advances
+          <FormField
+            label="r. 133: Zaplatené preddavky na daň (§34)"
+            hint="Preddavky na daň zaplatené priamo daňovníkom (nie zrazené zamestnávateľom). Vyplňte len ak ste platili preddavky sami."
+          >
+            <Input
+              type="number"
+              step="0.01"
+              value={data.r133}
+              onChange={(e) => onChange({ r133: e.target.value })}
+              placeholder="0.00"
+              suffix="EUR"
+            />
+          </FormField>
+          */}
         </div>
       </SectionCard>
       </div>
