@@ -256,7 +256,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
               <Row row="r.36a" label="Príjmy z dohôd" value={form.employment.r36a} />
             )}
             {form.employment.r131Dohody && safeDecimal(form.employment.r131Dohody).gt(0) && (
-              <Row row="r.131" label="Preddavky z dohôd" value={form.employment.r131Dohody} indent />
+              <Row row="r.04a" label="Preddavky z dohôd" value={form.employment.r131Dohody} indent />
             )}
           </div>
         </SectionCard>
