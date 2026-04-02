@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback } from 'react';
-import { ChildBonus, ChildEntry, SpouseNCZD } from '@/types/TaxForm';
+import { ChildBonus, ChildEntry, ChildrenChoice, SpouseNCZD } from '@/types/TaxForm';
 import { DEFAULT_CHILD_ENTRY } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { CHILD_BONUS_UNDER_15, CHILD_BONUS_15_TO_18 } from '@/lib/tax/constants';
@@ -203,9 +203,39 @@ export function StepChildBonus({
             V roku 2025: <strong className="text-gray-700">{CHILD_BONUS_UNDER_15} EUR</strong>/mesiac do 15 r.,{' '}
             <strong className="text-gray-700">{CHILD_BONUS_15_TO_18} EUR</strong>/mesiac 15-18 r. Bonus sa znižuje pri vyššom príjme.
           </p>
-          {showErrors && !hasCompleteChild && (
-            <InfoBox variant="warning">Pridajte aspoň 1 dieťa.</InfoBox>
+
+          <SectionCard title="Spôsob uplatnenia" subtitle="Kto si uplatňuje bonus?">
+            <div className="space-y-2">
+              {([
+                { value: 'yes' as ChildrenChoice, label: 'Uplatňujem si daňový bonus na deti' },
+                { value: 'no' as ChildrenChoice, label: 'Neuplatňujem (bonus si uplatní druhý rodič)' },
+                { value: 'income-used-by-someone-else' as ChildrenChoice, label: 'Neuplatňujem, ale poskytujem príjem pre výpočet bonusu druhého rodiča (§33 ods.8)' },
+              ]).map((opt) => (
+                <label key={opt.value} className="flex items-start gap-2 cursor-pointer text-sm text-gray-700">
+                  <input
+                    type="radio"
+                    name="childrenChoice"
+                    checked={data.childrenChoice === opt.value}
+                    onChange={() => onChange({ childrenChoice: opt.value })}
+                    className="mt-0.5 rounded-full border-gray-300"
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </SectionCard>
+
+          {data.childrenChoice === 'no' && (
+            <InfoBox variant="info">
+              Bonus si uplatní druhý rodič vo svojom daňovom priznaní. Deti nemusíte vypisovať.
+            </InfoBox>
           )}
+
+          {data.childrenChoice !== 'no' && (
+            <>
+              {showErrors && !hasCompleteChild && data.childrenChoice === 'yes' && (
+                <InfoBox variant="warning">Pridajte aspoň 1 dieťa.</InfoBox>
+              )}
 
           <SectionCard title="Vyživované deti" subtitle="Priezvisko a meno, rodné číslo, mesiace nároku">
             <div className="space-y-6">
@@ -313,37 +343,98 @@ export function StepChildBonus({
             </div>
           </SectionCard>
 
-          <SectionCard title="Bonus už vyplatený zamestnávateľom" subtitle="Riadok 119">
-            <FormField
-              label="Suma bonusu na deti vyplatená v priebehu roka zamestnávateľom"
-              hint="Z potvrdenia od zamestnávateľa alebo výplatnej pásky"
-            >
-              <Input
-                type="number"
-                step="0.01"
-                value={data.bonusPaidByEmployer}
-                onChange={(e) => onChange({ bonusPaidByEmployer: e.target.value })}
-                placeholder="0.00"
-                suffix="EUR"
-              />
-            </FormField>
-          </SectionCard>
+          {data.childrenChoice === 'yes' && (
+            <>
+              <SectionCard title="Bonus už vyplatený zamestnávateľom" subtitle="Riadok 119">
+                <div className="space-y-4">
+                  <FormField
+                    label="Bonus vyplatený zamestnávateľom (zo závislej činnosti)"
+                    hint="Z potvrdenia od zamestnávateľa"
+                  >
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={data.bonusPaidByEmployer}
+                      onChange={(e) => onChange({ bonusPaidByEmployer: e.target.value })}
+                      placeholder="0.00"
+                      suffix="EUR"
+                    />
+                  </FormField>
+                  <FormField
+                    label="Bonus vyplatený z dohôd"
+                    hint="Z potvrdenia od zamestnávateľa (dohody o prácach vykonávaných mimo pracovného pomeru)"
+                  >
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={data.bonusPaidByEmployerDohody}
+                      onChange={(e) => onChange({ bonusPaidByEmployerDohody: e.target.value })}
+                      placeholder="0.00"
+                      suffix="EUR"
+                    />
+                  </FormField>
+                </div>
+              </SectionCard>
 
-          <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
-              <div>
-                <span className="text-xs text-emerald-600">Celkový daňový bonus na deti (r.117)</span>
-                <p className="text-xs text-emerald-500 mt-0.5">
-                  Po znížení o príjem a po mesiacoch
-                </p>
+              <Toggle
+                enabled={data.partnerSharing.enabled}
+                onToggle={(enabled) => onChange({ partnerSharing: { ...data.partnerSharing, enabled } })}
+                label="Uplatňujem bonus na základe príjmu oboch rodičov (§33 ods.8)"
+              />
+              {data.partnerSharing.enabled && (
+                <SectionCard title="Príjem druhého rodiča" subtitle="§33 ods.8 — základ dane z aktívnych príjmov druhého oprávneného">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField
+                      label="Základ dane druhého rodiča (r.34a/r.116a)"
+                      hint="ZD z aktívnych príjmov partnera"
+                      required
+                      error={requiredError(showErrors, data.partnerSharing.partnerTaxBase)}
+                    >
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={data.partnerSharing.partnerTaxBase}
+                        onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, partnerTaxBase: e.target.value } })}
+                        placeholder="0.00"
+                        suffix="EUR"
+                      />
+                    </FormField>
+                    <FormField
+                      label="Počet mesiacov nároku"
+                      hint="Mesiace, kedy boli obe osoby oprávnené (1-12)"
+                    >
+                      <Input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={data.partnerSharing.pocetMesiacov}
+                        onChange={(e) => onChange({ partnerSharing: { ...data.partnerSharing, pocetMesiacov: e.target.value } })}
+                        placeholder="12"
+                      />
+                    </FormField>
+                  </div>
+                </SectionCard>
+              )}
+
+              <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
+                  <div>
+                    <span className="text-xs text-emerald-600">Celkový daňový bonus na deti (r.117)</span>
+                    <p className="text-xs text-emerald-500 mt-0.5">
+                      Po znížení o príjem a po mesiacoch
+                    </p>
+                  </div>
+                  <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
+                    {calculatedBonus
+                      ? `${fmtEur(calculatedBonus)} EUR`
+                      : '0,00 EUR'}
+                  </span>
+                </div>
               </div>
-              <span className="font-heading text-lg font-semibold text-emerald-600 tabular-nums">
-                {calculatedBonus
-                  ? `${fmtEur(calculatedBonus)} EUR`
-                  : '0,00 EUR'}
-              </span>
-            </div>
-          </div>
+            </>
+          )}
+            </>
+          )}
         </>
       )}
     </div>

@@ -111,6 +111,22 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
               suffix="EUR"
             />
           </FormField>
+
+          {safeDecimal(data.r36a).gt(0) && (
+            <FormField
+              label="r. 131 (dohody): Preddavky na daň z dohôd"
+              hint="Potvrdenie → II. oddiel, riadok 04a (preddavky len za dohody)"
+            >
+              <Input
+                type="number"
+                step="0.01"
+                value={data.r131Dohody}
+                onChange={(e) => onChange({ r131Dohody: e.target.value })}
+                placeholder="0.00"
+                suffix="EUR"
+              />
+            </FormField>
+          )}
         </div>
       </SectionCard>
       </div>
