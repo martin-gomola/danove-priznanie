@@ -103,6 +103,7 @@ function parseEmployment(telo: Record<string, unknown>): EmploymentIncome {
     r36a,
     r37,
     r131,
+    r131Dohody: '',
   };
 }
 
@@ -280,8 +281,11 @@ function parseChildBonus(telo: Record<string, unknown>): ChildBonus {
 
   return {
     enabled: children.length > 0,
+    childrenChoice: 'yes' as const,
     children,
     bonusPaidByEmployer: r119,
+    bonusPaidByEmployerDohody: '',
+    partnerSharing: { enabled: false, partnerTaxBase: '', pocetMesiacov: '' },
   };
 }
 

@@ -54,6 +54,7 @@ export const CAPITAL_TAX_RATE = 0.19; // 19% flat rate for §7 income
 export const MORTGAGE_BONUS_RATE = 0.5; // 50% of interest paid
 export const MORTGAGE_MAX_OLD = 400; // max EUR for contracts before 31.12.2023
 export const MORTGAGE_MAX_NEW = 1200; // max EUR for contracts from 1.1.2024
+export const MORTGAGE_ELIGIBLE_YEARS = 5; // bonus applies for 5 consecutive years
 
 // ── Child tax bonus (§33) - from 1.1.2025 ───────────────────────────
 // Source: Zákon 278/2024 (konsolidačný balíček), 44/DZPaU/2025/MU
@@ -72,6 +73,13 @@ export const CHILD_BONUS_PERCENT_CAP: Record<number, number> = {
   5: 0.57,
 };
 export const CHILD_BONUS_PERCENT_CAP_6_PLUS = 0.64;
+
+// Low income threshold — tax (r.116) zeroed when total §5 income ≤ this
+// and no bonuses are claimed. Source: §46a ods.2.
+export const LOW_INCOME_THRESHOLD = 2876.90; // EUR
+
+// 90% Slovak income rule for child bonus eligibility (§33 ods. 1)
+export const SLOVAK_INCOME_RATIO = 0.9;
 
 // ── 2% / 3% tax allocation (§50) ────────────────────────────────────
 export const TWO_PERCENT_RATE = 0.02;

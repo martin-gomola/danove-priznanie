@@ -35,6 +35,7 @@ export interface EmploymentIncome {
   r36a: string; // Príjmy z dohôd (income from work agreements, optional)
   r37: string; // Úhrn povinného poistného (insurance premiums)
   r131: string; // Úhrn preddavkov na daň (tax advances withheld)
+  r131Dohody: string; // Preddavky z dohôd (tax advances from agreements, optional)
 }
 
 // ── Foreign Dividends (Príloha č.2 + Oddiel XIII) ────────────────────
@@ -112,6 +113,8 @@ export interface DDSContributions {
 }
 
 // ── Child Tax Bonus (Oddiel III, §33) ─────────────────────────────────
+export type ChildrenChoice = 'yes' | 'no' | 'income-used-by-someone-else';
+
 export interface ChildEntry {
   id: string;
   priezviskoMeno: string; // child's full name (surname first)
@@ -120,10 +123,20 @@ export interface ChildEntry {
   wholeYear: boolean; // convenience: all 12 months
 }
 
+// Partner bonus sharing (§33 ods. 8) — second eligible person's tax base
+export interface PartnerBonusSharing {
+  enabled: boolean;
+  partnerTaxBase: string; // r.34a — partner's tax base from active income
+  pocetMesiacov: string; // number of months partner was eligible (1-12)
+}
+
 export interface ChildBonus {
   enabled: boolean;
+  childrenChoice: ChildrenChoice; // 'yes' = claiming, 'income-used-by-someone-else' = providing income for partner
   children: ChildEntry[];
-  bonusPaidByEmployer: string; // r.119 - already paid during year
+  bonusPaidByEmployer: string; // r.119 - already paid during year (employment)
+  bonusPaidByEmployerDohody: string; // r.119 - already paid during year (dohody)
+  partnerSharing: PartnerBonusSharing; // §33 ods. 8
 }
 
 // ── 2% Tax Allocation (Oddiel XII, §50) ──────────────────────────────
@@ -246,6 +259,7 @@ export interface TaxCalculationResult {
 
   // Grand total tax
   r116: string; // r90 + r105 + r115 + pril2.r28 + pril3.r14
+  r116a: string; // partner's tax used for child bonus (§33 ods. 8)
 
   // Bonuses
   r117: string; // daňový bonus na deti (§33)
@@ -301,6 +315,7 @@ export const DEFAULT_EMPLOYMENT: EmploymentIncome = {
   r36a: '',
   r37: '',
   r131: '',
+  r131Dohody: '',
 };
 
 export const DEFAULT_DIVIDENDS: ForeignDividends = {
@@ -354,10 +369,19 @@ export const DEFAULT_DDS: DDSContributions = {
   prispevky: '',
 };
 
+export const DEFAULT_PARTNER_BONUS_SHARING: PartnerBonusSharing = {
+  enabled: false,
+  partnerTaxBase: '',
+  pocetMesiacov: '',
+};
+
 export const DEFAULT_CHILD_BONUS: ChildBonus = {
   enabled: false,
+  childrenChoice: 'yes',
   children: [],
   bonusPaidByEmployer: '',
+  bonusPaidByEmployerDohody: '',
+  partnerSharing: { ...DEFAULT_PARTNER_BONUS_SHARING },
 };
 
 export const DEFAULT_TWO_PERCENT: TwoPercentAllocation = {

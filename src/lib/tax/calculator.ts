@@ -21,15 +21,19 @@ import {
   TAX_RATE_LOWER,
   TAX_RATE_UPPER,
   TAX_BRACKET_THRESHOLD,
+  TAX_YEAR,
   DIVIDEND_TAX_RATE,
   CAPITAL_TAX_RATE,
   MORTGAGE_BONUS_RATE,
   MORTGAGE_MAX_OLD,
   MORTGAGE_MAX_NEW,
+  MORTGAGE_ELIGIBLE_YEARS,
   CHILD_BONUS_PHASE_OUT_THRESHOLD,
   CHILD_BONUS_PHASE_OUT_DIVISOR,
   CHILD_BONUS_PERCENT_CAP,
   CHILD_BONUS_PERCENT_CAP_6_PLUS,
+  LOW_INCOME_THRESHOLD,
+  SLOVAK_INCOME_RATIO,
   TWO_PERCENT_RATE,
   THREE_PERCENT_RATE,
   MIN_ALLOCATION,
@@ -57,12 +61,18 @@ function d(value: string | number): Decimal {
 }
 
 /**
+ * Round a Decimal to 2 decimal places using half-up rounding.
+ * Single source of truth for all intermediate and final rounding.
+ */
+function round(value: Decimal): Decimal {
+  return value.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
+}
+
+/**
  * Format a Decimal for display and XML output: 2 decimal places, fixed string.
- * @param value - Decimal to format
- * @returns String like "1234.56"
  */
 function fmt(value: Decimal): string {
-  return value.toDecimalPlaces(2).toFixed(2);
+  return round(value).toFixed(2);
 }
 
 /**
@@ -85,7 +95,7 @@ function calculateNCZD(taxBase: Decimal): Decimal {
   // NCZD = 44.2 × ŽM - (základ dane / 4)
   const nczd = new Decimal(NCZD_MULTIPLIER_HIGH).minus(taxBase.div(4));
   if (nczd.lt(0)) return new Decimal(0);
-  return nczd.toDecimalPlaces(2);
+  return round(nczd);
 }
 
 /**
@@ -117,7 +127,7 @@ function calculateSpouseNCZD(taxBase: Decimal, spouseIncome: Decimal, months: nu
 
   // Prorate by months (1/12 per month)
   const prorated = baseNCZD.mul(months).div(12);
-  return prorated.toDecimalPlaces(2);
+  return round(prorated);
 }
 
 /**
@@ -166,22 +176,30 @@ function countEligibleChildrenInMonth(
   return count;
 }
 
+interface ChildBonusResult {
+  danovyBonus: Decimal;
+  nevyuzityDanovyBonus: Decimal;
+}
+
 /**
  * Calculate child tax bonus (§33) for 2025.
  *
- * Two regimes based on annual employment tax base (r.38):
+ * Two regimes based on the bonus tax base:
  * - ≤ 25,740 EUR: raw bonus capped at X% of tax base (percentage depends on child count per month)
  * - > 25,740 EUR: linear phase-out of (base − 25,740) / 10 / 12 per child per month
+ *
+ * The bonus tax base is r.38 (employment) or r.116a (partner sharing).
  */
-function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): Decimal {
+function calculateChildBonus(form: TaxFormData, bonusTaxBase: Decimal): ChildBonusResult {
   const childBonus = form.childBonus;
-  if (!childBonus.enabled || !childBonus.children.length) return new Decimal(0);
+  const zero: ChildBonusResult = { danovyBonus: new Decimal(0), nevyuzityDanovyBonus: new Decimal(0) };
+  if (!childBonus.enabled || childBonus.childrenChoice !== 'yes' || !childBonus.children.length) return zero;
 
   const threshold = new Decimal(CHILD_BONUS_PHASE_OUT_THRESHOLD);
 
-  if (employmentTaxBaseR38.gt(threshold)) {
+  if (bonusTaxBase.gt(threshold)) {
     // ── High-income path: linear reduction per child per month ──
-    const basePom = employmentTaxBaseR38.minus(threshold).div(CHILD_BONUS_PHASE_OUT_DIVISOR).div(12);
+    const basePom = bonusTaxBase.minus(threshold).div(CHILD_BONUS_PHASE_OUT_DIVISOR).div(12);
     let total = new Decimal(0);
 
     for (const child of childBonus.children) {
@@ -195,19 +213,18 @@ function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): 
         total = total.plus(reduced);
       }
     }
-    return total.toDecimalPlaces(2);
+    return { danovyBonus: round(total), nevyuzityDanovyBonus: new Decimal(0) };
   }
 
   // ── Standard path: percentage cap by child count per month group ──
-  // Group months by their eligible child count so the correct percentage applies.
   const monthChildCounts: number[] = [];
   for (let i = 0; i < 12; i++) {
     monthChildCounts.push(countEligibleChildrenInMonth(childBonus.children, i));
   }
 
-  // Find unique child counts and group month indices
   const uniqueCounts = [...new Set(monthChildCounts)].sort((a, b) => a - b);
   let total = new Decimal(0);
+  let nevyuzityDanovyBonus = new Decimal(0);
 
   for (const count of uniqueCounts) {
     if (count === 0) continue;
@@ -216,7 +233,6 @@ function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): 
       if (monthChildCounts[i] === count) monthsInGroup.push(i);
     }
 
-    // Sum raw bonus for all months in this group
     let rawBonus = new Decimal(0);
     for (const mi of monthsInGroup) {
       for (const child of childBonus.children) {
@@ -228,18 +244,22 @@ function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): 
       }
     }
 
-    // Percentage cap prorated by months in group — round only once at the end
     const percentCap = getChildBonusPercentCap(count);
-    const limit = employmentTaxBaseR38
-      .mul(percentCap)
-      .mul(monthsInGroup.length)
-      .div(12)
-      .toDecimalPlaces(2);
+    let limit = round(bonusTaxBase.mul(percentCap));
+    if (monthsInGroup.length !== 12) {
+      const pom = round(limit.div(12));
+      limit = round(pom.mul(monthsInGroup.length));
+    }
 
-    total = total.plus(Decimal.min(rawBonus, limit));
+    if (rawBonus.gt(limit)) {
+      total = total.plus(limit);
+      nevyuzityDanovyBonus = nevyuzityDanovyBonus.plus(rawBonus.minus(limit));
+    } else {
+      total = total.plus(rawBonus);
+    }
   }
 
-  return total.toDecimalPlaces(2);
+  return { danovyBonus: round(total), nevyuzityDanovyBonus };
 }
 
 /**
@@ -247,6 +267,7 @@ function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): 
  * - 50% of interest paid
  * - Max 400 EUR for contracts ≤ 31.12.2023
  * - Max 1200 EUR for contracts > 31.12.2023
+ * - Prorated in the first and last year of the 5-year window
  */
 function calculateMortgageBonus(form: TaxFormData): Decimal {
   if (!form.mortgage.enabled) return new Decimal(0);
@@ -255,16 +276,34 @@ function calculateMortgageBonus(form: TaxFormData): Decimal {
   if (interest.lte(0)) return new Decimal(0);
 
   const contractDate = form.mortgage.datumUzavretiaZmluvy;
-  let maxBonus: number;
+  const maxBonus = (contractDate && contractDate <= '2023-12-31')
+    ? MORTGAGE_MAX_OLD
+    : MORTGAGE_MAX_NEW;
 
-  if (contractDate && contractDate <= '2023-12-31') {
-    maxBonus = MORTGAGE_MAX_OLD;
-  } else {
-    maxBonus = MORTGAGE_MAX_NEW;
+  const months = Math.min(12, Math.max(0, parseInt(form.mortgage.pocetMesiacov, 10) || 12));
+  const startDateStr = form.mortgage.datumZacatiaUroceniaUveru;
+
+  if (months === 12) {
+    return round(Decimal.min(interest.mul(MORTGAGE_BONUS_RATE), new Decimal(maxBonus)));
   }
 
-  const bonus = interest.mul(MORTGAGE_BONUS_RATE);
-  return Decimal.min(bonus, new Decimal(maxBonus));
+  // First year of the 5-year window — loan started this tax year
+  if (startDateStr) {
+    const startYear = parseInt(startDateStr.split('-')[0], 10);
+    if (startYear === TAX_YEAR) {
+      const limit = round(new Decimal(maxBonus).div(12)).mul(months);
+      return round(Decimal.min(interest.mul(MORTGAGE_BONUS_RATE), limit));
+    }
+    // Last year of the 5-year window
+    if (startYear === TAX_YEAR - MORTGAGE_ELIGIBLE_YEARS) {
+      const halfInterest = interest.mul(MORTGAGE_BONUS_RATE);
+      const prorated = round(round(halfInterest).div(12)).mul(months);
+      const limit = round(new Decimal(maxBonus).div(12)).mul(months);
+      return round(Decimal.min(prorated, limit));
+    }
+  }
+
+  return round(Decimal.min(interest.mul(MORTGAGE_BONUS_RATE), new Decimal(maxBonus)));
 }
 
 // ── Section result types (internal) ─────────────────────────────────
@@ -318,6 +357,7 @@ interface TaxCalculationSectionResult {
   r106: Decimal;
   r115: Decimal;
   r116: Decimal;
+  r116a: Decimal;
 }
 
 interface BonusesSectionResult {
@@ -431,64 +471,144 @@ function dividendsSection(form: TaxFormData): DividendsSectionResult {
 /** Oddiel IX: NCZD reduction, tax base §4 (r78 + r71), tax from §7, grand total (r.72-r.116). */
 function taxCalculationSection(
   form: TaxFormData,
+  r36: Decimal,
   r38: Decimal,
   r68: Decimal,
   r71: Decimal,
-  pril2_pr28: Decimal
+  pril2_pr28: Decimal,
+  r117Pre: Decimal,
+  r123Pre: Decimal
 ): TaxCalculationSectionResult {
   const r72 = r38;
   const r73 = calculateNCZD(r72);
-  // r.74: NCZD na manžela/manželku (§11 ods.3)
-  // Depends on: taxpayer's tax base (r72), spouse's own income, months
   let r74 = new Decimal(0);
   if (form.spouse.enabled && form.spouse.pocetMesiacov) {
     const months = Math.min(12, Math.max(0, parseInt(form.spouse.pocetMesiacov, 10) || 0));
     const spouseIncome = d(form.spouse.vlastnePrijmy);
     r74 = calculateSpouseNCZD(r72, spouseIncome, months);
   }
-  // r.75: NCZD na príspevky na DDS (§11 ods.8), max 180 EUR
   let r75 = new Decimal(0);
   if (form.dds.enabled) {
     const prispevky = d(form.dds.prispevky);
     r75 = Decimal.min(prispevky, new Decimal(DDS_MAX));
   }
-  const r77 = Decimal.min(r73.plus(r74).plus(r75), r72).toDecimalPlaces(2);
-  const r78 = Decimal.max(r38.minus(r77), new Decimal(0)).toDecimalPlaces(2);
-  const r80 = r78.plus(r71).toDecimalPlaces(2);
-  const r81 = calculateProgressiveTax(r80).toDecimalPlaces(2);
+  const r77 = round(Decimal.min(r73.plus(r74).plus(r75), r72));
+  const r78 = round(Decimal.max(r38.minus(r77), new Decimal(0)));
+  const r80 = round(r78.plus(r71));
+  const r81 = round(calculateProgressiveTax(r80));
   const r90 = r81;
-  const r106 = r68.mul(CAPITAL_TAX_RATE).toDecimalPlaces(2);
+  const r106 = round(r68.mul(CAPITAL_TAX_RATE));
   const r115 = r106;
-  const r116 = r90.plus(r115).plus(pril2_pr28).toDecimalPlaces(2);
-  return { r72, r73, r74, r75, r77, r78, r80, r81, r90, r106, r115, r116 };
+
+  const rawR116 = round(r90.plus(r115).plus(pril2_pr28));
+
+  // Low-income zeroing (§46a ods. 2): if no bonuses claimed and total income ≤ threshold, tax = 0
+  const noBonuses = r117Pre.eq(0) && r123Pre.eq(0);
+  const condition1 = noBonuses && rawR116.lte(17);
+  const condition2 = noBonuses && r36.lte(LOW_INCOME_THRESHOLD);
+  const r116 = (condition1 || condition2) ? new Decimal(0) : Decimal.max(rawR116, new Decimal(0));
+
+  // r.116a: partner bonus sharing (§33 ods. 8)
+  let r116a = new Decimal(0);
+  const ps = form.childBonus.partnerSharing;
+  if (ps.enabled) {
+    const partnerBase = d(ps.partnerTaxBase);
+    const partnerMonths = Math.min(12, Math.max(0, parseInt(ps.pocetMesiacov, 10) || 0));
+    if (r38.gt(0) && partnerMonths > 0) {
+      if (partnerMonths === 12) {
+        r116a = round(partnerBase.plus(r38));
+      } else {
+        const prorated = round(round(partnerBase.div(12)).mul(partnerMonths));
+        r116a = round(r38.plus(prorated));
+      }
+    }
+  }
+
+  return { r72, r73, r74, r75, r77, r78, r80, r81, r90, r106, r115, r116, r116a };
 }
 
 /** Bonuses: child (§33), mortgage (§33a), rows 117-127. */
-function bonusesSection(form: TaxFormData, r116: Decimal, r38: Decimal): BonusesSectionResult {
-  const r117 = calculateChildBonus(form, r38);
-  const r118 = Decimal.max(r116.minus(r117), new Decimal(0));
-  const r119 = d(form.childBonus.bonusPaidByEmployer);
-  const r120 = Decimal.max(r117.minus(r119), new Decimal(0));
-  const r121 = Decimal.min(r120, r118);
-  const r122 = new Decimal(0);
+function bonusesSection(
+  form: TaxFormData,
+  r116: Decimal,
+  r38: Decimal,
+  r116a: Decimal,
+  r36: Decimal
+): BonusesSectionResult {
+  // Determine bonus tax base: r116a (partner sharing) or r38 (own)
+  const bonusTaxBase = form.childBonus.partnerSharing.enabled && r116a.gt(0)
+    ? r116a
+    : r38;
+
+  const childBonusResult = calculateChildBonus(form, bonusTaxBase);
+
+  // r.146 / r.146a and 90% Slovak income gate
+  // r.146 = total income from §5 (all sources), r.146a = same from SK sources
+  // Since our app only handles Slovak income, r146a/r146 ratio is always 1.0
+  // but we still validate the gate formally.
+  const r146 = r36;
+  const r146a = r36;
+  let r117 = childBonusResult.danovyBonus;
+  if (r146.gt(0) && r146a.gt(0)) {
+    const ratio = round(r146a.div(r146));
+    if (ratio.lt(SLOVAK_INCOME_RATIO)) {
+      r117 = new Decimal(0);
+    }
+  } else if (form.childBonus.enabled && form.childBonus.childrenChoice === 'yes') {
+    r117 = new Decimal(0);
+  }
+
+  const r118 = round(Decimal.max(r116.minus(r117), new Decimal(0)));
+  // r.119: bonus already paid by employer (employment + dohody)
+  const r119 = round(d(form.childBonus.bonusPaidByEmployer).plus(d(form.childBonus.bonusPaidByEmployerDohody)));
+  const r120 = round(Decimal.max(r117.minus(r119), new Decimal(0)));
+  // r.121: bonus to claim from tax office = max(r120 - r116, 0)
+  const r121 = round(Decimal.max(r120.minus(r116), new Decimal(0)));
+  // r.122: incorrectly paid bonus = max(r119 - r117, 0)
+  const r122 = round(Decimal.max(r119.minus(r117), new Decimal(0)));
+
   const r123 = calculateMortgageBonus(form);
-  const r124 = Decimal.max(r118.minus(r123), new Decimal(0));
+  const r124 = round(Decimal.max(r118.minus(r123), new Decimal(0)));
   const r126 = r123;
-  const r127 = Decimal.max(r126.minus(r118), new Decimal(0));
+  const r127 = round(Decimal.max(r126.minus(r118), new Decimal(0)));
   return { r117, r118, r119, r120, r121, r122, r123, r124, r126, r127 };
 }
 
-/** Final: advances (r.131), daň na úhradu (r.135), preplatok (r.136). */
+/** Final: advances (r.131), daň na úhradu (r.135), preplatok (r.136).
+ *
+ * Official formula from financnasprava.sk:
+ *   if (r.116 > 17) OR (r.116 <= 17 AND (r.117 > 0 OR r.123 > 0)):
+ *     base = r.116
+ *   else:
+ *     base = 0
+ *   result = base - r.117 + r.119 + r.121 - r.123 + r.125 + r.127 + r.128
+ *            - r.129 - r.130 - r.131 - r.132 - r.133 - r.134
+ *   r.135 = max(0, result); if ≤ 5 EUR → 0
+ *   r.136 = max(0, -result)
+ */
 function finalSection(
-  r118: Decimal,
+  r116: Decimal,
+  r117: Decimal,
+  r119: Decimal,
+  r121: Decimal,
   r123: Decimal,
   r127: Decimal,
   r131: Decimal
 ): FinalSectionResult {
-  const finalResult = r118.minus(r123).plus(r127).minus(r131);
-  let r135 = Decimal.max(finalResult, new Decimal(0));
+  const useTax = r116.gt(17) || (r116.lte(17) && (r117.gt(0) || r123.gt(0)));
+  const base = useTax ? r116 : new Decimal(0);
+
+  const finalResult = base
+    .minus(r117)
+    .plus(r119)
+    .plus(r121)
+    .minus(r123)
+    .plus(r127)  // r.125 (mortgage paid by employer) = 0, so r.126=r.123, r.127=max(r.126-r.118,0)
+    .minus(r131);
+
+  let r135 = round(Decimal.max(finalResult, new Decimal(0)));
   if (r135.gt(0) && r135.lte(5)) r135 = new Decimal(0);
-  const r136 = finalResult.lt(0) ? finalResult.abs() : new Decimal(0);
+  const r136 = round(Decimal.min(finalResult, new Decimal(0)).neg());
   return { finalResult, r135, r136 };
 }
 
@@ -516,6 +636,7 @@ function buildResult(
   tax: TaxCalculationSectionResult,
   bon: BonusesSectionResult,
   fin: FinalSectionResult,
+  r131Total: Decimal,
   r152: Decimal,
   parentAllocPerParent: Decimal
 ): TaxCalculationResult {
@@ -555,6 +676,7 @@ function buildResult(
     r106: fmt(tax.r106),
     r115: fmt(tax.r115),
     r116: fmt(tax.r116),
+    r116a: fmt(tax.r116a),
     r117: fmt(bon.r117),
     r118: fmt(bon.r118),
     r119: fmt(bon.r119),
@@ -565,7 +687,7 @@ function buildResult(
     r124: fmt(bon.r124),
     r126: fmt(bon.r126),
     r127: fmt(bon.r127),
-    r131: fmt(emp.r131),
+    r131: fmt(r131Total),
     r135: fmt(fin.r135),
     r136: fmt(fin.r136),
     r152: fmt(r152),
@@ -580,18 +702,27 @@ function buildResult(
  * Main tax calculation - matches the official DPFO typ B 2025 form.
  *
  * Flow: Employment (Oddiel V) → Capital income (Oddiel VII) →
- *       Dividends (Príloha č.2) → Tax calculation (Oddiel IX) →
- *       Bonuses → Advances → Final result
+ *       Dividends (Príloha č.2) → Pre-compute bonuses (needed for r.116 zeroing) →
+ *       Tax calculation (Oddiel IX, with r.116 zeroing) →
+ *       Bonuses (final) → Final result
  */
 export function calculateTax(form: TaxFormData): TaxCalculationResult {
   const emp = employmentSection(form);
   const mf = mutualFundsSection(form);
   const stocks = stockSalesSection(form);
   const div = dividendsSection(form);
-  const tax = taxCalculationSection(form, emp.r38, mf.r68, stocks.r71, div.pril2_pr28);
-  const bon = bonusesSection(form, tax.r116, emp.r38);
-  const fin = finalSection(bon.r118, bon.r123, bon.r127, emp.r131);
+
+  // Pre-compute bonuses to determine r.117/r.123 for r.116 zeroing logic
+  const r36 = d(form.employment.r36);
+  const r117Pre = calculateChildBonus(form, emp.r38).danovyBonus;
+  const r123Pre = calculateMortgageBonus(form);
+
+  const tax = taxCalculationSection(form, r36, emp.r38, mf.r68, stocks.r71, div.pril2_pr28, r117Pre, r123Pre);
+  const bon = bonusesSection(form, tax.r116, emp.r38, tax.r116a, r36);
+  // r.131: sum of employment + dohody advances
+  const r131Total = round(emp.r131.plus(d(form.employment.r131Dohody)));
+  const fin = finalSection(tax.r116, bon.r117, bon.r119, bon.r121, bon.r123, bon.r127, r131Total);
   const r152 = allocationSection(form, bon.r124);
   const parentAllocPerParent = parentAllocationSection(form, bon.r124);
-  return buildResult(emp, mf, stocks, div, tax, bon, fin, r152, parentAllocPerParent);
+  return buildResult(emp, mf, stocks, div, tax, bon, fin, r131Total, r152, parentAllocPerParent);
 }

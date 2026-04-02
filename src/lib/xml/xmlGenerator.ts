@@ -111,7 +111,6 @@ export function convertToJson(
         m00: allMonths ? '1' : '0',
       };
       for (let i = 0; i < 12; i++) {
-        // m00 and m01-m12 are mutually exclusive in the official form
         m[`m${(i + 1).toString().padStart(2, '0')}`] = allMonths ? '0' : (child.months[i] ? '1' : '0');
       }
       return m;
@@ -119,6 +118,16 @@ export function convertToJson(
     // XSD requires minOccurs="4" for dieta
     while (entries.length < 4) entries.push(emptyDieta());
     telo.r33.dieta = entries;
+
+    // r.33a: flag when more than 4 children (XSD only has 4 dieta slots inline)
+    if (childBonus.children.length > 4) {
+      telo.r33a = '1';
+    }
+
+    // §33 ods. 8: partner bonus sharing
+    if (childBonus.partnerSharing.enabled) {
+      telo.uplatnujemPar33Ods8 = '1';
+    }
   }
 
   // ════════════════════════════════════════════════════════
@@ -198,8 +207,16 @@ export function convertToJson(
   // ── r.116: Grand total tax ────────────────────────────
   telo.r116 = decStr(calc.r116); // r.90 + r.115 + pril2.r28
 
+  // ── r.116a: Partner's tax base for child bonus (§33 ods. 8) ──
+  if (parseFloat(calc.r116a) > 0) {
+    telo.r116a = decStr(calc.r116a);
+  }
+
   // ── Bonuses (rows 117-127) ────────────────────────────
-  telo.r117 = decStr(calc.r117);  // daňový bonus na deti (§33)
+  // r.117: only write when > 0 (matches official form behavior)
+  if (parseFloat(calc.r117) > 0) {
+    telo.r117 = decStr(calc.r117);
+  }
   telo.r118 = decStr(calc.r118);  // r.116 − r.117
   telo.r119 = decStr(calc.r119);  // bonus na deti paid by employer
   telo.r120 = decStr(calc.r120);  // r.117 − r.119
@@ -226,12 +243,19 @@ export function convertToJson(
   telo.r135 = decStr(calc.r135);  // daň na úhradu
   telo.r136 = decStr(calc.r136);  // daňový preplatok
 
-  // ── r.146/146a: Employment tax base for child bonus percentage cap (§33) ──
-  // The percentage cap on child bonus is computed from the employment tax base (r.38),
-  // not gross income (r.36). Use calc.r38 to match the calculation logic.
-  if (form.childBonus.enabled && parseFloat(calc.r117) > 0 && form.employment.enabled) {
-    telo.r146 = decStr(calc.r38);
-    telo.r146a = decStr(calc.r38);
+  // ── r.146/146a: Total income from §5 for child bonus (§33) ──
+  // r.146 = total employment income (all sources); r.146a = from SK sources only.
+  // Populated when: (a) child bonus > 0, OR (b) user provides income for partner's claim.
+  const wantsChildBonus = form.childBonus.enabled && (
+    parseFloat(calc.r117) > 0 ||
+    form.childBonus.childrenChoice === 'income-used-by-someone-else'
+  );
+  if (wantsChildBonus && form.employment.enabled) {
+    const r146val = decStr(form.employment.r36);
+    if (r146val && parseFloat(r146val) > 0) {
+      telo.r146 = r146val;
+      telo.r146a = r146val;
+    }
   }
 
   // ════════════════════════════════════════════════════════

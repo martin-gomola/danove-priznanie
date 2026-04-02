@@ -89,7 +89,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         obec: 'Bratislava',
         stat: 'Slovenská republika',
       },
-      employment: { enabled: false, r36: '', r36a: '', r37: '', r131: '' },
+      employment: { ...DEFAULT_TAX_FORM.employment, enabled: false, r36: '', r36a: '', r37: '', r131: '' },
     });
     const calc = calculateTax(form);
     const xml = convertToXML(form, calc);
@@ -117,6 +117,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         stat: 'Slovenská republika',
       },
       employment: {
+        ...DEFAULT_TAX_FORM.employment,
         enabled: true,
         r36: '28800.00',
         r36a: '4032.00',
@@ -150,6 +151,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         stat: 'Slovenská republika',
       },
       employment: {
+        ...DEFAULT_TAX_FORM.employment,
         enabled: true,
         r36: '28800.00',
         r36a: '4032.00',
@@ -190,6 +192,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         stat: 'Slovenská republika',
       },
       employment: {
+        ...DEFAULT_TAX_FORM.employment,
         enabled: true,
         r36: '28800.00',
         r36a: '4032.00',
@@ -254,6 +257,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         stat: 'Slovenská republika',
       },
       employment: {
+        ...DEFAULT_TAX_FORM.employment,
         enabled: true,
         r36: '28800.00',
         r36a: '4032.00',
@@ -307,6 +311,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         pocetMesiacov: '12',
       },
       childBonus: {
+        ...DEFAULT_TAX_FORM.childBonus,
         enabled: true,
         bonusPaidByEmployer: '0.00',
         children: [
@@ -353,6 +358,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         stat: 'Slovenská republika',
       },
       employment: {
+        ...DEFAULT_TAX_FORM.employment,
         enabled: true,
         r36: '28800.00',
         r36a: '4032.00',
@@ -412,7 +418,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         obec: 'Bratislava',
         stat: 'Slovenská republika',
       },
-      employment: { enabled: false },
+      employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
       dividends: {
         enabled: true,
         ecbRate: '1.13',
@@ -458,7 +464,7 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         obec: 'Bratislava',
         stat: 'Slovenská republika',
       },
-      employment: { enabled: false },
+      employment: { ...DEFAULT_TAX_FORM.employment, enabled: false },
     });
     const calc = calculateTax(form);
     const xml = convertToXML(form, calc);
