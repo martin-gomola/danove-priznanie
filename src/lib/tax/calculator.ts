@@ -228,13 +228,13 @@ function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): 
       }
     }
 
-    // Percentage cap prorated by months in group
+    // Percentage cap prorated by months in group — round only once at the end
     const percentCap = getChildBonusPercentCap(count);
-    let limit = employmentTaxBaseR38.mul(percentCap).toDecimalPlaces(2);
-    if (monthsInGroup.length !== 12) {
-      const monthlyLimit = limit.div(12).toDecimalPlaces(2);
-      limit = monthlyLimit.mul(monthsInGroup.length).toDecimalPlaces(2);
-    }
+    const limit = employmentTaxBaseR38
+      .mul(percentCap)
+      .mul(monthsInGroup.length)
+      .div(12)
+      .toDecimalPlaces(2);
 
     total = total.plus(Decimal.min(rawBonus, limit));
   }
