@@ -543,6 +543,119 @@ describe('Child Bonus (r117) - §33', () => {
     );
     expect(parseFloat(result.r117)).toBe(100 * 9); // 9 eligible months
   });
+
+  it('percentage cap: 1 child, low income → bonus capped at 29% of tax base', () => {
+    // r38 = 3000, 1 child under 15 all year
+    // Raw bonus = 1200, cap = 29% × 3000 = 870
+    const rc = rodneCisloUnderAge(15);
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '3000', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Test', rodneCislo: rc, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(870);
+  });
+
+  it('percentage cap: 2 children, low income → bonus capped at 36% of tax base', () => {
+    // r38 = 5000, 2 children under 15 all year
+    // Raw bonus = 2400, cap = 36% × 5000 = 1800
+    const rc1 = rodneCisloUnderAge(15);
+    const rc2 = rodneCisloForAge({ turnsAge: 10, inMonth: 1 });
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '5000', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Child 1', rodneCislo: rc1, months: Array(12).fill(true), wholeYear: true },
+            { id: '2', priezviskoMeno: 'Child 2', rodneCislo: rc2, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(1800);
+  });
+
+  it('percentage cap does not reduce when tax base is sufficient', () => {
+    // r38 = 20000, 1 child under 15 → cap = 29% × 20000 = 5800 > 1200
+    const rc = rodneCisloUnderAge(15);
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '20000', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Test', rodneCislo: rc, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(1200);
+  });
+
+  it('high-income phase-out: r38 = 27500, 1 child → reduced by (27500-25740)/10', () => {
+    // Official FAQ example 4: bonus = 1200 - 0.1*(27500-25740) = 1024
+    const rc = rodneCisloUnderAge(15);
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '27500', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Test', rodneCislo: rc, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(1024);
+  });
+
+  it('at threshold boundary (25740): uses percentage cap, no phase-out', () => {
+    // r38 = 25740, 1 child under 15 → cap = 29% × 25740 = 7464.60 > 1200
+    const rc = rodneCisloUnderAge(15);
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '25740', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Test', rodneCislo: rc, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(1200);
+  });
+
+  it('high-income: bonus reduced to 0 for very high income', () => {
+    // r38 = 40000, 1 child 15-17 → rate 50/month
+    // reduction = (40000-25740)/10/12 = 118.83/month > 50 → bonus = 0
+    const rc = rodneCisloAtLeastAge(15);
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '40000', r37: '0', r131: '0' },
+        childBonus: {
+          ...DEFAULT_TAX_FORM.childBonus,
+          enabled: true,
+          children: [
+            { id: '1', priezviskoMeno: 'Test', rodneCislo: rc, months: Array(12).fill(true), wholeYear: true },
+          ],
+        },
+      })
+    );
+    expect(parseFloat(result.r117)).toBe(0);
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════════════

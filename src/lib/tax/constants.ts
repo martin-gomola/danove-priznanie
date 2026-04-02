@@ -59,8 +59,19 @@ export const MORTGAGE_MAX_NEW = 1200; // max EUR for contracts from 1.1.2024
 // Source: Zákon 278/2024 (konsolidačný balíček), 44/DZPaU/2025/MU
 export const CHILD_BONUS_UNDER_15 = 100; // EUR/month
 export const CHILD_BONUS_15_TO_18 = 50; // EUR/month
-export const CHILD_BONUS_PHASE_OUT_THRESHOLD = 2145; // monthly tax base EUR
+export const CHILD_BONUS_PHASE_OUT_THRESHOLD = 25740; // annual tax base EUR (1.5× 12× avg wage 2023)
 export const CHILD_BONUS_PHASE_OUT_DIVISOR = 10;
+
+// Percentage cap on child bonus by number of eligible children (§33 ods. 2)
+// Applies when annual tax base ≤ CHILD_BONUS_PHASE_OUT_THRESHOLD
+export const CHILD_BONUS_PERCENT_CAP: Record<number, number> = {
+  1: 0.29,
+  2: 0.36,
+  3: 0.43,
+  4: 0.50,
+  5: 0.57,
+};
+export const CHILD_BONUS_PERCENT_CAP_6_PLUS = 0.64;
 
 // ── 2% / 3% tax allocation (§50) ────────────────────────────────────
 export const TWO_PERCENT_RATE = 0.02;

@@ -28,6 +28,8 @@ import {
   MORTGAGE_MAX_NEW,
   CHILD_BONUS_PHASE_OUT_THRESHOLD,
   CHILD_BONUS_PHASE_OUT_DIVISOR,
+  CHILD_BONUS_PERCENT_CAP,
+  CHILD_BONUS_PERCENT_CAP_6_PLUS,
   TWO_PERCENT_RATE,
   THREE_PERCENT_RATE,
   MIN_ALLOCATION,
@@ -35,7 +37,7 @@ import {
   MIN_PARENT_ALLOCATION,
   STOCK_SHORT_TERM_EXEMPTION,
 } from './constants';
-import { parseRodneCislo, getMonthlyRates2025 } from '@/lib/rodneCislo';
+import { parseRodneCislo, getMonthlyRates2025, ageAt } from '@/lib/rodneCislo';
 
 // Configure Decimal for financial calculations
 Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
@@ -138,30 +140,105 @@ function calculateProgressiveTax(taxBase: Decimal): Decimal {
 }
 
 /**
- * Calculate child tax bonus (§33) for 2025
- * 100 EUR/month under 15, 50 EUR/month 15-17, income phase-out above 2,145 EUR/month base.
+ * Get the percentage cap rate for a given number of eligible children (§33 ods. 2).
+ */
+function getChildBonusPercentCap(childCount: number): number {
+  if (childCount <= 0) return 0;
+  if (childCount >= 6) return CHILD_BONUS_PERCENT_CAP_6_PLUS;
+  return CHILD_BONUS_PERCENT_CAP[childCount] ?? 0;
+}
+
+/**
+ * Count eligible children (under 18, with month flag set) for a given month index (0-based).
+ */
+function countEligibleChildrenInMonth(
+  children: TaxFormData['childBonus']['children'],
+  monthIdx: number
+): number {
+  let count = 0;
+  for (const child of children) {
+    if (!child.months[monthIdx]) continue;
+    const birth = parseRodneCislo(child.rodneCislo);
+    if (!birth) continue;
+    const age = ageAt(birth, 2025, monthIdx + 1);
+    if (age < 18) count++;
+  }
+  return count;
+}
+
+/**
+ * Calculate child tax bonus (§33) for 2025.
+ *
+ * Two regimes based on annual employment tax base (r.38):
+ * - ≤ 25,740 EUR: raw bonus capped at X% of tax base (percentage depends on child count per month)
+ * - > 25,740 EUR: linear phase-out of (base − 25,740) / 10 / 12 per child per month
  */
 function calculateChildBonus(form: TaxFormData, employmentTaxBaseR38: Decimal): Decimal {
   const childBonus = form.childBonus;
   if (!childBonus.enabled || !childBonus.children.length) return new Decimal(0);
-  const monthlyBase = employmentTaxBaseR38.div(12);
+
   const threshold = new Decimal(CHILD_BONUS_PHASE_OUT_THRESHOLD);
-  const divisor = CHILD_BONUS_PHASE_OUT_DIVISOR;
-  let total = new Decimal(0);
-  for (const child of childBonus.children) {
-    const birth = parseRodneCislo(child.rodneCislo);
-    if (!birth) continue;
-    const rates = getMonthlyRates2025(birth);
-    for (let i = 0; i < 12; i++) {
-      if (!child.months[i]) continue;
-      let monthlyBonus = new Decimal(rates[i]);
-      if (monthlyBase.gt(threshold)) {
-        const reduction = monthlyBase.minus(threshold).div(divisor);
-        monthlyBonus = Decimal.max(monthlyBonus.minus(reduction), new Decimal(0));
+
+  if (employmentTaxBaseR38.gt(threshold)) {
+    // ── High-income path: linear reduction per child per month ──
+    const basePom = employmentTaxBaseR38.minus(threshold).div(CHILD_BONUS_PHASE_OUT_DIVISOR).div(12);
+    let total = new Decimal(0);
+
+    for (const child of childBonus.children) {
+      const birth = parseRodneCislo(child.rodneCislo);
+      if (!birth) continue;
+      const rates = getMonthlyRates2025(birth);
+      for (let i = 0; i < 12; i++) {
+        if (!child.months[i]) continue;
+        const monthlyBonus = new Decimal(rates[i]);
+        const reduced = Decimal.max(monthlyBonus.minus(basePom), new Decimal(0));
+        total = total.plus(reduced);
       }
-      total = total.plus(monthlyBonus);
     }
+    return total.toDecimalPlaces(2);
   }
+
+  // ── Standard path: percentage cap by child count per month group ──
+  // Group months by their eligible child count so the correct percentage applies.
+  const monthChildCounts: number[] = [];
+  for (let i = 0; i < 12; i++) {
+    monthChildCounts.push(countEligibleChildrenInMonth(childBonus.children, i));
+  }
+
+  // Find unique child counts and group month indices
+  const uniqueCounts = [...new Set(monthChildCounts)].sort((a, b) => a - b);
+  let total = new Decimal(0);
+
+  for (const count of uniqueCounts) {
+    if (count === 0) continue;
+    const monthsInGroup: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      if (monthChildCounts[i] === count) monthsInGroup.push(i);
+    }
+
+    // Sum raw bonus for all months in this group
+    let rawBonus = new Decimal(0);
+    for (const mi of monthsInGroup) {
+      for (const child of childBonus.children) {
+        if (!child.months[mi]) continue;
+        const birth = parseRodneCislo(child.rodneCislo);
+        if (!birth) continue;
+        const rates = getMonthlyRates2025(birth);
+        rawBonus = rawBonus.plus(rates[mi]);
+      }
+    }
+
+    // Percentage cap prorated by months in group
+    const percentCap = getChildBonusPercentCap(count);
+    let limit = employmentTaxBaseR38.mul(percentCap).toDecimalPlaces(2);
+    if (monthsInGroup.length !== 12) {
+      const monthlyLimit = limit.div(12).toDecimalPlaces(2);
+      limit = monthlyLimit.mul(monthsInGroup.length).toDecimalPlaces(2);
+    }
+
+    total = total.plus(Decimal.min(rawBonus, limit));
+  }
+
   return total.toDecimalPlaces(2);
 }
 

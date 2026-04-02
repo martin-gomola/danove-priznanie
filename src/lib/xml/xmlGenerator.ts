@@ -226,6 +226,14 @@ export function convertToJson(
   telo.r135 = decStr(calc.r135);  // daň na úhradu
   telo.r136 = decStr(calc.r136);  // daňový preplatok
 
+  // ── r.146/146a: Employment income for child bonus (§33) ──
+  // Required by the official e-form to compute the percentage cap on child bonus.
+  // r.146 = total employment income (§5); r.146a = same (all from SK sources).
+  if (form.childBonus.enabled && parseFloat(calc.r117) > 0 && form.employment.enabled) {
+    telo.r146 = decStr(form.employment.r36);
+    telo.r146a = decStr(form.employment.r36);
+  }
+
   // ════════════════════════════════════════════════════════
   // Oddiel XII: 2% / 3% allocation (§50)
   // ════════════════════════════════════════════════════════
