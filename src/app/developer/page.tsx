@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useState } from 'react';
 
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
 
@@ -14,15 +15,14 @@ function getSessionToken(): string {
 }
 
 export default function DeveloperPage() {
-  const [token, setToken] = useState('');
+  const [token, setToken] = useState(() => (
+    typeof window === 'undefined' ? '' : getSessionToken()
+  ));
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [baseUrl, setBaseUrl] = useState('http://localhost:3015');
-
-  useEffect(() => {
-    setToken(getSessionToken());
-    setBaseUrl(window.location.origin);
-  }, []);
+  const [baseUrl] = useState(() => (
+    typeof window === 'undefined' ? 'http://localhost:3015' : window.location.origin
+  ));
 
   const copyToken = () => {
     navigator.clipboard.writeText(token);
@@ -52,9 +52,9 @@ export default function DeveloperPage() {
       <div className="max-w-3xl mx-auto px-6 py-12 space-y-10">
         {/* Header */}
         <div>
-          <a href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+          <Link href="/" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
             ← Späť na formulár
-          </a>
+          </Link>
           <h1 className="text-2xl font-semibold mt-4 tracking-tight">
             API & AI integrácia
           </h1>
@@ -118,7 +118,7 @@ export default function DeveloperPage() {
             </p>
             <ol className="list-decimal list-inside space-y-1.5 text-gray-600">
               <li>AI agent prečíta váš PDF/obrázok (napr. Potvrdenie o zdaniteľných príjmoch)</li>
-              <li>Extrahuje hodnoty pomocou vstavanej schopnosti čítať dokumenty</li>
+              <li>Voliteľne použije vstavaný LiteParse endpoint na lokálne spracovanie PDF/obrázka</li>
               <li>Odošle ich cez <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">POST /api/form</code> s vaším tokenom</li>
               <li>Aplikácia automaticky prevezme dáta do formulára (polling každé 3s)</li>
             </ol>
@@ -130,6 +130,27 @@ export default function DeveloperPage() {
           <h2 className="text-lg font-medium">API Reference</h2>
 
           <div className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+            <div className="p-5 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-mono font-medium rounded">
+                  POST
+                </span>
+                <code className="text-sm font-mono">/api/employment/import</code>
+              </div>
+              <p className="text-sm text-gray-600">
+                Lokálne spracuje PDF alebo obrázok cez LiteParse a vráti vyčítané riadky zo zamestnaneckého potvrdenia.
+              </p>
+              <div className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto">
+                <pre>{`curl -X POST ${baseUrl}/api/employment/import \\
+  -H "Authorization: Bearer ${token || '<your-token>'}" \\
+  -F "file=@/Users/you/Documents/potvrdenie-2025.pdf"`}</pre>
+              </div>
+              <p className="text-xs text-gray-400">
+                Odpoveď obsahuje <code className="px-1 py-0.5 bg-gray-100 text-gray-600 rounded">employment</code> a <code className="px-1 py-0.5 bg-gray-100 text-gray-600 rounded">diagnostics</code>
+                vrátane kontroly <code className="px-1 py-0.5 bg-gray-100 text-gray-600 rounded">r.03 = r.01 - r.02</code>.
+              </p>
+            </div>
+
             {/* POST */}
             <div className="p-5 space-y-3">
               <div className="flex items-center gap-2">
@@ -206,7 +227,9 @@ export default function DeveloperPage() {
         <section className="space-y-3">
           <h2 className="text-lg font-medium">Mapovanie: Potvrdenie → API</h2>
           <p className="text-sm text-gray-500">
-            Pre automatické vyplnenie zo zamestnaneckého potvrdenia (ročné zúčtovanie):
+            Pre automatické vyplnenie zo zamestnaneckého potvrdenia (ročné zúčtovanie). Môžete ich vyčítať ručne alebo cez
+            {' '}
+            <code className="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">POST /api/employment/import</code>.
           </p>
           <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
             <table className="w-full text-sm">
@@ -253,10 +276,15 @@ export default function DeveloperPage() {
           <h2 className="text-lg font-medium">Claude Code / Codex</h2>
           <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-3 text-sm text-gray-600">
             <p>
-              V terminálových AI agentoch stačí poskytnúť PDF a použiť curl:
+              V terminálových AI agentoch môžete najprv zavolať LiteParse endpoint a potom odoslať výsledok do formulára:
             </p>
             <div className="rounded-lg bg-gray-900 text-gray-100 p-4 text-xs font-mono overflow-x-auto">
-              <pre>{`# Agent reads the PDF, extracts values, then:
+              <pre>{`# Agent uploads the PDF to the local parser:
+curl -X POST ${baseUrl}/api/employment/import \\
+  -H "Authorization: Bearer ${token || '<your-token>'}" \\
+  -F "file=@/absolute/path/to/potvrdenie-2025.pdf"
+
+# Then sends the extracted fields to the form:
 curl -X POST ${baseUrl}/api/form \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer ${token || '<your-token>'}" \\
@@ -270,9 +298,9 @@ curl -X POST ${baseUrl}/api/form \\
 
         {/* Footer */}
         <div className="pt-6 border-t border-gray-200">
-          <a href="/" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+          <Link href="/" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
             ← Späť na formulár
-          </a>
+          </Link>
         </div>
       </div>
     </div>

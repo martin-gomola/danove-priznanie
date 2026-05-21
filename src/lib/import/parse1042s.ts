@@ -6,8 +6,7 @@
 
 import type { DividendEntry } from '@/types/TaxForm';
 import { findCountryByCode } from '@/lib/countries';
-
-const INCOME_CODE_DIVIDENDS = '06';
+import { extractPdfTextWithFallback } from './liteparse';
 
 /** Max length of extracted PDF/text to avoid expensive regex on huge input. 1042-S forms are small. */
 const MAX_1042S_TEXT_LENGTH = 600 * 1024; // 600 KB
@@ -152,11 +151,9 @@ export function parse1042sFromText(text: string): DividendEntry | null {
 
 /**
  * Parse 1042-S PDF buffer into a single US dividend entry.
- * Uses pdf-parse to extract text, then parse1042sFromText.
+ * Uses LiteParse first (with OCR) and falls back to pdf-parse if needed.
  */
 export async function parse1042sPdf(buffer: Buffer): Promise<DividendEntry | null> {
-  const pdfParse = (await import('pdf-parse')).default;
-  const data = await pdfParse(buffer);
-  const text = data?.text ?? '';
+  const text = await extractPdfTextWithFallback(buffer, { ocrLanguage: 'eng' });
   return parse1042sFromText(text);
 }

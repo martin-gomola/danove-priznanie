@@ -34,11 +34,14 @@ export default function RootLayout({
   return (
     <html lang="sk">
       <head>
-        <script
-          defer
-          src="https://sentinel.martingomola.com/script.js"
-          data-website-id="1600a6df-6ff9-46a9-b197-51f5f241363f"
-        />
+        {process.env.NEXT_PUBLIC_ANALYTICS_SRC &&
+          process.env.NEXT_PUBLIC_ANALYTICS_ID && (
+            <script
+              defer
+              src={process.env.NEXT_PUBLIC_ANALYTICS_SRC}
+              data-website-id={process.env.NEXT_PUBLIC_ANALYTICS_ID}
+            />
+          )}
       </head>
       <body className={`${lora.variable} ${dmSans.variable} font-sans antialiased`}>
         <ToastProvider>{children}</ToastProvider>

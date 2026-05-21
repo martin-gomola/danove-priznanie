@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Upload } from 'lucide-react';
 import { DDSContributions, EmploymentIncome } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, MarginNote, Toggle } from '@/components/ui/FormField';
 import { safeDecimal, fmtEur, requiredError } from '@/lib/utils/decimal';
@@ -13,10 +14,36 @@ interface Props {
   dds: DDSContributions;
   onDdsChange: (updates: Partial<DDSContributions>) => void;
   calculatedR75?: string;
+  onImportFile?: (file: File) => void;
   showErrors?: boolean;
 }
 
-export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChange, calculatedR75, showErrors = false }: Props) {
+export function Step2Employment({
+  data,
+  onChange,
+  calculatedR38,
+  dds,
+  onDdsChange,
+  calculatedR75,
+  onImportFile,
+  showErrors = false,
+}: Props) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleImportClick = React.useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !onImportFile) return;
+      onImportFile(file);
+      e.target.value = '';
+    },
+    [onImportFile]
+  );
+
   return (
     <div className="space-y-6">
       <div className="relative">
@@ -37,6 +64,33 @@ export function Step2Employment({ data, onChange, calculatedR38, dds, onDdsChang
       <div className="relative">
         <SectionCard title="Údaje z ročného zúčtovania" subtitle="Potvrdenie od zamestnávateľa - II. oddiel">
         <div className="space-y-5">
+          {onImportFile && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,image/*,application/pdf"
+                onChange={handleFileChange}
+                className="hidden"
+                aria-hidden
+              />
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 flex flex-col items-start gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleImportClick}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Import PDF/obrázok
+                </button>
+                <span className="text-xs text-gray-500">Lokálne spracovanie cez LiteParse, max. 5 MB</span>
+                <span className="text-xs text-amber-700 max-w-[22rem]">
+                  Po importe skontrolujte riadky 01, 02 a 04 proti potvrdeniu od zamestnávateľa.
+                </span>
+              </div>
+            </>
+          )}
+
           <FormField
             label="r. 36: Úhrn príjmov"
             hint="Potvrdenie → II. oddiel, riadok 01"

@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile
       args:
         PORT: "${SERVICE_PORT:-3015}"
+        NEXT_PUBLIC_ANALYTICS_SRC: "${NEXT_PUBLIC_ANALYTICS_SRC:-}"
+        NEXT_PUBLIC_ANALYTICS_ID: "${NEXT_PUBLIC_ANALYTICS_ID:-}"
     container_name: dane-priznanie
     env_file:
       - .env

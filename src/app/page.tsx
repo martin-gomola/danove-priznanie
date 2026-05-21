@@ -143,7 +143,45 @@ export default function Home() {
         toast.error('Import zlyhal');
       }
     },
-    [sessionToken, form.dividends.entries, form.dividends.ecbRate, form.dividends.czkRate, updateDividends, toast]
+    [sessionToken, form.dividends, updateDividends, toast]
+  );
+
+  const handleImportEmployment = useCallback(
+    async (file: File) => {
+      if (!sessionToken) {
+        toast.error('Chýba session token. Obnovte stránku.');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.set('file', file);
+
+        const res = await fetch('/api/employment/import', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${sessionToken}` },
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data?.error ?? 'Import ročného zúčtovania zlyhal');
+          return;
+        }
+
+        updateEmployment(data.employment);
+
+        if (data?.diagnostics?.crossCheckMatches === false) {
+          toast.info('Načítané, ale r.03 na potvrdení nesedí s r.36 - r.37. Skontrolujte dokument.');
+          return;
+        }
+
+        toast.success('Ročné zúčtovanie bolo načítané');
+      } catch {
+        toast.error('Import ročného zúčtovania zlyhal');
+      }
+    },
+    [sessionToken, updateEmployment, toast]
   );
 
   if (!isLoaded) {
@@ -195,6 +233,7 @@ export default function Home() {
             dds={form.dds}
             onDdsChange={updateDds}
             calculatedR75={calc.r75}
+            onImportFile={handleImportEmployment}
             showErrors={showStepErrors}
           />
         );

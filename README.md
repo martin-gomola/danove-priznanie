@@ -55,13 +55,15 @@ Open [http://localhost:3015](http://localhost:3015).
 
 If you use **Cursor**, **Claude Code**, or **Codex**, you can have the agent read your employer's "Potvrdenie o zdaniteľných príjmoch" (annual income confirmation) and fill the employment section automatically.
 
-**How it works:** The app exposes a local API (`POST /api/form`). The agent reads your PDF locally, extracts the values, and sends them to the app. No API keys. No data leaves your machine.
+**How it works:** The app exposes local APIs. The agent can upload the PDF/image to `POST /api/employment/import` for LiteParse-based extraction, then send the returned fields to `POST /api/form`. No API keys. No data leaves your machine.
 
 - **Cursor** : Use the skill at `.cursor/skills/fill-potvrdenie/SKILL.md`. Ask:
   ```
   Fill the employment section from this PDF: ~/Documents/potvrdenie-2025.pdf
   ```
-- **Claude Code / Codex** : Give the agent the PDF path and the curl command from the [developer docs](http://localhost:3015/developer).
+- **Claude Code / Codex** : Give the agent the PDF path and the curl commands from the [developer docs](http://localhost:3015/developer).
+
+Dividend imports also use LiteParse for PDF processing, which improves 1042-S handling for noisier broker documents.
 
 Full API reference and field mapping: [localhost:3015/developer](http://localhost:3015/developer).
 

@@ -17,12 +17,19 @@ description: Extract employment data from Slovak "Potvrdenie o zdaniteľných pr
 
 ## Workflow
 
-1. **Read** the PDF/image using the Read tool
-2. **Extract** the 4 values from the field mapping above
-3. **Cross-check**: r.01 - r.02 should equal r.03 on the document
-4. **Get token**: Ask the user for their session token (shown on the `/developer` page in the app). Each browser generates a unique UUID stored in localStorage key `dane-priznanie-session-token`. Do NOT read from `.env`.
-5. **Get base URL**: Default is `http://localhost:3015`. For remote servers, ask the user to confirm.
-6. **POST** to the API (see below)
+1. **Get token**: Ask the user for their session token (shown on the `/developer` page in the app). Each browser generates a unique UUID stored in localStorage key `dane-priznanie-session-token`. Do NOT read from `.env`.
+2. **Get base URL**: Default is `http://localhost:3015`. For remote servers, ask the user to confirm.
+3. **Upload** the PDF/image to the LiteParse-backed parser endpoint:
+
+```bash
+curl -X POST <BASE_URL>/api/employment/import \
+  -H "Authorization: Bearer <SESSION_TOKEN>" \
+  -F "file=@/absolute/path/to/potvrdenie.pdf"
+```
+
+4. **Read** the returned `employment` and `diagnostics`
+5. **Cross-check**: if `diagnostics.crossCheckMatches === false`, warn the user before posting
+6. **POST** the returned `employment` object to the form API (see below)
 7. **Confirm** extracted values and cross-check result to the user
 
 ## API Call
@@ -60,8 +67,8 @@ The app polls every 3s and auto-merges the data (toast notification on success).
 User: Fill employment from ~/Documents/potvrdenie-2025.pdf
 
 1. Ask user for session token → "abc12345-def6-7890-..."
-2. Read PDF → r01=32400.00, r01a=0.00, r02=4341.60, r04=3648.00, r04a=""
-3. Cross-check: 32400.00 - 4341.60 = 28058.40 ✓ (matches r03)
+2. POST PDF to /api/employment/import → { employment: { r36: "32400.00", ... }, diagnostics: { crossCheckMatches: true } }
+3. Cross-check: 32400.00 - 4341.60 = 28058.40 ✓
 4. POST with Bearer token → { employment: { enabled: true, r36: "32400.00", r131Dohody: "", ... } }
 5. "Extracted 5 values. Tax base r.38 = 28 058,40 EUR."
 ```

@@ -10,6 +10,12 @@ RUN npm config set progress true && \
     npm config set fetch-retries 5 && \
     npm ci
 
+# Analytics values are baked at build time (Next.js inlines NEXT_PUBLIC_* into the bundle).
+ARG NEXT_PUBLIC_ANALYTICS_SRC
+ARG NEXT_PUBLIC_ANALYTICS_ID
+ENV NEXT_PUBLIC_ANALYTICS_SRC=${NEXT_PUBLIC_ANALYTICS_SRC}
+ENV NEXT_PUBLIC_ANALYTICS_ID=${NEXT_PUBLIC_ANALYTICS_ID}
+
 # Build app (produces .next/standalone + .next/static + public)
 COPY . .
 RUN npm run build

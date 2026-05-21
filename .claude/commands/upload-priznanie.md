@@ -11,10 +11,17 @@ Read the PDF at $ARGUMENTS and extract employment data from "Potvrdenie o zdanit
 
 ## Steps
 
-1. Read the PDF, extract the 4 values above
-2. Cross-check: r.01 - r.02 = r.03 (základ dane)
-3. Ask the user for their **session token** (shown on the `/developer` page in the app). Each browser has a unique token stored in localStorage (`dane-priznanie-session-token`).
-4. POST to the app:
+1. Ask the user for their **session token** (shown on the `/developer` page in the app). Each browser has a unique token stored in localStorage (`dane-priznanie-session-token`).
+2. Upload the PDF to the local parser:
+
+```bash
+curl -X POST <BASE_URL>/api/employment/import \
+  -H "Authorization: Bearer <SESSION_TOKEN>" \
+  -F "file=@<ABSOLUTE_PDF_PATH>"
+```
+
+3. Inspect `employment` and `diagnostics.crossCheckMatches`
+4. POST the extracted employment object to the app:
 
 ```bash
 curl -X POST <BASE_URL>/api/form \
