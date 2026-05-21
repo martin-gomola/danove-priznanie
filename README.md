@@ -2,6 +2,13 @@
 
 A web app that helps you file the Slovak personal income tax return (DPFO typ B) for 2025. You fill out a step-by-step form, and the app generates an XML file you upload at [financnasprava.sk](https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb).
 
+**Demo:** [danove-priznanie.onrender.com](https://danove-priznanie.onrender.com) (free tier, may take ~30s to wake up on first visit)
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="Step 1 — personal data" width="400" />
+  <img src="docs/screenshot-export.png" alt="Step 8 — export XML" width="400" />
+</p>
+
 ---
 
 ## Why This Exists
