@@ -82,7 +82,9 @@ describe('Real CSV import and XML export', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries,
       },
     });
@@ -139,7 +141,9 @@ describe('Real CSV import and XML export', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries,
       },
     });

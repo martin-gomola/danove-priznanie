@@ -3,29 +3,33 @@
  * Used when amountEur is missing (e.g. after 1042-S import) so Príloha č.2 and Oddiel XIII get correct values.
  */
 
+import type { DividendCurrency, ForeignDividends } from '@/types/TaxForm';
 import { safeDecimal } from './decimal';
 
+type DividendRateSource = Pick<ForeignDividends, 'ecbRate' | 'czkRate' | 'plnRate'> & Partial<Pick<ForeignDividends, 'currencyRates'>>;
+
+export function rateForDividendCurrency(currency: DividendCurrency, rates: DividendRateSource): string {
+  if (currency === 'EUR') return '1';
+  const mappedRate = rates.currencyRates?.[currency];
+  if (mappedRate !== undefined) return mappedRate;
+  if (currency === 'CZK') return rates.czkRate;
+  if (currency === 'PLN') return rates.plnRate;
+  if (currency === 'USD') return rates.ecbRate;
+  return '';
+}
+
 /**
- * Rate for EUR is 1; for USD use ecbRate, for CZK use czkRate, for PLN use plnRate.
+ * Rate is expressed as original currency units per 1 EUR.
  * EUR amount = amountOriginal / rate.
  */
 export function dividendToEur(
   amountOriginal: string,
-  currency: 'USD' | 'EUR' | 'CZK' | 'PLN',
-  ecbRate: string,
-  czkRate: string,
-  plnRate: string = '4.2397',
+  currency: DividendCurrency,
+  rates: DividendRateSource,
 ): string {
   const amount = safeDecimal(amountOriginal);
   if (amount.isZero()) return '0.00';
-  const rate =
-    currency === 'EUR'
-      ? 1
-      : currency === 'CZK'
-        ? (parseFloat(czkRate) || 1)
-        : currency === 'PLN'
-          ? (parseFloat(plnRate) || 1)
-          : (parseFloat(ecbRate) || 1);
-  if (!rate) return '0.00';
+  const rate = parseFloat(rateForDividendCurrency(currency, rates));
+  if (!Number.isFinite(rate) || rate <= 0) return '0.00';
   return amount.div(rate).toDecimalPlaces(2).toFixed(2);
 }

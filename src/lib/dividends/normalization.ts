@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
 import type { DividendEntry, ForeignDividends } from '@/types/TaxForm';
+import { getCurrencyForCountry } from '@/lib/countries';
 import { dividendToEur } from '@/lib/utils/dividendEur';
 import { safeDecimal } from '@/lib/utils/decimal';
 
@@ -21,24 +22,26 @@ export interface NormalizeDividendOptions {
   preferExistingEur?: boolean;
 }
 
-function eurAmount(amountOriginal: string, currency: DividendCurrency, ecbRate: string, czkRate: string, plnRate: string): string {
+type DividendRateSource = Pick<ForeignDividends, 'ecbRate' | 'czkRate' | 'plnRate'> & Partial<Pick<ForeignDividends, 'currencyRates'>>;
+
+function eurAmount(amountOriginal: string, currency: DividendCurrency, rates: DividendRateSource): string {
   if (currency === 'EUR') return safeDecimal(amountOriginal).toDecimalPlaces(2).toFixed(2);
-  return dividendToEur(amountOriginal, currency, ecbRate, czkRate, plnRate);
+  return dividendToEur(amountOriginal, currency, rates);
 }
 
 export function normalizeDividendEntry(
   entry: DividendEntry,
-  rates: Pick<ForeignDividends, 'ecbRate' | 'czkRate' | 'plnRate'>,
+  rates: DividendRateSource,
   options: NormalizeDividendOptions = {},
 ): DividendEntry {
-  const currency = entry.currency ?? 'USD';
+  const currency = entry.country ? getCurrencyForCountry(entry.country) : (entry.currency ?? 'USD');
   const preferExistingEur = options.preferExistingEur ?? true;
   const amountEur = preferExistingEur && safeDecimal(entry.amountEur).gt(0)
     ? safeDecimal(entry.amountEur).toDecimalPlaces(2).toFixed(2)
-    : eurAmount(entry.amountOriginal, currency, rates.ecbRate, rates.czkRate, rates.plnRate);
+    : eurAmount(entry.amountOriginal, currency, rates);
   const withheldTaxEur = preferExistingEur && safeDecimal(entry.withheldTaxEur).gt(0)
     ? safeDecimal(entry.withheldTaxEur).toDecimalPlaces(2).toFixed(2)
-    : eurAmount(entry.withheldTaxOriginal, currency, rates.ecbRate, rates.czkRate, rates.plnRate);
+    : eurAmount(entry.withheldTaxOriginal, currency, rates);
 
   return {
     ...entry,
@@ -50,7 +53,7 @@ export function normalizeDividendEntry(
 
 export function normalizeDividendEntries(
   entries: DividendEntry[],
-  rates: Pick<ForeignDividends, 'ecbRate' | 'czkRate' | 'plnRate'>,
+  rates: DividendRateSource,
   options: NormalizeDividendOptions = {},
 ): DividendEntry[] {
   return entries.map((entry) => normalizeDividendEntry(entry, rates, options));

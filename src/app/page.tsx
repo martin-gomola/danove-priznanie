@@ -126,8 +126,7 @@ export default function Home() {
           toast.error('V súbore sa nenašli žiadne dividendy.');
           return;
         }
-        const { ecbRate, czkRate, plnRate } = form.dividends;
-        const converted = normalizeDividendEntries(entries, { ecbRate, czkRate, plnRate }, { preferExistingEur: false });
+        const converted = normalizeDividendEntries(entries, form.dividends, { preferExistingEur: false });
         updateDividends({ entries: [...form.dividends.entries, ...converted], enabled: true });
         toast.success(`Importované ${converted.length} položiek`);
       } catch {

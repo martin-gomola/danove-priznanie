@@ -4,7 +4,7 @@
  * Aggregates multiple rows per ticker/country into a single entry.
  */
 
-import type { DividendEntry } from '@/types/TaxForm';
+import type { DividendCurrency, DividendEntry } from '@/types/TaxForm';
 import { findCountryByCode } from '@/lib/countries';
 import { alpha2ToNumeric } from './countryMapping';
 
@@ -19,11 +19,15 @@ function parseNum(s: string): number {
 }
 
 /** Currency from CSV maps to our supported dividend currencies; default USD for unknown */
-function toCurrency(currency: string): 'USD' | 'EUR' | 'CZK' | 'PLN' {
+function toCurrency(currency: string): DividendCurrency {
   const u = currency?.trim().toUpperCase();
-  if (u === 'EUR') return 'EUR';
-  if (u === 'CZK') return 'CZK';
-  if (u === 'PLN') return 'PLN';
+  if (
+    u === 'USD' || u === 'EUR' || u === 'CZK' || u === 'PLN' || u === 'GBP' ||
+    u === 'CHF' || u === 'CAD' || u === 'DKK' || u === 'HUF' || u === 'NOK' ||
+    u === 'SEK' || u === 'RON' || u === 'AUD' || u === 'CNY' || u === 'HKD' ||
+    u === 'JPY' || u === 'KRW' || u === 'TWD' || u === 'BRL' || u === 'ILS' ||
+    u === 'ZAR'
+  ) return u;
   return 'USD';
 }
 

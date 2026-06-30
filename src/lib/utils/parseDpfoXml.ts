@@ -28,6 +28,7 @@ import {
 import { findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { ECB_RATE_2025, ECB_CZK_RATE_2025, ECB_PLN_RATE_2025, TAX_YEAR } from '@/lib/tax/constants';
 import { safeDecimal } from '@/lib/utils/decimal';
+import { rateForDividendCurrency } from '@/lib/utils/dividendEur';
 
 // ── Low-level XML helpers ────────────────────────────────────────────
 
@@ -208,7 +209,8 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
     const country = findCountryByCode(kodStatu);
     const currency = getCurrencyForCountry(kodStatu || '840');
 
-    const backRate = new Decimal(currency === 'EUR' ? 1 : currency === 'CZK' ? ECB_CZK_RATE_2025 : currency === 'PLN' ? ECB_PLN_RATE_2025 : ECB_RATE_2025);
+    const rate = rateForDividendCurrency(currency, DEFAULT_TAX_FORM.dividends);
+    const backRate = safeDecimal(rate);
     const amountOriginal = currency === 'EUR' ? (prijmy || '0') : amountEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
     const withheldTaxOriginal = currency === 'EUR' ? withheldTaxEur.toDecimalPlaces(2).toFixed(2) : withheldTaxEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
 

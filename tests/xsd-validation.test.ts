@@ -210,7 +210,9 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries: [
           {
             id: '1',
@@ -278,7 +280,9 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries: [
           {
             id: '1',
@@ -382,7 +386,9 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries: [
           {
             id: '1', ticker: 'AAPL', country: '840', countryName: 'USA',
@@ -439,7 +445,9 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         czkRate: '24.686',
         czkRateOverride: false,
         plnRate: '4.2397',
-        plnRateOverride: false,
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries: [
           {
             id: '1',

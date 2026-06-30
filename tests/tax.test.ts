@@ -386,7 +386,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '0', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -400,7 +401,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '150', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -415,7 +417,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '30', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -443,8 +446,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
           ecbRateOverride: false,
           czkRate: '24.686',
           czkRateOverride: false,
-          plnRate: '4.2397',
-          plnRateOverride: false,
+          plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -846,7 +849,8 @@ describe('Grand Total Tax (r116)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '100', amountEur: '1000', withheldTaxOriginal: '0', withheldTaxEur: '0' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );

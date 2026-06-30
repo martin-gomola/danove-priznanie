@@ -5,6 +5,8 @@
  * Sorted: most common dividend sources first, then alphabetical.
  */
 
+import type { DividendCurrency } from '@/types/TaxForm';
+
 export interface Country {
   code: string; // ISO 3166-1 numeric (3-digit string)
   name: string; // Slovak display name
@@ -85,19 +87,36 @@ export function isEurozoneCountry(code: string): boolean {
   return EUROZONE_CODES.has(code);
 }
 
-/** Czech Republic ISO 3166-1 numeric code */
-const CZK_CODE = '203';
-const PLN_CODE = '616';
+const NON_EUR_CURRENCY_BY_COUNTRY: Record<string, DividendCurrency> = {
+  '840': 'USD', // USA
+  '826': 'GBP', // Veľká Británia
+  '756': 'CHF', // Švajčiarsko
+  '124': 'CAD', // Kanada
+  '203': 'CZK', // Česká republika
+  '208': 'DKK', // Dánsko
+  '348': 'HUF', // Maďarsko
+  '578': 'NOK', // Nórsko
+  '616': 'PLN', // Poľsko
+  '642': 'RON', // Rumunsko
+  '752': 'SEK', // Švédsko
+  '036': 'AUD', // Austrália
+  '156': 'CNY', // Čína
+  '344': 'HKD', // Hongkong
+  '392': 'JPY', // Japonsko
+  '410': 'KRW', // Kórejská republika
+  '158': 'TWD', // Taiwan - ECB annual EUR series not available
+  '076': 'BRL', // Brazília
+  '376': 'ILS', // Izrael
+  '710': 'ZAR', // Južná Afrika
+};
 
 /** Returns true if the country uses CZK as its currency (Czech Republic) */
 export function isCzkCountry(code: string): boolean {
-  return code === CZK_CODE;
+  return NON_EUR_CURRENCY_BY_COUNTRY[code] === 'CZK';
 }
 
 /** Derive the dividend currency for a given country code */
-export function getCurrencyForCountry(code: string): 'USD' | 'EUR' | 'CZK' | 'PLN' {
+export function getCurrencyForCountry(code: string): DividendCurrency {
   if (isEurozoneCountry(code)) return 'EUR';
-  if (isCzkCountry(code)) return 'CZK';
-  if (code === PLN_CODE) return 'PLN';
-  return 'USD';
+  return NON_EUR_CURRENCY_BY_COUNTRY[code] ?? 'USD';
 }
