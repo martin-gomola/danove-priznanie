@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { TwoPercentAllocation, ParentTaxAllocation, ParentAllocationChoice, ParentInfo } from '@/types/TaxForm';
 import { FormField, Input, SectionCard, Toggle, InfoBox, MarginNote } from '@/components/ui/FormField';
 import { PrijimatelSelect } from '@/components/ui/PrijimatelSelect';
@@ -76,6 +76,7 @@ export function Step6TwoPercent({
   parentData, onParentChange, calculatedPerParent,
   showErrors = false,
 }: Props) {
+  const [manualRecipient, setManualRecipient] = useState(false);
   const parentAmount = safeDecimal(calculatedPerParent).toNumber();
   const parentCount = parentData.choice === 'both' ? 2 : parentData.choice === 'one' ? 1 : 0;
 
@@ -113,20 +114,59 @@ export function Step6TwoPercent({
       {data.enabled && (
         <>
           <div className="relative">
-          <SectionCard title="Príjemca podielu" subtitle="Organizácia, ktorej poukážete podiel dane. Zoznam prijímateľov: financnasprava.sk">
+          <SectionCard title="Príjemca podielu" subtitle="Organizácia, ktorej poukážete podiel dane.">
             <div className="space-y-4">
+              <p className="text-xs text-gray-600">
+                Zdroj zoznamu:{' '}
+                <a
+                  href="https://pfseform.financnasprava.sk/Formulare/eFormVzor/DP/form.621.prijimatelia_2026.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer font-medium text-emerald-700 hover:text-emerald-800 underline underline-offset-2"
+                >
+                  Finančná správa - oficiálny zoznam prijímateľov pre DPFO typ B 2025
+                </a>
+                .
+              </p>
               <FormField
                 label="Organizácia (príjemca 2 %)"
-                hint="Vyberte z oficiálneho zoznamu FS alebo hľadajte podľa názvu / IČO"
+                hint={manualRecipient ? 'Zadajte údaje ručne podľa oficiálneho zoznamu alebo potvrdených údajov príjemcu.' : 'Vyberte z oficiálneho zoznamu FS alebo hľadajte podľa názvu / IČO'}
                 required
                 error={data.enabled ? requiredError(showErrors, data.ico) : undefined}
               >
-                <PrijimatelSelect
-                  valueIco={data.ico}
-                  valueObchMeno={data.obchMeno}
-                  onSelect={(item) => onChange({ ico: item.ico, obchMeno: item.obchMeno })}
-                  placeholder="Hľadať podľa názvu alebo IČO..."
-                />
+                {manualRecipient ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-[12rem_1fr] gap-3">
+                      <Input
+                        value={data.ico}
+                        onChange={(e) => onChange({ ico: e.target.value.replace(/\D/g, '').slice(0, 8) })}
+                        placeholder="IČO"
+                        inputMode="numeric"
+                        maxLength={8}
+                      />
+                      <Input
+                        value={data.obchMeno}
+                        onChange={(e) => onChange({ obchMeno: e.target.value })}
+                        placeholder="Názov príjemcu"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setManualRecipient(false)}
+                      className="cursor-pointer text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                    >
+                      Vybrať zo zoznamu
+                    </button>
+                  </div>
+                ) : (
+                  <PrijimatelSelect
+                    valueIco={data.ico}
+                    valueObchMeno={data.obchMeno}
+                    onSelect={(item) => onChange({ ico: item.ico, obchMeno: item.obchMeno })}
+                    onManualEntry={() => setManualRecipient(true)}
+                    placeholder="Hľadať podľa názvu alebo IČO..."
+                  />
+                )}
               </FormField>
 
               <div className="space-y-3">
