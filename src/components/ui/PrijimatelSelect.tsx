@@ -9,6 +9,7 @@ interface Props {
   valueIco: string;
   valueObchMeno: string;
   onSelect: (item: PrijimatelItem) => void;
+  onManualEntry?: () => void;
   placeholder?: string;
   disabled?: boolean;
 }
@@ -19,6 +20,7 @@ export function PrijimatelSelect({
   valueIco,
   valueObchMeno,
   onSelect,
+  onManualEntry,
   placeholder = 'Hľadať podľa názvu alebo IČO...',
   disabled,
 }: Props) {
@@ -116,7 +118,22 @@ export function PrijimatelSelect({
                 <li className="px-3 py-4 text-center text-sm text-gray-500">Načítavam...</li>
               ) : options.length === 0 ? (
                 <li className="px-3 py-4 text-center text-sm text-gray-500">
-                  {query.trim().length < 2 ? 'Zadajte aspoň 2 znaky' : 'Žiadny výsledok'}
+                  <p>{query.trim().length < 2 ? 'Zadajte aspoň 2 znaky' : 'Žiadny výsledok'}</p>
+                  {query.trim().length >= 2 && onManualEntry && (
+                    <button
+                      type="button"
+                      style={{ cursor: 'pointer' }}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setOpen(false);
+                        setQuery('');
+                        onManualEntry();
+                      }}
+                      className="mt-2 cursor-pointer text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                    >
+                      Zadať príjemcu manuálne
+                    </button>
+                  )}
                 </li>
               ) : (
                 options.map((item) => (
