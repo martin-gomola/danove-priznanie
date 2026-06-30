@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Lora, DM_Sans } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 
@@ -33,17 +34,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="sk">
-      <head>
+      <body className={`${lora.variable} ${dmSans.variable} font-sans antialiased`}>
         {process.env.NEXT_PUBLIC_ANALYTICS_SRC &&
           process.env.NEXT_PUBLIC_ANALYTICS_ID && (
-            <script
-              defer
+            <Script
               src={process.env.NEXT_PUBLIC_ANALYTICS_SRC}
               data-website-id={process.env.NEXT_PUBLIC_ANALYTICS_ID}
+              strategy="afterInteractive"
             />
           )}
-      </head>
-      <body className={`${lora.variable} ${dmSans.variable} font-sans antialiased`}>
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

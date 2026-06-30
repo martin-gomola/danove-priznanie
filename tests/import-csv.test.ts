@@ -19,6 +19,8 @@ DividendDetail,Data,RevenueComponent,USD,TST3,10003,US,20241216,20241209,,Ordina
 DividendDetail,Data,Summary,USD,TST4,10004,US,20240314,20240229,5,,,5,5,5,-0.75,-0.75,-0.75,
 DividendDetail,Data,RevenueComponent,USD,TST4,10004,US,20240314,20240229,,Ordinary Dividend,Qualified - Meets Holding Period,5,5,5,-0.75,-0.75,-0.75,
 DividendDetail,Data,RevenueComponent,USD,TST4,10004,US,20240314,20240229,,Other,Other,0,0,0,-0.01,-0.01,-0.01,
+DividendDetail,Data,Summary,PLN,TST5,10005,PL,20240510,20240501,20,,,423.97,100,105,-42.40,-10,-10.50,
+DividendDetail,Data,RevenueComponent,PLN,TST5,10005,PL,20240510,20240501,,Ordinary Dividend,Qualified - Meets Holding Period,423.97,100,105,-42.40,-10,-10.50,
 DividendDetail,Total,,USD,,,,,,,,,75,75,75,-11.25,-11.25,-11.25,
 DividendRevenueSummary,Header,RevenueType,TotalInBase,TotalInUSD
 DividendRevenueSummary,Data,Total Ordinary Dividends,175,180,
@@ -31,7 +33,7 @@ DividendSummaryByCountry,Total,,,175,0,36.25,
 describe('parseIbkrDividendCsv', () => {
   it('parses sample IBKR dividend CSV into aggregated entries', () => {
     const entries = parseIbkrDividendCsv(SAMPLE_CSV);
-    expect(entries).toHaveLength(4); // TST1, TST2, TST3, TST4
+    expect(entries).toHaveLength(5); // TST1, TST2, TST3, TST4, TST5
   });
 
   it('produces one entry per ticker/country/currency with correct amounts', () => {
@@ -70,6 +72,16 @@ describe('parseIbkrDividendCsv', () => {
     expect(byTicker.TST4!.country).toBe('840');
     expect(byTicker.TST4!.amountOriginal).toBe('5.00');
     expect(byTicker.TST4!.withheldTaxOriginal).toBe('0.75');
+
+    // TST5: PL, PLN
+    expect(byTicker.TST5).toBeDefined();
+    expect(byTicker.TST5!.country).toBe('616');
+    expect(byTicker.TST5!.countryName).toBe('Poľsko');
+    expect(byTicker.TST5!.currency).toBe('PLN');
+    expect(byTicker.TST5!.amountOriginal).toBe('423.97');
+    expect(byTicker.TST5!.amountEur).toBe('100.00');
+    expect(byTicker.TST5!.withheldTaxOriginal).toBe('42.40');
+    expect(byTicker.TST5!.withheldTaxEur).toBe('10.00');
   });
 
   it('assigns unique ids to each entry', () => {

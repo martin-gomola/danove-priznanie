@@ -1,92 +1,35 @@
 import { NextRequest } from 'next/server';
-import type { DividendEntry } from '@/types/TaxForm';
-import { parseIbkrDividendCsv } from '@/lib/import/parseIbkrCsv';
-import { parse1042sPdf } from '@/lib/import/parse1042s';
+import {
+  getUploadedFile,
+  importDividendDocument,
+  requireBearerSession,
+  uploadedFileValidationErrorResponse,
+  validateUploadedFile,
+} from '@/lib/import/intake';
 
-const MIN_TOKEN_LENGTH = 8;
 const MAX_FILE_BYTES = 1 * 1024 * 1024; // 1 MB
 
-function extractToken(req: NextRequest): string | null {
-  const auth = req.headers.get('authorization') ?? '';
-  if (!auth.startsWith('Bearer ')) return null;
-  const token = auth.slice(7).trim();
-  return token.length >= MIN_TOKEN_LENGTH ? token : null;
-}
-
-function isCsv(file: File): boolean {
-  const name = (file.name || '').toLowerCase();
-  const type = (file.type || '').toLowerCase();
-  return name.endsWith('.csv') || type.includes('csv') || type === 'text/csv';
-}
-
-/** Detect IBKR dividend CSV by content (so uploads with wrong extension still work) */
-function looksLikeIbkrDividendCsv(text: string): boolean {
-  const trimmed = text.trimStart();
-  return (
-    trimmed.startsWith('Account,Header,') ||
-    trimmed.startsWith('DividendDetail,Header,') ||
-    (trimmed.includes('DividendDetail,Data,Summary,') && trimmed.includes('Gross,GrossInBase,GrossInUSD'))
-  );
-}
-
-function isPdf(file: File): boolean {
-  const name = (file.name || '').toLowerCase();
-  const type = (file.type || '').toLowerCase();
-  return name.endsWith('.pdf') || type === 'application/pdf';
-}
-
 export async function POST(req: NextRequest) {
-  const token = extractToken(req);
-  if (!token) {
-    return Response.json(
-      { error: 'Missing Authorization: Bearer <session-token>' },
-      { status: 401 },
-    );
-  }
+  const authError = requireBearerSession(req.headers);
+  if (authError) return authError;
 
   try {
     const formData = await req.formData();
-    const file = formData.get('file') ?? formData.get('document');
-    if (!file || !(file instanceof File)) {
-      return Response.json(
-        { error: 'No file in request. Send multipart/form-data with field "file".' },
-        { status: 400 },
-      );
+    const fileValidation = validateUploadedFile(getUploadedFile(formData), MAX_FILE_BYTES);
+    if (!fileValidation.ok) {
+      return uploadedFileValidationErrorResponse(fileValidation);
     }
 
-    if (file.size > MAX_FILE_BYTES) {
-      return Response.json(
-        { error: 'File too large (max 1 MB)' },
-        { status: 413 },
-      );
-    }
-
-    let entries: DividendEntry[];
-
-    if (isPdf(file)) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const entry = await parse1042sPdf(buffer);
-      entries = entry ? [entry] : [];
-    } else {
-      const text = await file.text();
-      if (isCsv(file) || looksLikeIbkrDividendCsv(text)) {
-        entries = parseIbkrDividendCsv(text);
-      } else {
-        return Response.json(
-          { error: 'Unsupported file type. Use .csv (IBKR dividend) or .pdf (1042-S).' },
-          { status: 400 },
-        );
-      }
-    }
-
+    const entries = await importDividendDocument(fileValidation.file);
     return Response.json({ entries });
   } catch (err) {
     if (process.env.NODE_ENV !== 'production') {
       console.error('Dividend import failed:', err);
     }
-    return Response.json(
-      { error: 'Failed to parse file. Check format (IBKR dividend CSV or 1042-S PDF).' },
-      { status: 422 },
-    );
+    const unsupported = err instanceof Error && err.message === 'Unsupported dividend import file type';
+    const message = unsupported
+      ? 'Unsupported file type. Use .csv (IBKR dividend) or .pdf (1042-S).'
+      : 'Failed to parse file. Check format (IBKR dividend CSV or 1042-S PDF).';
+    return Response.json({ error: message }, { status: unsupported ? 400 : 422 });
   }
 }

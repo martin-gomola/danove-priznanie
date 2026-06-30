@@ -41,13 +41,36 @@ export interface EmploymentIncome {
 }
 
 // ── Foreign Dividends (Príloha č.2 + Oddiel XIII) ────────────────────
+export type DividendCurrency =
+  | 'USD'
+  | 'EUR'
+  | 'CZK'
+  | 'PLN'
+  | 'GBP'
+  | 'CHF'
+  | 'CAD'
+  | 'DKK'
+  | 'HUF'
+  | 'NOK'
+  | 'SEK'
+  | 'RON'
+  | 'AUD'
+  | 'CNY'
+  | 'HKD'
+  | 'JPY'
+  | 'KRW'
+  | 'TWD'
+  | 'BRL'
+  | 'ILS'
+  | 'ZAR';
+
 export interface DividendEntry {
   id: string;
   ticker: string;
   country: string; // ISO country code, default "840" (USA)
   countryName: string; // display name, default "USA"
-  currency: 'USD' | 'EUR' | 'CZK'; // dividend currency - EUR for Eurozone, CZK for Czechia, USD for rest
-  amountOriginal: string; // gross dividends in original currency (USD, EUR, or CZK)
+  currency: DividendCurrency; // dividend currency derived from country or broker import
+  amountOriginal: string; // gross dividends in original currency
   amountEur: string; // EUR equivalent (auto-converted, or direct for EUR)
   withheldTaxOriginal: string; // tax withheld in original currency
   withheldTaxEur: string; // EUR equivalent of withheld tax
@@ -60,6 +83,10 @@ export interface ForeignDividends {
   ecbRateOverride: boolean; // whether user overrode the default rate
   czkRate: string; // ECB annual average rate CZK/EUR for 2025
   czkRateOverride: boolean; // whether user overrode the default CZK rate
+  plnRate: string; // ECB annual average rate PLN/EUR for 2025
+  plnRateOverride: boolean; // whether user overrode the default PLN rate
+  currencyRates: Partial<Record<DividendCurrency, string>>; // annual rate: currency units per 1 EUR
+  currencyRateOverrides: Partial<Record<DividendCurrency, boolean>>;
 }
 
 // ── Mutual Fund Sales (Oddiel VII, Tabulka 2) ────────────────────────
@@ -338,8 +365,34 @@ export const DEFAULT_DIVIDENDS: ForeignDividends = {
   entries: [],
   ecbRate: '1.13', // ECB 2025 annual average USD/EUR
   ecbRateOverride: false,
-  czkRate: '25.21', // ECB 2025 annual average CZK/EUR
+  czkRate: '24.686', // ECB 2025 annual average CZK/EUR
   czkRateOverride: false,
+  plnRate: '4.2397', // ECB 2025 annual average PLN/EUR
+  plnRateOverride: false,
+  currencyRates: {
+    EUR: '1',
+    USD: '1.1299831372549',
+    CZK: '24.6879411764706',
+    PLN: '4.2396576470588',
+    GBP: '0.8567923137255',
+    CHF: '0.9370309803922',
+    CAD: '1.5787262745098',
+    DKK: '7.4633949019608',
+    HUF: '397.7674901960784',
+    NOK: '11.7172878431373',
+    SEK: '11.0663058823529',
+    RON: '5.0423901960784',
+    AUD: '1.75176',
+    CNY: '8.1185043137255',
+    HKD: '8.8104156862745',
+    JPY: '169.0434509803921',
+    KRW: '1605.4522745098043',
+    BRL: '6.3071674509804',
+    ILS: '3.8927258823529',
+    ZAR: '20.1788552941177',
+    TWD: '',
+  },
+  currencyRateOverrides: {},
 };
 
 export const DEFAULT_MUTUAL_FUNDS: MutualFundSales = {

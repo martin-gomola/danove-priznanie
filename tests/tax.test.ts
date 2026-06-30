@@ -18,7 +18,6 @@ import {
   NCZD_MULTIPLIER_HIGH,
   NCZD_SPOUSE_ZAKLAD,
   NCZD_SPOUSE_MULTIPLIER_HIGH,
-  DDS_MAX,
   TAX_BRACKET_THRESHOLD,
   TAX_RATE_LOWER,
   TAX_RATE_UPPER,
@@ -387,7 +386,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '0', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -401,7 +401,8 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '150', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -416,11 +417,42 @@ describe('Príloha č.2: Dividends (§51e)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '1000', amountEur: '', withheldTaxOriginal: '30', withheldTaxEur: '' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
     expect(result.pril2_pr28).toBe('40.00');
+  });
+
+  it('converts Polish PLN dividends with the ECB annual average rate', () => {
+    const result = calculateTax(
+      form({
+        employment: { ...DEFAULT_TAX_FORM.employment, enabled: true, r36: '10000', r37: '0', r131: '0' },
+        dividends: {
+          enabled: true,
+          entries: [{
+            id: '1',
+            ticker: 'PLN',
+            country: '616',
+            countryName: 'Poľsko',
+            currency: 'PLN',
+            amountOriginal: '423.97',
+            amountEur: '',
+            withheldTaxOriginal: '0',
+            withheldTaxEur: '',
+          }],
+          ecbRate: '1.13',
+          ecbRateOverride: false,
+          czkRate: '24.686',
+          czkRateOverride: false,
+          plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
+        },
+      })
+    );
+    expect(result.pril2_pr1).toBe('100.00');
+    expect(result.pril2_pr9).toBe('7.00');
   });
 });
 
@@ -817,7 +849,8 @@ describe('Grand Total Tax (r116)', () => {
         dividends: {
           enabled: true,
           entries: [{ id: '1', ticker: 'X', country: '840', countryName: 'USA', currency: 'USD', amountOriginal: '100', amountEur: '1000', withheldTaxOriginal: '0', withheldTaxEur: '0' }],
-          ecbRate: '1', ecbRateOverride: false, czkRate: '25.21', czkRateOverride: false,
+          ecbRate: '1', ecbRateOverride: false, czkRate: '24.686', czkRateOverride: false, plnRate: '4.2397', plnRateOverride: false, currencyRates: { ...DEFAULT_TAX_FORM.dividends.currencyRates, USD: '1' },
+          currencyRateOverrides: {},
         },
       })
     );
@@ -1015,4 +1048,3 @@ describe('Parent Allocation (§50aa)', () => {
     expect(p(result.parentAllocPerParent)).toBeCloseTo(p(result.r124) * 0.02, 2);
   });
 });
-

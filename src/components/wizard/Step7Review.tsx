@@ -6,6 +6,7 @@ import { SectionCard, FormField, Input, InfoBox } from '@/components/ui/FormFiel
 import { Download, FileText, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, ExternalLink, ArrowRight, Banknote } from 'lucide-react';
 import { getValidationWarnings } from '@/lib/validation/wizard';
 import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { taxRowLabelsFromCalculation, TaxRowId } from '@/lib/tax/taxRowLabels';
 
 interface Props {
   form: TaxFormData;
@@ -74,6 +75,8 @@ function isValidIban(iban: string): boolean {
 export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRefund }: Props) {
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const warnings = useMemo(() => getValidationWarnings(form), [form]);
+  const taxRows = useMemo(() => taxRowLabelsFromCalculation(calc), [calc]);
+  const taxRowLabel = (row: TaxRowId) => taxRows.label(row);
   const documents: { label: string; needed: boolean; mandatory?: boolean }[] = [
     {
       label: 'Potvrdenie o zdaniteľných príjmoch (od zamestnávateľa)',
@@ -270,7 +273,7 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
             <Row row="r.36" label="Úhrn príjmov (brutto)" value={form.employment.r36} />
             <Row row="r.37" label="Povinné poistné" value={form.employment.r37} />
             <Divider />
-            <Row row="r.38" label="Základ dane zo závislej činnosti" value={calc.r38} highlight="amber" />
+            <Row row="r.38" label={taxRowLabel('r38')} value={taxRows.value('r38')} highlight="amber" />
             {form.employment.r36a && (
               <Row row="r.36a" label="Príjmy z dohôd" value={form.employment.r36a} />
             )}
@@ -288,9 +291,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
             <Row label="Tabuľka 2, r.7 stĺ.1: Príjem z predaja" value={calc.totalFundIncome} />
             <Row label="Tabuľka 2, r.7 stĺ.2: Výdavky (nákupná cena)" value={calc.totalFundExpense} />
             <Divider />
-            <Row row="r.66" label="Úhrn príjmov z tabuľky 2" value={calc.r66} />
-            <Row row="r.67" label="Úhrn výdavkov z tabuľky 2" value={calc.r67} />
-            <Row row="r.68" label="Osobitný základ dane z §7" value={calc.r68} highlight="amber" />
+            <Row row="r.66" label={taxRowLabel('r66')} value={taxRows.value('r66')} />
+            <Row row="r.67" label={taxRowLabel('r67')} value={taxRows.value('r67')} />
+            <Row row="r.68" label={taxRowLabel('r68')} value={taxRows.value('r68')} highlight="amber" />
           </div>
           <div className="mt-3">
             <InfoBox variant="info">
@@ -304,9 +307,9 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
       {form.stockSales.enabled && (
         <SectionCard title="Oddiel VIII: Ostatné príjmy (§8) - predaj akcií">
           <div className="space-y-0.5">
-            <Row row="r.69" label="Úhrn príjmov z tabuľky 3" value={calc.r69} />
-            <Row row="r.70" label="Úhrn výdavkov z tabuľky 3" value={calc.r70} />
-            <Row row="r.71" label="Osobitný základ dane z §8" value={calc.r71} highlight="amber" />
+            <Row row="r.69" label={taxRowLabel('r69')} value={taxRows.value('r69')} />
+            <Row row="r.70" label={taxRowLabel('r70')} value={taxRows.value('r70')} />
+            <Row row="r.71" label={taxRowLabel('r71')} value={taxRows.value('r71')} highlight="amber" />
           </div>
           <div className="mt-3">
             <InfoBox variant="info">
@@ -320,24 +323,24 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
       {form.dividends.enabled && (
         <SectionCard title="Príloha č.2 - Podiely na zisku (§51e)">
           <div className="space-y-0.5">
-            <Row row="pr.01" label="Podiel na zisku (dividendy EUR)" value={calc.pril2_pr1} />
-            <Row row="pr.07" label="Osobitný základ dane" value={calc.pril2_pr7} />
-            <Row row="pr.08" label="Sadzba dane" value="7%" />
-            <Row row="pr.09" label="Daň pred zápočtom (7%)" value={calc.pril2_pr9} />
+            <Row row="pr.01" label={taxRowLabel('pril2_pr1')} value={taxRows.value('pril2_pr1')} />
+            <Row row="pr.07" label={taxRowLabel('pril2_pr7')} value={taxRows.value('pril2_pr7')} />
+            <Row row="pr.08" label={taxRowLabel('pril2_pr8')} value="7%" />
+            <Row row="pr.09" label={taxRowLabel('pril2_pr9')} value={taxRows.value('pril2_pr9')} />
             <Divider />
             {safeDecimal(calc.totalWithheldTaxEur).gt(0) && (
               <>
-                <Row row="pr.14" label="Daň zaplatená v zahraničí" value={calc.pril2_pr14} />
-                <Row row="pr.17" label="Daň uznaná na zápočet" value={calc.pril2_pr17} highlight="green" />
+                <Row row="pr.14" label={taxRowLabel('pril2_pr14')} value={taxRows.value('pril2_pr14')} />
+                <Row row="pr.17" label={taxRowLabel('pril2_pr17')} value={taxRows.value('pril2_pr17')} highlight="green" />
               </>
             )}
             <Row
               row="pr.18"
-              label="Daň po zápočte"
-              value={calc.pril2_pr18}
+              label={taxRowLabel('pril2_pr18')}
+              value={taxRows.value('pril2_pr18')}
               highlight={safeDecimal(calc.pril2_pr18).isZero() ? 'green' : 'amber'}
             />
-            <Row row="pr.28" label="Celková daň z dividend" value={calc.pril2_pr28} highlight="amber" />
+            <Row row="pr.28" label={taxRowLabel('pril2_pr28')} value={taxRows.value('pril2_pr28')} highlight="amber" />
           </div>
           {safeDecimal(calc.pril2_pr18).isZero() && safeDecimal(calc.totalWithheldTaxEur).gt(0) && (
             <InfoBox variant="success">
@@ -351,40 +354,40 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
       <SectionCard title="Oddiel IX - Výpočet dane">
         <div className="space-y-0.5">
           {/* NCZD */}
-          <Row row="r.72" label="ZD z §5 pred znížením o NCZD" value={calc.r72} />
-          <Row row="r.73" label="NCZD na daňovníka (§11 ods.2)" value={calc.r73} />
+          <Row row="r.72" label={taxRowLabel('r72')} value={taxRows.value('r72')} />
+          <Row row="r.73" label={taxRowLabel('r73')} value={taxRows.value('r73')} />
           {form.spouse?.enabled && (
-            <Row row="r.74" label="NCZD na manžela/manželku (§11 ods.3)" value={calc.r74} />
+            <Row row="r.74" label={taxRowLabel('r74')} value={taxRows.value('r74')} />
           )}
           {form.dds?.enabled && safeDecimal(calc.r75).gt(0) && (
-            <Row row="r.75" label="NCZD na príspevky na DDS (§11 ods.8)" value={calc.r75} />
+            <Row row="r.75" label={taxRowLabel('r75')} value={taxRows.value('r75')} />
           )}
-          <Row row="r.77" label="Nezdaniteľná časť celkom" value={calc.r77} />
+          <Row row="r.77" label={taxRowLabel('r77')} value={taxRows.value('r77')} />
           <Divider />
-          <Row row="r.78" label="ZD z §5 po znížení o NCZD" value={calc.r78} />
+          <Row row="r.78" label={taxRowLabel('r78')} value={taxRows.value('r78')} />
 
           {/* Tax base */}
           <Row
             row="r.80"
-            label={`ZD podľa §4 ods.1 písm.a${form.stockSales.enabled ? ' (r.78 + r.71)' : ''}`}
-            value={calc.r80}
+            label={`${taxRowLabel('r80')}${form.stockSales.enabled ? ' (r.78 + r.71)' : ''}`}
+            value={taxRows.value('r80')}
           />
           <Divider />
 
           {/* Taxes */}
-          <Row row="r.81" label="Daň z r.80 (19%/25%)" value={calc.r81} />
-          <Row row="r.90" label="Daň z §4 ods.1 písm.a" value={calc.r90} />
+          <Row row="r.81" label={taxRowLabel('r81')} value={taxRows.value('r81')} />
+          <Row row="r.90" label={taxRowLabel('r90')} value={taxRows.value('r90')} />
 
           {form.mutualFunds.enabled && (
             <>
               <Divider />
-              <Row row="r.106" label="Daň z §7 (19% z r.68, jednotná sadzba)" value={calc.r106} />
-              <Row row="r.115" label="Daň z §7 po úprave" value={calc.r115} />
+              <Row row="r.106" label={taxRowLabel('r106')} value={taxRows.value('r106')} />
+              <Row row="r.115" label={taxRowLabel('r115')} value={taxRows.value('r115')} />
             </>
           )}
 
           <Divider />
-          <Row row="r.116" label="Daň celkovo" value={calc.r116} highlight="amber" />
+          <Row row="r.116" label={taxRowLabel('r116')} value={taxRows.value('r116')} highlight="amber" />
           <InfoBox variant="info">
             r.116 = r.90 (daň zo zamestnania a §8){form.mutualFunds.enabled ? ' + r.115 (daň z fondov)' : ''}{form.dividends.enabled ? ' + príl.2 r.28 (daň z dividend)' : ''}
           </InfoBox>
@@ -392,46 +395,46 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
           {/* Bonuses */}
           {form.childBonus?.enabled && form.childBonus.childrenChoice === 'yes' &&
             form.childBonus.partnerSharing?.enabled && safeDecimal(calc.r116a).gt(0) && (
-            <Row row="r.116a" label="ZD druhého rodiča (§33 ods.8)" value={calc.r116a} />
+            <Row row="r.116a" label={taxRowLabel('r116a')} value={taxRows.value('r116a')} />
           )}
-          <Row row="r.117" label="Daňový bonus na deti" value={calc.r117} />
-          <Row row="r.118" label="Daň po bonuse na deti" value={calc.r118} />
+          <Row row="r.117" label={taxRowLabel('r117')} value={taxRows.value('r117')} />
+          <Row row="r.118" label={taxRowLabel('r118')} value={taxRows.value('r118')} />
           {form.childBonus?.enabled && form.childBonus.childrenChoice === 'yes' && (
             <>
-              <Row row="r.119" label="Bonus na deti (vyplatený zamestnávateľom)" value={calc.r119} />
-              <Row row="r.120" label="Zostávajúci bonus na deti (r.117 − r.119)" value={calc.r120} />
-              <Row row="r.121" label="Bonus na deti na poukázanie správcom dane" value={calc.r121} highlight="green" />
+              <Row row="r.119" label={taxRowLabel('r119')} value={taxRows.value('r119')} />
+              <Row row="r.120" label={taxRowLabel('r120')} value={taxRows.value('r120')} />
+              <Row row="r.121" label={taxRowLabel('r121')} value={taxRows.value('r121')} highlight="green" />
               {safeDecimal(calc.r122).gt(0) && (
-                <Row row="r.122" label="Nesprávne vyplatený bonus" value={calc.r122} highlight="red" />
+                <Row row="r.122" label={taxRowLabel('r122')} value={taxRows.value('r122')} highlight="red" />
               )}
             </>
           )}
 
           {form.mortgage.enabled && (
-            <Row row="r.123" label="Bonus na zaplatené úroky (§33a)" value={calc.r123} highlight="green" />
+            <Row row="r.123" label={taxRowLabel('r123')} value={taxRows.value('r123')} highlight="green" />
           )}
 
-          <Row row="r.124" label="Daň po všetkých bonusoch" value={calc.r124} highlight="amber" />
+          <Row row="r.124" label={taxRowLabel('r124')} value={taxRows.value('r124')} highlight="amber" />
 
           <Divider />
 
           {/* Advances and final */}
-          <Row row="r.131" label="Preddavky na daň (zrazené)" value={calc.r131} />
+          <Row row="r.131" label={taxRowLabel('r131')} value={taxRows.value('r131')} />
           {safeDecimal(calc.r133).gt(0) && (
-            <Row row="r.133" label="Zaplatené preddavky (§34)" value={calc.r133} />
+            <Row row="r.133" label={taxRowLabel('r133')} value={taxRows.value('r133')} />
           )}
           <Divider />
 
           <Row
             row="r.135"
-            label="Daň na úhradu (doplatok)"
-            value={calc.r135}
+            label={taxRowLabel('r135')}
+            value={taxRows.value('r135')}
             highlight={safeDecimal(calc.r135).gt(0) ? 'red' : undefined}
           />
           <Row
             row="r.136"
-            label="Daňový preplatok (vrátka)"
-            value={calc.r136}
+            label={taxRowLabel('r136')}
+            value={taxRows.value('r136')}
             highlight={safeDecimal(calc.r136).gt(0) ? 'green' : undefined}
           />
         </div>
@@ -445,8 +448,8 @@ export function Step7Review({ form, calc, onDownloadXml, onGoToStep, onUpdateRef
             <Row label="Názov" value={form.twoPercent.obchMeno} numeric={false} />
             <Row
               row="r.152"
-              label={`Suma (${form.twoPercent.splnam3per ? '3%' : '2%'} z r.124)`}
-              value={calc.r152}
+              label={`${taxRowLabel('r152')} (${form.twoPercent.splnam3per ? '3%' : '2%'} z r.124)`}
+              value={taxRows.value('r152')}
               highlight="green"
             />
           </div>

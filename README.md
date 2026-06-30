@@ -41,7 +41,7 @@ Open [http://localhost:3015](http://localhost:3015).
 | Hypoteka | Mortgage interest deduction (§33a) |
 | Zamestnanie | Employment income (§5) - or use AI to fill from your employer's PDF |
 | Fondy | Mutual fund sales (§7) |
-| Dividendy | Foreign dividends (§51e) - USD, EUR, CZK with automatic conversion |
+| Dividendy | Foreign dividends (§51e) - USD, EUR, CZK, PLN with automatic conversion |
 | 2% dane | Tax allocation to NGOs (§50) |
 | Súhrn | Review and export XML |
 
@@ -52,7 +52,7 @@ Open [http://localhost:3015](http://localhost:3015).
 ## Features
 
 - **Exact arithmetic** : `decimal.js` for tax-safe calculations
-- **Multi-currency dividends** : USD, EUR, CZK; auto-conversion to EUR using reference rates
+- **Multi-currency dividends** : USD, EUR, CZK, PLN; auto-conversion to EUR using reference rates
 - **Legal basis** : Calculations follow [DPFO typ B 2025](https://www.financnasprava.sk/sk/elektronicke-sluzby/koncove-sluzby/podanie-dp-dpfo-szco-typb) and [Zákon č. 595/2003 Z.z.](https://www.slov-lex.sk/pravne-predpisy/SK/ZZ/2003/595/)
 - **Tests** : `npm test` runs vitest for the tax calculator and XML parser
 

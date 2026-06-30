@@ -11,7 +11,7 @@ import { parseIbkrDividendCsv } from '../src/lib/import/parseIbkrCsv';
 import { convertToXML } from '@/lib/xml/xmlGenerator';
 import { calculateTax } from '@/lib/tax/calculator';
 import { DEFAULT_TAX_FORM, TaxFormData } from '@/types/TaxForm';
-import { dividendToEur } from '@/lib/utils/dividendEur';
+import { summarizeDividendIncome } from '@/lib/dividends/normalization';
 
 function buildForm(overrides: Partial<TaxFormData> = {}): TaxFormData {
   return { ...DEFAULT_TAX_FORM, ...overrides };
@@ -43,24 +43,9 @@ function parseDividendsByCountryFromXml(xml: string): Map<string, string> {
   return byCountry;
 }
 
-/** Expected EUR sum per country from form entries (using amountEur or dividendToEur). */
+/** Expected EUR sum per country from the tax path, always using annual ECB rates. */
 function expectedDividendsByCountry(form: TaxFormData): Map<string, string> {
-  const { entries, ecbRate, czkRate } = form.dividends;
-  const byCountry: Record<string, number> = {};
-  for (const entry of entries) {
-    const code = entry.country || '840';
-    const amountEur =
-      entry.amountEur && Number(entry.amountEur) > 0
-        ? entry.amountEur
-        : dividendToEur(entry.amountOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
-    const n = parseFloat(amountEur) || 0;
-    byCountry[code] = (byCountry[code] ?? 0) + n;
-  }
-  const out = new Map<string, string>();
-  for (const [code, sum] of Object.entries(byCountry)) {
-    out.set(code, sum.toFixed(2));
-  }
-  return out;
+  return new Map(summarizeDividendIncome(form.dividends).countryBreakdown.map((row) => [row.countryCode, row.amountEur]));
 }
 
 const CSV_PATH = path.resolve(__dirname, '../tmp/sample-dividends.csv');
@@ -94,8 +79,12 @@ describe('Real CSV import and XML export', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries,
       },
     });
@@ -149,8 +138,12 @@ describe('Real CSV import and XML export', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+          plnRateOverride: false,
+          currencyRates: DEFAULT_TAX_FORM.dividends.currencyRates,
+          currencyRateOverrides: {},
         entries,
       },
     });

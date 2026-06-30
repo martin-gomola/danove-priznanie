@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { ALLOWED_FORM_SECTIONS } from '@/lib/form/formState';
 
 /**
  * Per-session bridge for external tools (MCP, Cursor skills, Claude Code)
@@ -41,10 +42,7 @@ const MAX_PAYLOAD_BYTES = 100_000;
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 /** Known top-level form sections */
-const ALLOWED_SECTIONS = new Set([
-  'personalInfo', 'employment', 'dividends', 'mutualFunds', 'stockSales',
-  'mortgage', 'spouse', 'childBonus', 'twoPercent', 'parentAllocation',
-]);
+const ALLOWED_SECTIONS = new Set<string>(ALLOWED_FORM_SECTIONS);
 
 /** Clean up expired entries from the map */
 function cleanExpired() {
