@@ -87,6 +87,7 @@ export function isEurozoneCountry(code: string): boolean {
 
 /** Czech Republic ISO 3166-1 numeric code */
 const CZK_CODE = '203';
+const PLN_CODE = '616';
 
 /** Returns true if the country uses CZK as its currency (Czech Republic) */
 export function isCzkCountry(code: string): boolean {
@@ -94,8 +95,9 @@ export function isCzkCountry(code: string): boolean {
 }
 
 /** Derive the dividend currency for a given country code */
-export function getCurrencyForCountry(code: string): 'USD' | 'EUR' | 'CZK' {
+export function getCurrencyForCountry(code: string): 'USD' | 'EUR' | 'CZK' | 'PLN' {
   if (isEurozoneCountry(code)) return 'EUR';
   if (isCzkCountry(code)) return 'CZK';
+  if (code === PLN_CODE) return 'PLN';
   return 'USD';
 }

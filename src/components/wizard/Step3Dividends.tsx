@@ -6,7 +6,8 @@ import { FormField, Input, Select, SectionCard, Toggle, InfoBox, MarginNote, Mar
 import { DIVIDEND_COUNTRIES, findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
 import { Plus, Trash2, Upload } from 'lucide-react';
 import Decimal from 'decimal.js';
-import { safeDecimal, fmtEur, sumDecimal } from '@/lib/utils/decimal';
+import { safeDecimal, fmtEur } from '@/lib/utils/decimal';
+import { normalizeDividendEntry, normalizeDividendEntries, summarizeDividendIncome } from '@/lib/dividends/normalization';
 
 /** Optional screenshot for broker guide; hides if image fails to load (e.g. file not yet in public). */
 function BrokerGuideImage({ src, alt }: { src: string; alt: string }) {
@@ -30,26 +31,6 @@ interface Props {
   showErrors?: boolean;
 }
 
-/** Convert a foreign-currency amount to EUR by dividing by the rate (units per 1 EUR). */
-function convertToEur(amount: string, rate: string): string {
-  try {
-    if (!amount || !rate) return '';
-    const amt = new Decimal(amount);
-    const rt = new Decimal(rate);
-    if (rt.isZero()) return '';
-    return amt.div(rt).toDecimalPlaces(2).toFixed(2);
-  } catch {
-    return '';
-  }
-}
-
-/** Pick the right rate for a given currency */
-function rateForCurrency(currency: 'USD' | 'EUR' | 'CZK', ecbRate: string, czkRate: string): string {
-  if (currency === 'EUR') return '1';
-  if (currency === 'CZK') return czkRate;
-  return ecbRate; // USD
-}
-
 /** Single dividend entry card: ticker, country, amounts, withheld tax. */
 function DividendEntryCard({
   entry,
@@ -65,7 +46,7 @@ function DividendEntryCard({
   const cur = entry.currency ?? 'USD';
   const isEur = cur === 'EUR';
   const needsConversion = !isEur;
-  const currencySymbol = cur === 'EUR' ? '€' : cur === 'CZK' ? 'Kč' : '$';
+  const currencySymbol = cur === 'EUR' ? '€' : cur === 'CZK' ? 'Kč' : cur === 'PLN' ? 'zł' : '$';
   const currencyLabel = cur;
   const removeLabel = entry.ticker ? `Odstrániť ${entry.ticker}` : `Odstrániť položku ${index + 1}`;
 
@@ -79,6 +60,9 @@ function DividendEntryCard({
           )}
           {cur === 'CZK' && (
             <span className="text-xs font-medium text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">CZK</span>
+          )}
+          {cur === 'PLN' && (
+            <span className="text-xs font-medium text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded">PLN</span>
           )}
         </div>
         <button
@@ -94,7 +78,7 @@ function DividendEntryCard({
           <Input
             value={entry.ticker}
             onChange={(e) => updateEntry(entry.id, { ticker: e.target.value.toUpperCase() })}
-            placeholder={cur === 'CZK' ? 'CEZ.PR' : isEur ? 'MC.PA' : 'AAPL'}
+            placeholder={cur === 'CZK' ? 'CEZ.PR' : cur === 'PLN' ? 'PKO.WA' : isEur ? 'MC.PA' : 'AAPL'}
           />
         </FormField>
         <FormField label="Krajina">
@@ -225,68 +209,64 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
           // Auto-detect currency when country changes
           if (updates.country !== undefined) {
             updated.currency = getCurrencyForCountry(updated.country);
-            const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.amountEur = convertToEur(updated.amountOriginal, rate);
-            updated.withheldTaxEur = convertToEur(updated.withheldTaxOriginal, rate);
           }
 
-          // When amount changes, convert using the entry's rate
-          if (updates.amountOriginal !== undefined && !updates.country) {
-            const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.amountEur = convertToEur(updated.amountOriginal, rate);
-          }
-          if (updates.withheldTaxOriginal !== undefined && !updates.country) {
-            const rate = rateForCurrency(updated.currency, data.ecbRate, data.czkRate);
-            updated.withheldTaxEur = convertToEur(updated.withheldTaxOriginal, rate);
-          }
-
-          return updated;
+          return normalizeDividendEntry(updated, data, { preferExistingEur: false });
         }),
       });
+    },
+    [data, onChange]
+  );
+
+  // Recalculate EUR amounts when USD rate changes.
+  const handleUsdRateChange = useCallback(
+    (newRate: string) => {
+      const updatedEntries = normalizeDividendEntries(
+        data.entries,
+        { ecbRate: newRate, czkRate: data.czkRate, plnRate: data.plnRate },
+        { preferExistingEur: false },
+      );
+      onChange({ ecbRate: newRate, ecbRateOverride: true, entries: updatedEntries });
+    },
+    [data.entries, data.czkRate, data.plnRate, onChange]
+  );
+
+  // Recalculate EUR amounts when CZK rate changes.
+  const handleCzkRateChange = useCallback(
+    (newRate: string) => {
+      const updatedEntries = normalizeDividendEntries(
+        data.entries,
+        { ecbRate: data.ecbRate, czkRate: newRate, plnRate: data.plnRate },
+        { preferExistingEur: false },
+      );
+      onChange({ czkRate: newRate, czkRateOverride: true, entries: updatedEntries });
+    },
+    [data.entries, data.ecbRate, data.plnRate, onChange]
+  );
+
+  // Recalculate EUR amounts when PLN rate changes.
+  const handlePlnRateChange = useCallback(
+    (newRate: string) => {
+      const updatedEntries = normalizeDividendEntries(
+        data.entries,
+        { ecbRate: data.ecbRate, czkRate: data.czkRate, plnRate: newRate },
+        { preferExistingEur: false },
+      );
+      onChange({ plnRate: newRate, plnRateOverride: true, entries: updatedEntries });
     },
     [data.entries, data.ecbRate, data.czkRate, onChange]
   );
 
-  // Recalculate EUR amounts when USD rate changes (only affects USD entries)
-  const handleUsdRateChange = useCallback(
-    (newRate: string) => {
-      const updatedEntries = data.entries.map((e) => {
-        const rate = rateForCurrency(e.currency ?? 'USD', newRate, data.czkRate);
-        return {
-          ...e,
-          amountEur: convertToEur(e.amountOriginal, rate),
-          withheldTaxEur: convertToEur(e.withheldTaxOriginal, rate),
-        };
-      });
-      onChange({ ecbRate: newRate, ecbRateOverride: true, entries: updatedEntries });
-    },
-    [data.entries, data.czkRate, onChange]
-  );
-
-  // Recalculate EUR amounts when CZK rate changes (only affects CZK entries)
-  const handleCzkRateChange = useCallback(
-    (newRate: string) => {
-      const updatedEntries = data.entries.map((e) => {
-        const rate = rateForCurrency(e.currency ?? 'USD', data.ecbRate, newRate);
-        return {
-          ...e,
-          amountEur: convertToEur(e.amountOriginal, rate),
-          withheldTaxEur: convertToEur(e.withheldTaxOriginal, rate),
-        };
-      });
-      onChange({ czkRate: newRate, czkRateOverride: true, entries: updatedEntries });
-    },
-    [data.entries, data.ecbRate, onChange]
-  );
-
   const hasUsdEntries = data.entries.some((e) => (e.currency ?? 'USD') === 'USD');
   const hasCzkEntries = data.entries.some((e) => e.currency === 'CZK');
+  const hasPlnEntries = data.entries.some((e) => e.currency === 'PLN');
   const hasDividendEntry = data.entries.some(
     (entry) => Boolean(entry.country) && (safeDecimal(entry.amountOriginal).gt(0) || safeDecimal(entry.amountEur).gt(0))
   );
 
-  const totalEur = sumDecimal(data.entries, (e) => e.amountEur);
-  const totalWithheldEur = sumDecimal(data.entries, (e) => e.withheldTaxEur);
+  const dividendSummary = summarizeDividendIncome(data);
+  const totalEur = dividendSummary.totalDividendsEur;
+  const totalWithheldEur = dividendSummary.totalWithheldTaxEur;
 
   const slovakTax = totalEur.mul(0.07).toDecimalPlaces(2);
   const creditableAmount = Decimal.min(slovakTax, totalWithheldEur);
@@ -295,6 +275,7 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
   const note51e = <>Zákon č. 595/2003 Z.z. §51e:<br />Sadzba dane z podielov na zisku (dividendy) 7 %.</>;
   const noteUsdEur = <>Údaje o kurze: ECB - ročný priemer USD/EUR.</>;
   const noteCzkEur = <>Údaje o kurze: ECB - ročný priemer CZK/EUR.</>;
+  const notePlnEur = <>Údaje o kurze: ECB - ročný priemer PLN/EUR.</>;
 
   return (
     <div className="relative">
@@ -313,6 +294,11 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
         {data.enabled && hasCzkEntries && (
           <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A" hrefLabel="ECB - kurz CZK/EUR (údaje)">
             {noteCzkEur}
+          </MarginNotePanel>
+        )}
+        {data.enabled && hasPlnEntries && (
+          <MarginNotePanel href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.PLN.EUR.SP00.A" hrefLabel="ECB - kurz PLN/EUR (údaje)">
+            {notePlnEur}
           </MarginNotePanel>
         )}
         {data.enabled && (
@@ -387,10 +373,38 @@ export function Step3Dividends({ data, onChange, onImportFile, showErrors = fals
                     min="0"
                     value={data.czkRate}
                     onChange={(e) => handleCzkRateChange(e.target.value)}
-                    placeholder="25.21"
+                    placeholder="24.686"
                   />
                 </FormField>
                 {data.czkRateOverride && (
+                  <InfoBox variant="warning">
+                    Používate vlastný kurz. Oficiálny ECB kurz za 2025 sa zverejní začiatkom 2026.
+                  </InfoBox>
+                )}
+              </div>
+            </SectionCard>
+          )}
+
+          {hasPlnEntries && (
+            <SectionCard title="Kurz PLN/EUR" subtitle="Prepočet dividend z PLN na EUR (ročný priemer)">
+              <MarginNote skipDesktopAside href="https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.PLN.EUR.SP00.A" hrefLabel="ECB - kurz PLN/EUR (údaje)">
+                {notePlnEur}
+              </MarginNote>
+              <div className="space-y-3">
+                <FormField
+                  label="PLN za 1 EUR"
+                  hint="Predvyplnené ECB (2025). Môžete prepísať."
+                >
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    min="0"
+                    value={data.plnRate}
+                    onChange={(e) => handlePlnRateChange(e.target.value)}
+                    placeholder="4.2397"
+                  />
+                </FormField>
+                {data.plnRateOverride && (
                   <InfoBox variant="warning">
                     Používate vlastný kurz. Oficiálny ECB kurz za 2025 sa zverejní začiatkom 2026.
                   </InfoBox>

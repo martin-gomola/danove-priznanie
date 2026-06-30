@@ -10,7 +10,7 @@
 
 import Decimal from 'decimal.js';
 import { TaxFormData, TaxCalculationResult } from '@/types/TaxForm';
-import { dividendToEur } from '@/lib/utils/dividendEur';
+import { summarizeDividendIncome } from '@/lib/dividends/normalization';
 import {
   NCZD_ZAKLAD,
   NCZD_THRESHOLD,
@@ -421,22 +421,7 @@ function stockSalesSection(form: TaxFormData): StockSalesSectionResult {
 
 /** Príloha č.2: Foreign dividends (§51e) with foreign tax credit. */
 function dividendsSection(form: TaxFormData): DividendsSectionResult {
-  let totalDividendsEur = new Decimal(0);
-  let totalWithheldTaxEur = new Decimal(0);
-  if (form.dividends.enabled) {
-    const { ecbRate, czkRate } = form.dividends;
-    for (const entry of form.dividends.entries) {
-      const currency = entry.currency ?? 'USD';
-      const amountEur = currency === 'EUR'
-        ? entry.amountOriginal
-        : dividendToEur(entry.amountOriginal, currency, ecbRate, czkRate);
-      const withheldEur = currency === 'EUR'
-        ? entry.withheldTaxOriginal
-        : dividendToEur(entry.withheldTaxOriginal, currency, ecbRate, czkRate);
-      totalDividendsEur = totalDividendsEur.plus(d(amountEur));
-      totalWithheldTaxEur = totalWithheldTaxEur.plus(d(withheldEur));
-    }
-  }
+  const { totalDividendsEur, totalWithheldTaxEur } = summarizeDividendIncome(form.dividends);
   const pril2_pr1 = totalDividendsEur;
   const pril2_pr6_s1 = totalDividendsEur;
   const pril2_pr7 = pril2_pr6_s1;

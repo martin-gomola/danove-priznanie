@@ -81,7 +81,7 @@ export function Input({ suffix, className = '', ...props }: InputProps) {
   );
 }
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
 
 export function Select({ className = '', children, ...props }: SelectProps) {
   return (

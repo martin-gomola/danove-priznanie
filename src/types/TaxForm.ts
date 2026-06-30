@@ -46,8 +46,8 @@ export interface DividendEntry {
   ticker: string;
   country: string; // ISO country code, default "840" (USA)
   countryName: string; // display name, default "USA"
-  currency: 'USD' | 'EUR' | 'CZK'; // dividend currency - EUR for Eurozone, CZK for Czechia, USD for rest
-  amountOriginal: string; // gross dividends in original currency (USD, EUR, or CZK)
+  currency: 'USD' | 'EUR' | 'CZK' | 'PLN'; // dividend currency - EUR for Eurozone, CZK for Czechia, PLN for Poland, USD for rest
+  amountOriginal: string; // gross dividends in original currency (USD, EUR, CZK, or PLN)
   amountEur: string; // EUR equivalent (auto-converted, or direct for EUR)
   withheldTaxOriginal: string; // tax withheld in original currency
   withheldTaxEur: string; // EUR equivalent of withheld tax
@@ -60,6 +60,8 @@ export interface ForeignDividends {
   ecbRateOverride: boolean; // whether user overrode the default rate
   czkRate: string; // ECB annual average rate CZK/EUR for 2025
   czkRateOverride: boolean; // whether user overrode the default CZK rate
+  plnRate: string; // ECB annual average rate PLN/EUR for 2025
+  plnRateOverride: boolean; // whether user overrode the default PLN rate
 }
 
 // ── Mutual Fund Sales (Oddiel VII, Tabulka 2) ────────────────────────
@@ -338,8 +340,10 @@ export const DEFAULT_DIVIDENDS: ForeignDividends = {
   entries: [],
   ecbRate: '1.13', // ECB 2025 annual average USD/EUR
   ecbRateOverride: false,
-  czkRate: '25.21', // ECB 2025 annual average CZK/EUR
+  czkRate: '24.686', // ECB 2025 annual average CZK/EUR
   czkRateOverride: false,
+  plnRate: '4.2397', // ECB 2025 annual average PLN/EUR
+  plnRateOverride: false,
 };
 
 export const DEFAULT_MUTUAL_FUNDS: MutualFundSales = {

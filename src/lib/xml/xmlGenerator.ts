@@ -14,7 +14,7 @@ import outputBasis, { OutputJson } from './outputBasis';
 import { TaxFormData } from '@/types/TaxForm';
 import { TaxCalculationResult } from '@/types/TaxForm';
 import { safeDecimal } from '@/lib/utils/decimal';
-import { dividendToEur } from '@/lib/utils/dividendEur';
+import { summarizeDividendIncome } from '@/lib/dividends/normalization';
 
 function decStr(value: string | undefined): string {
   if (!value || value === '') return '';
@@ -341,26 +341,12 @@ export function convertToJson(
     // Total dividend tax
     pril2.pr28 = decStr(calc.pril2_pr28);  // = pr.18 + pr.27
 
-    // ── Osobitné záznamy (Oddiel XIII) ─────────────────
-    // Group dividends by country code for the mandatory foreign income breakdown.
-    // Use amountEur when set; otherwise derive from amountOriginal so Section XIII is filled.
-    const { ecbRate, czkRate } = form.dividends;
-    const byCountry: Record<string, string> = {};
-    for (const entry of form.dividends.entries) {
-      const code = entry.country || '840';
-      const amountEur =
-        entry.amountEur && safeDecimal(entry.amountEur).gt(0)
-          ? entry.amountEur
-          : dividendToEur(entry.amountOriginal, entry.currency ?? 'USD', ecbRate, czkRate);
-      byCountry[code] = safeDecimal(byCountry[code]).plus(safeDecimal(amountEur)).toFixed(2);
-    }
-
-    const countryEntries = Object.entries(byCountry).map(([code, amount]) => ({
-      kodStatu: code,
+    const countryEntries = summarizeDividendIncome(form.dividends).countryBreakdown.map((entry) => ({
+      kodStatu: entry.countryCode,
       druhPrimuPar: '51e',
       druhPrimuOds: '1',
       druhPrimuPis: '',
-      prijmy: amount,
+      prijmy: entry.amountEur,
       vydavky: '',
       zTohoVydavky: '',
     }));

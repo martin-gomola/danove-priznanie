@@ -26,7 +26,7 @@ import {
   type StockSales,
 } from '@/types/TaxForm';
 import { findCountryByCode, getCurrencyForCountry } from '@/lib/countries';
-import { ECB_RATE_2025, ECB_CZK_RATE_2025, TAX_YEAR } from '@/lib/tax/constants';
+import { ECB_RATE_2025, ECB_CZK_RATE_2025, ECB_PLN_RATE_2025, TAX_YEAR } from '@/lib/tax/constants';
 import { safeDecimal } from '@/lib/utils/decimal';
 
 // ── Low-level XML helpers ────────────────────────────────────────────
@@ -208,7 +208,7 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
     const country = findCountryByCode(kodStatu);
     const currency = getCurrencyForCountry(kodStatu || '840');
 
-    const backRate = new Decimal(currency === 'EUR' ? 1 : currency === 'CZK' ? ECB_CZK_RATE_2025 : ECB_RATE_2025);
+    const backRate = new Decimal(currency === 'EUR' ? 1 : currency === 'CZK' ? ECB_CZK_RATE_2025 : currency === 'PLN' ? ECB_PLN_RATE_2025 : ECB_RATE_2025);
     const amountOriginal = currency === 'EUR' ? (prijmy || '0') : amountEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
     const withheldTaxOriginal = currency === 'EUR' ? withheldTaxEur.toDecimalPlaces(2).toFixed(2) : withheldTaxEur.mul(backRate).toDecimalPlaces(2).toFixed(2);
 
@@ -231,6 +231,8 @@ function parseDividends(telo: Record<string, unknown>): ForeignDividends {
     enabled: true,
     entries,
     ecbRate: String(ECB_RATE_2025),
+    czkRate: String(ECB_CZK_RATE_2025),
+    plnRate: String(ECB_PLN_RATE_2025),
   };
 }
 

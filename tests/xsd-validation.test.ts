@@ -207,8 +207,10 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+        plnRateOverride: false,
         entries: [
           {
             id: '1',
@@ -273,8 +275,10 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+        plnRateOverride: false,
         entries: [
           {
             id: '1',
@@ -375,8 +379,10 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+        plnRateOverride: false,
         entries: [
           {
             id: '1', ticker: 'AAPL', country: '840', countryName: 'USA',
@@ -387,8 +393,8 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
           {
             id: '2', ticker: 'CEZ', country: '203', countryName: 'Česko',
             currency: 'CZK',
-            amountOriginal: '1000.00', amountEur: '39.67',
-            withheldTaxOriginal: '150.00', withheldTaxEur: '5.95',
+            amountOriginal: '1000.00', amountEur: '40.51',
+            withheldTaxOriginal: '150.00', withheldTaxEur: '6.08',
           },
           {
             id: '3', ticker: 'TTE', country: '250', countryName: 'Francúzsko',
@@ -430,8 +436,10 @@ describe('XSD Schema Validation (dpfo_b2025.xsd)', () => {
         enabled: true,
         ecbRate: '1.13',
         ecbRateOverride: false,
-        czkRate: '25.21',
+        czkRate: '24.686',
         czkRateOverride: false,
+        plnRate: '4.2397',
+        plnRateOverride: false,
         entries: [
           {
             id: '1',

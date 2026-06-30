@@ -1,33 +1,14 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { TaxFormData, ForeignDividends, DEFAULT_TAX_FORM } from '@/types/TaxForm';
+import { TaxFormData, DEFAULT_TAX_FORM } from '@/types/TaxForm';
 import { parseDpfoXmlToFormData } from '@/lib/utils/parseDpfoXml';
-import { dividendToEur } from '@/lib/utils/dividendEur';
 import { useToast } from '@/components/ui/Toast';
 import { INTRO_DISMISSED_KEY } from '@/components/ui/IntroModal';
+import { applyExternalFormUpdate, hydrateTaxFormData, mergeTaxFormData, resetTaxFormData } from '@/lib/form/formState';
 
 const STORAGE_KEY = 'dane-priznanie-2025';
 const SESSION_TOKEN_KEY = 'dane-priznanie-session-token';
-
-/** Recompute EUR amounts for non-EUR dividend entries using the current exchange rates. */
-function reconcileDividendEur(dividends: ForeignDividends): ForeignDividends {
-  const { ecbRate, czkRate, entries } = dividends;
-  if (!entries.length) return dividends;
-  const rate = ecbRate || '1.13';
-  const czk = czkRate || '25.21';
-  let changed = false;
-  const fixed = entries.map((e) => {
-    const cur = e.currency ?? 'USD';
-    if (cur === 'EUR') return e;
-    const correctAmount = dividendToEur(e.amountOriginal, cur, rate, czk);
-    const correctWithheld = dividendToEur(e.withheldTaxOriginal, cur, rate, czk);
-    if (e.amountEur === correctAmount && e.withheldTaxEur === correctWithheld) return e;
-    changed = true;
-    return { ...e, amountEur: correctAmount, withheldTaxEur: correctWithheld };
-  });
-  return changed ? { ...dividends, entries: fixed } : dividends;
-}
 
 /** Get or create a per-browser session token (random UUID stored in localStorage). */
 function getSessionToken(): string {
@@ -45,7 +26,18 @@ function getSessionToken(): string {
  */
 export function useTaxForm() {
   const toast = useToast();
-  const [form, setForm] = useState<TaxFormData>(DEFAULT_TAX_FORM);
+  const [form, setForm] = useState<TaxFormData>(() => {
+    if (typeof window === 'undefined') return DEFAULT_TAX_FORM;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? hydrateTaxFormData(JSON.parse(saved) as Partial<TaxFormData>) : DEFAULT_TAX_FORM;
+    } catch (e) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Failed to load saved form data:', e);
+      }
+      return DEFAULT_TAX_FORM;
+    }
+  });
   const [isLoaded, setIsLoaded] = useState(false);
   const [sessionToken, setSessionToken] = useState('');
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved' | 'error'>('saved');
@@ -58,38 +50,12 @@ export function useTaxForm() {
     saveTimerRef.current = window.setTimeout(() => setSaveStatus('saved'), 250);
   }, []);
 
-  // Load from localStorage on mount - deep-merge each section so newly added
-  // fields (e.g. czkRate) get their defaults even when saved data is older.
+  // Mark browser-only session state ready after hydration.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved) as Partial<TaxFormData>;
-        const mergedDividends = reconcileDividendEur({ ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends });
-        setForm({
-          ...DEFAULT_TAX_FORM,
-          ...parsed,
-          personalInfo: { ...DEFAULT_TAX_FORM.personalInfo, ...parsed.personalInfo },
-          employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
-          dividends: mergedDividends,
-          mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
-          stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
-          mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
-          spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
-          dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
-          childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
-          twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
-          parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
-          refundRequest: { ...DEFAULT_TAX_FORM.refundRequest, ...parsed.refundRequest },
-        });
-      }
-    } catch (e) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('Failed to load saved form data:', e);
-      }
-    }
-    setSessionToken(getSessionToken());
-    setIsLoaded(true);
+    queueMicrotask(() => {
+      setSessionToken(getSessionToken());
+      setIsLoaded(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -124,23 +90,7 @@ export function useTaxForm() {
         const { data } = await res.json();
         if (!data || typeof data !== 'object') return;
 
-        // Deep-merge each section so partial updates work correctly
-        setForm((prev) => {
-          const next = { ...prev, ...data } as TaxFormData;
-          if (data.personalInfo) next.personalInfo = { ...prev.personalInfo, ...data.personalInfo };
-          if (data.employment) next.employment = { ...prev.employment, ...data.employment };
-          if (data.dividends) next.dividends = reconcileDividendEur({ ...prev.dividends, ...data.dividends });
-          if (data.mutualFunds) next.mutualFunds = { ...prev.mutualFunds, ...data.mutualFunds };
-          if (data.stockSales) next.stockSales = { ...prev.stockSales, ...data.stockSales };
-          if (data.mortgage) next.mortgage = { ...prev.mortgage, ...data.mortgage };
-          if (data.spouse) next.spouse = { ...prev.spouse, ...data.spouse };
-          if (data.dds) next.dds = { ...prev.dds, ...data.dds };
-          if (data.childBonus) next.childBonus = { ...prev.childBonus, ...data.childBonus };
-          if (data.twoPercent) next.twoPercent = { ...prev.twoPercent, ...data.twoPercent };
-          if (data.parentAllocation) next.parentAllocation = { ...prev.parentAllocation, ...data.parentAllocation };
-          if (data.refundRequest) next.refundRequest = { ...prev.refundRequest, ...data.refundRequest };
-          return next;
-        });
+        setForm((prev) => applyExternalFormUpdate(prev, data));
         toast.success('Údaje boli doplnené z externého nástroja');
       } catch {
         // Silently ignore - API might not be available
@@ -311,7 +261,7 @@ export function useTaxForm() {
 
   const resetForm = useCallback(() => {
     markSaving();
-    setForm(DEFAULT_TAX_FORM);
+    setForm(resetTaxFormData());
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(INTRO_DISMISSED_KEY);
   }, [markSaving]);
@@ -324,21 +274,7 @@ export function useTaxForm() {
         try {
           const xml = e.target?.result as string;
           const parsed = parseDpfoXmlToFormData(xml);
-          setForm({
-            ...DEFAULT_TAX_FORM,
-            ...parsed,
-            employment: { ...DEFAULT_TAX_FORM.employment, ...parsed.employment },
-            mortgage: { ...DEFAULT_TAX_FORM.mortgage, ...parsed.mortgage },
-            mutualFunds: { ...DEFAULT_TAX_FORM.mutualFunds, ...parsed.mutualFunds },
-            stockSales: { ...DEFAULT_TAX_FORM.stockSales, ...parsed.stockSales },
-            dividends: { ...DEFAULT_TAX_FORM.dividends, ...parsed.dividends },
-            spouse: { ...DEFAULT_TAX_FORM.spouse, ...parsed.spouse },
-            dds: { ...DEFAULT_TAX_FORM.dds, ...parsed.dds },
-            childBonus: { ...DEFAULT_TAX_FORM.childBonus, ...parsed.childBonus },
-            twoPercent: { ...DEFAULT_TAX_FORM.twoPercent, ...parsed.twoPercent },
-            parentAllocation: { ...DEFAULT_TAX_FORM.parentAllocation, ...parsed.parentAllocation },
-            refundRequest: { ...DEFAULT_TAX_FORM.refundRequest, ...parsed.refundRequest },
-          });
+          setForm(mergeTaxFormData(DEFAULT_TAX_FORM, parsed));
           markSaving();
           toast.success('XML importované');
         } catch (err) {

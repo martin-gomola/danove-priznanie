@@ -16,7 +16,7 @@ import { Step7Review } from '@/components/wizard/Step7Review';
 import { useToast } from '@/components/ui/Toast';
 import { IntroModal } from '@/components/ui/IntroModal';
 import { getStepBlockingIssues } from '@/lib/validation/wizard';
-import { dividendToEur } from '@/lib/utils/dividendEur';
+import { normalizeDividendEntries } from '@/lib/dividends/normalization';
 
 const STEP_LABELS = [
   'Osobné údaje',
@@ -126,17 +126,8 @@ export default function Home() {
           toast.error('V súbore sa nenašli žiadne dividendy.');
           return;
         }
-        const { ecbRate, czkRate } = form.dividends;
-        const converted = entries.map((e: { currency: 'USD' | 'EUR' | 'CZK'; amountEur: string; amountOriginal: string; withheldTaxEur: string; withheldTaxOriginal: string }) => {
-          const currency = e.currency ?? 'USD';
-          const amountEur = currency === 'EUR'
-            ? e.amountOriginal
-            : dividendToEur(e.amountOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
-          const withheldTaxEur = currency === 'EUR'
-            ? e.withheldTaxOriginal
-            : dividendToEur(e.withheldTaxOriginal, currency, ecbRate || '1.13', czkRate || '25.21');
-          return { ...e, amountEur, withheldTaxEur };
-        });
+        const { ecbRate, czkRate, plnRate } = form.dividends;
+        const converted = normalizeDividendEntries(entries, { ecbRate, czkRate, plnRate }, { preferExistingEur: false });
         updateDividends({ entries: [...form.dividends.entries, ...converted], enabled: true });
         toast.success(`Importované ${converted.length} položiek`);
       } catch {

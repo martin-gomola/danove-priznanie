@@ -18,11 +18,12 @@ function parseNum(s: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-/** Currency from CSV (EUR, USD) maps to our type; default USD for unknown */
-function toCurrency(currency: string): 'USD' | 'EUR' | 'CZK' {
+/** Currency from CSV maps to our supported dividend currencies; default USD for unknown */
+function toCurrency(currency: string): 'USD' | 'EUR' | 'CZK' | 'PLN' {
   const u = currency?.trim().toUpperCase();
   if (u === 'EUR') return 'EUR';
   if (u === 'CZK') return 'CZK';
+  if (u === 'PLN') return 'PLN';
   return 'USD';
 }
 

@@ -103,7 +103,11 @@ export const ECB_RATE_2025 = 1.13; // USD per 1 EUR
 
 // ── ECB Annual Average Exchange Rate CZK/EUR 2025 ────────────────────
 // Source: https://data.ecb.europa.eu/data/datasets/EXR/EXR.A.CZK.EUR.SP00.A
-export const ECB_CZK_RATE_2025 = 25.21; // CZK per 1 EUR
+export const ECB_CZK_RATE_2025 = 24.686; // CZK per 1 EUR
+
+// ── ECB Annual Average Exchange Rate PLN/EUR 2025 ────────────────────
+// Source: ECB annual average reference rate, EUR 1 = PLN 4.2397
+export const ECB_PLN_RATE_2025 = 4.2397; // PLN per 1 EUR
 
 // ── Form metadata ────────────────────────────────────────────────────
 export const FORM_TYPE = 'B'; // DPFO typ B
